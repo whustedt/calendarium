@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Entry</title>
+    <!-- Linking the stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
+</head>
+<body>
+    <!-- Form for updating an entry -->
+    <form action="{{ url_for('update', id=entry.id) }}" method="post">
+        Date: <input type="date" name="date" required value="{{ entry.date }}"><br>
+        Category:
+        <select name="category" required>
+            <!-- Setting the selected option based on the entry's category -->
+            <option value="cake" {% if entry.category == 'cake' %} selected {% endif %}>🍰 Cake</option>
+            <option value="birthday" {% if entry.category == 'birthday' %} selected {% endif %}>🎂 Birthday</option>
+            <option value="release" {% if entry.category == 'release' %} selected {% endif %}>🚀 Release</option>
+            <option value="custom" {% if entry.category == 'custom' %} selected {% endif %}>🔧 Custom</option>
+        </select><br>
+        Title: <input type="text" name="title" required value="{{ entry.title }}"><br>
+        <!-- Providing a default value for description if it's not present -->
+        Description: <input type="text" name="description" value="{{ entry.description|default('', true) }}"><br>
+        <input type="submit" value="Update">
+    </form>
+</body>
+</html>

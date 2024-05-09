@@ -1,0 +1,76 @@
+# Deployment configuration for Calendarium web application
+# This sets up the main application pod with specific container settings.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: calendarium-web-deployment  # Descriptive name of the deployment
+spec:
+ replicas: 1  # Ensures only one replica of the pod is running
+ strategy:
+   type: Recreate
+ selector:
+   matchLabels:
+     app: calendarium-web  # Labels used to select the pod for this deployment
+ template:
+   metadata:
+     labels:
+       app: calendarium-web  # Labels applied to the pod
+   spec:
+     containers:
+       - name: calendarium-web-container  # Container name for clarity
+         image: ghcr.io/whustedt/calendarium:v1.0.0  # The specific Docker image to use
+         ports:
+           - containerPort: 8000  # The port the container exposes
+         volumeMounts:
+           - name: calendarium-data-volume  # Reference to the PVC
+             mountPath: /app/data  # Mount path inside the container where data is stored
+     volumes:
+       - name: calendarium-data-volume  # Volume name linked to the PVC below
+         persistentVolumeClaim:
+           claimName: calendarium-data-pvc  # PVC that provides the actual storage resource
+---
+# PersistentVolumeClaim for storing application data
+# This claim reserves disk space from the cluster storage resources.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+ name: calendarium-data-pvc  # PVC name that's referenced in the deployment
+spec:
+ accessModes:
+   - ReadWriteOnce  # The volume can be mounted as read-write by a single node
+ resources:
+   requests:
+     storage: 300Mi  # Requests 300 MiB of storage
+---
+# Service definition for internal and external communication
+# This service makes the application accessible within the cluster and routes internal traffic.
+apiVersion: v1
+kind: Service
+metadata:
+ name: calendarium-web-service  # Name of the service
+spec:
+ type: LoadBalancer
+ selector:
+   app: calendarium-web  # Selects pods with matching labels
+ ports:
+   - protocol: TCP
+     port: 8000  # The service port that can be accessed within the cluster
+     targetPort: 8000  # The pod port to which the service forwards traffic
+---
+# Ingress configuration for routing external HTTP traffic
+# This resource defines rules for accessing the service from outside the Kubernetes cluster.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+ name: calendarium-web-ingress  # Name of the ingress
+spec:
+ rules:
+   - http:
+       paths:
+         - path: /
+           pathType: Prefix  # Matches all paths for routing
+           backend:
+             service:
+               name: calendarium-web-service  # Routes traffic to this service
+               port:
+                 number: 8000  # The service port specified above

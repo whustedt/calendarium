@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Flickity provides timeline functionality -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='timeline/flickity.css') }}">
+
+    <!-- Project specific styling -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='timeline/style.css') }}">
+
+    <!-- Inline style to handle dynamic height -->
+    <style>
+        .timeline {
+            height: {{ timeline_height }}; /* Use the height value passed from Flask */
+        }
+    </style>
+
+</head>
+<body>
+
+    <!-- Edit button linking to index page -->
+    <a href="{{ url_for('index') }}" target="_blank" class="edit-button">✏️</a>
+
+    <!-- Timeline container -->
+    <div class="timeline" data-flickity='{"initialIndex": ".initial-focus", "cellAlign": "left", "pageDots": false, "prevNextButtons": false, "contain": true, "resize": false}'>
+
+        <!-- Loop through entries to display timeline items -->
+        {% for entry in entries %}
+            {% set date_class = "" %}
+            {% set initial_focus = "" %}
+            {% if entry.date < today %}
+                {% set date_class = "past" %}
+                {% if loop.index0 == second_to_last_past_index %}
+                    {% set initial_focus = "initial-focus" %}
+                {% endif %}
+            {% elif entry.date == today %}
+                {% set date_class = "highlight" %}
+            {% endif %}
+
+            <!-- Timeline item -->
+            <div class="timeline-item {{ entry.category }} {{ date_class }} {{ initial_focus }}">
+                <span class="date">{{ entry.date|format_date('d. MMMM', locale='de_DE') }}</span>
+                <span class="title">{{ entry.title }}</span>
+                {% if entry.description %}
+                    <span class="description">{{ entry.description }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+    </div>
+
+    <!-- Demodata for use without a backend -->
+    <!-- <script type="text/javascript" src="insertDemoData.js"></script> -->
+
+    <!-- Flickity provides timeline functionality -->
+    <script type="text/javascript" src="{{ url_for('static', filename='timeline/flickity.pkgd.min.js') }}"></script>
+
+    <!-- Confetti animation for events with css classes birthday and highlight -->
+    <script type="text/javascript" src="{{ url_for('static', filename='timeline/confetti.js') }}"></script>
+
+</body>
+</html>

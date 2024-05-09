@@ -1,0 +1,76 @@
+[
+    {
+        "date": "2024-01-12",
+        "category": "birthday",
+        "title": "Alex's Birthday"
+    },
+    {
+        "date": "2024-02-14",
+        "category": "custom",
+        "title": "Valentine's Day Workshop",
+        "description": "A special event focusing on personalization of gifts."
+    },
+    {
+        "date": "2024-03-23",
+        "category": "release",
+        "title": "Feature Update 2.1",
+        "description": "Introducing new features based on user feedback."
+    },
+    {
+        "date": "2024-04-10",
+        "category": "cake",
+        "title": "Quarterly Success Party",
+        "description": "Celebrating the successful close of the first quarter."
+    },
+    {
+        "date": "2024-05-01",
+        "category": "release",
+        "title": "Version 1.0 Launch"
+    },
+    {
+        "date": "2024-05-10",
+        "category": "birthday",
+        "title": "John's Birthday",
+        "description": "Surprise party planned for John at the office."
+    },
+    {
+        "date": "2024-06-15",
+        "category": "cake",
+        "title": "Product Milestone Celebration",
+        "description": "Celebrating the major milestone with cake for everyone."
+    },
+    {
+        "date": "2024-07-22",
+        "category": "custom",
+        "title": "Custom Workshop",
+        "description": "Workshop on customizing our product features for enterprise clients."
+    },
+    {
+        "date": "2024-08-30",
+        "category": "birthday",
+        "title": "Marie's Birthday"
+    },
+    {
+        "date": "2024-09-05",
+        "category": "release",
+        "title": "System Upgrade 3.0"
+    },
+    {
+        "date": "2024-10-16",
+        "category": "custom",
+        "title": "Annual Strategy Meeting",
+        "description": "Discussion of strategic directions and initiatives for the coming year."
+    },
+    {
+        "date": "2024-11-25",
+        "category": "cake",
+        "title": "Thanksgiving Celebration",
+        "description": "A celebration with the whole team to give thanks for the year's successes."
+    },
+    {
+        "date": "2024-12-20",
+        "category": "birthday",
+        "title": "CEO's Birthday Celebration",
+        "description": "A grand celebration in honor of our CEO's birthday."
+    }
+]
