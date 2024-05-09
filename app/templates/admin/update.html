@@ -8,19 +8,25 @@
 </head>
 <body>
     <!-- Form for updating an entry -->
-    <form action="{{ url_for('update', id=entry.id) }}" method="post">
-        Date: <input type="date" name="date" required value="{{ entry.date }}"><br>
-        Category:
-        <select name="category" required>
-            <!-- Setting the selected option based on the entry's category -->
-            <option value="cake" {% if entry.category == 'cake' %} selected {% endif %}>🍰 Cake</option>
-            <option value="birthday" {% if entry.category == 'birthday' %} selected {% endif %}>🎂 Birthday</option>
-            <option value="release" {% if entry.category == 'release' %} selected {% endif %}>🚀 Release</option>
-            <option value="custom" {% if entry.category == 'custom' %} selected {% endif %}>🔧 Custom</option>
-        </select><br>
+    <form action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
+        <div class="form-row">
+            <label>Date: <input type="date" name="date" required value="{{ entry.date }}"></label>
+            <div class="category-options">
+                Category:
+                <label><input type="radio" name="category" value="cake" {% if entry.category == 'cake' %} checked {% endif %} required>🍰 Cake</label>
+                <label><input type="radio" name="category" value="birthday" {% if entry.category == 'birthday' %} checked {% endif %} >🎂 Birthday</label>
+                <label><input type="radio" name="category" value="release" {% if entry.category == 'release' %} checked {% endif %} >🚀 Release</label>
+                <label><input type="radio" name="category" value="custom" {% if entry.category == 'custom' %} checked {% endif %} >🔧 Custom</label>
+            </div>
+        </div>
         Title: <input type="text" name="title" required value="{{ entry.title }}"><br>
-        <!-- Providing a default value for description if it's not present -->
         Description: <input type="text" name="description" value="{{ entry.description|default('', true) }}"><br>
+        Image: <input type="file" name="entryImage" accept="image/png, image/jpeg"><br>
+        <!-- Conditional checkbox for removing the image -->
+        {% if entry.image_filename %}
+            Current Image: <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="Current Image"><br>
+            Remove Image: <input type="checkbox" name="remove_image" value="1"> Remove current image<br>
+        {% endif %}
         <input type="submit" value="Update">
     </form>
 </body>

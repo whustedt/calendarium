@@ -6,27 +6,30 @@ body {
 
 form {
     margin-bottom: 20px;
-    background-color: #f9f9f9;  /* Soft off-white */
+    background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
 }
 
 input[type="text"],
-input[type="date"],
-select {
+input[type="file"] {
     width: 100%;
     padding: 8px;
     margin-top: 4px;
     margin-bottom: 8px;
     display: inline-block;
-    border: 1px solid #ccc; /* Light gray border */
+    border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
 }
 
+input[type="date"] {
+    width: auto; /* Constrain width of date input */
+}
+
 input[type="submit"],
 button {
-    background-color: #4CAF50; /* Consistent green theme */
+    background-color: #4CAF50;
     color: white;
     padding: 10px 15px;
     margin: 4px 0;
@@ -36,9 +39,19 @@ button {
     font-size: 1rem;
 }
 
-input[type="submit"]:hover,
-button:hover {
-    background-color: #45a049; /* Slightly darker green */
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category-options {
+    display: flex;
+    gap: 10px; /* Space between radio options */
+}
+
+input[type="radio"] {
+    margin: 0 5px 0 0;
 }
 
 table {
@@ -55,6 +68,13 @@ th, td {
 
 tr:nth-child(even) {
     background-color: #f2f2f2; /* Light gray for alternate rows */
+}
+
+img {
+    max-width: 100px; /* Limit the width of the image */
+    height: auto; /* Maintain the aspect ratio */
+    border-radius: 4px; /* Rounded corners for the image */
+    border: 1px solid #ddd; /* Light gray border around images */
 }
 
 button.edit {

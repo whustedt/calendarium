@@ -1,6 +1,9 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim
 
+# Set the timezone environment variable
+ENV TZ=Europe/Berlin
+
 # Set the working directory to /app
 WORKDIR /app
 

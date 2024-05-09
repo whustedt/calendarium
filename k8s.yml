@@ -19,6 +19,9 @@ spec:
      containers:
        - name: calendarium-web-container  # Container name for clarity
          image: ghcr.io/whustedt/calendarium:v1.0.0  # The specific Docker image to use
+         env:
+          - name: TZ
+            value: "Europe/Berlin"
          ports:
            - containerPort: 8000  # The port the container exposes
          volumeMounts:
@@ -40,7 +43,7 @@ spec:
    - ReadWriteOnce  # The volume can be mounted as read-write by a single node
  resources:
    requests:
-     storage: 300Mi  # Requests 300 MiB of storage
+     storage: 1Gi  # Requests storage
 ---
 # Service definition for internal and external communication
 # This service makes the application accessible within the cluster and routes internal traffic.
