@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Python package updates
+  - package-ecosystem: "pip" # Python package manager
+    directory: "/" # Location of the requirements.txt file
+    schedule:
+      interval: "weekly" # Dependabot will check for updates weekly
+
+  # Docker updates
+  - package-ecosystem: "docker" # Docker package manager
+    directory: "/" # Assuming Dockerfile is in the root
+    schedule:
+      interval: "weekly" # Dependabot will check for Docker image updates weekly
+
+  # GitHub Actions updates
+  - package-ecosystem: "github-actions" # GitHub Actions
+    directory: "/" # Location of the GitHub workflow files
+    schedule:
+      interval: "weekly" # Dependabot will check for updates to GitHub Actions weekly

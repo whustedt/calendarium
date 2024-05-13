@@ -18,7 +18,7 @@ spec:
    spec:
      containers:
        - name: calendarium-web-container  # Container name for clarity
-         image: ghcr.io/whustedt/calendarium:v1.0.0  # The specific Docker image to use
+         image: ghcr.io/whustedt/calendarium:v2.1.0  # The specific Docker image to use
          env:
           - name: TZ
             value: "Europe/Berlin"
@@ -67,7 +67,7 @@ kind: Ingress
 metadata:
  name: calendarium-web-ingress  # Name of the ingress
 spec:
- rules:
+ rules: # add host for real deployment
    - http:
        paths:
          - path: /

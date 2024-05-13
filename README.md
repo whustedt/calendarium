@@ -27,10 +27,10 @@ Below are the available API endpoints with their respective usage:
 - **Home**
   - **GET** `/`
   - Returns the main page of the application.
-  
+
 - **Timeline**
-  - **GET** `/timeline?timeline-height=<height>`
-  - Displays a timeline of all entries. Allows optional `timeline-height` query parameter to adjust the height of the timeline (e.g., `timeline-height=100%`). This view uses the Flickity library.
+  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>`
+  - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, and `font-scale` query parameters to adjust the height of the timeline, set the font, and apply a scale factor to the font size respectively (e.g., `timeline-height=100%`, `font-family=Arial`, `font-scale=1.5`). This view uses the Flickity library.
 
 - **Create Entry**
   - **POST** `/create`
@@ -46,7 +46,7 @@ Below are the available API endpoints with their respective usage:
 
 - **API Data Access**
   - **GET** `/api/data`
-  - Returns all entries in JSON format.
+  - Returns all entries in JSON format, including additional attributes such as `date_formatted` and `index` which help in sorting and formatting entries relative to the current date.
 
 - **Batch Import**
   - **POST** `/batch-import`

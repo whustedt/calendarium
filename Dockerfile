@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set the timezone environment variable
 ENV TZ=Europe/Berlin
@@ -23,4 +23,4 @@ ENV FLASK_APP=app:app
 ENV PYTHONPATH=/app
 
 # Run app.py when the container launches
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:create_app()"]

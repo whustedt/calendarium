@@ -1,13 +1,16 @@
 html, body {
-    font-family: sans-serif;
+    font-family: sans-serif; /* fallback value */
     height: 100%; /* Essential for percentage heights to work correctly */
     margin: 0;
     padding: 0;
 }
 
+.timeline_with_button {
+  position: relative;
+}
 
 .edit-button {
-    position: fixed;
+    position: absolute;
     top: 20px;
     right: 20px;
     background-color: hotpink;
@@ -57,13 +60,13 @@ html, body {
     animation: fadeInUp 1s ease-out forwards;
 }
 .timeline-item .date {
-  font-size: 8cqh;
+  font-size: 8cqh; /* fallback value */
   position: absolute;
   top: 10px;
   right: 15px;
 }
-.timeline-item .title {font-size: 12cqh; margin-top: 5px;}
-.timeline-item .description {font-size: 10cqh;}
+.timeline-item .title {font-size: 12cqh; margin-top: 5px;} /* fallback value */
+.timeline-item .description {font-size: 10cqh;} /* fallback value */
 .timeline-item.cake { 
     background: linear-gradient(135deg, #FF8A65, #FF7043); /* Warmer and brighter shades of orange */
     background-color: #FF8A65; /* this is used when blending an img */
