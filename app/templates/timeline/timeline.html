@@ -32,7 +32,8 @@
         <div class="timeline" data-flickity='{"initialIndex": ".initial-focus", "cellAlign": "left", "pageDots": false, "prevNextButtons": false, "contain": true, "resize": false}'>
             <!-- Loop through entries to display timeline items -->
             {% for entry in entries %}
-                {% set date_class = "highlight" if entry.index == 0 else ("past" if entry.index < 0 else "") %}
+
+            {% set date_class = "highlight" if entry.isToday else ("past" if entry.index < 0 else "") %}
                 {% set initial_focus = "initial-focus" if entry.index == -2 else "" %}
                 {% set img_class = "with-img" if entry.image_url else "" %}
                 {% set img_style = "background-image: url('" + entry.image_url + "');" if entry.image_url else "" %}

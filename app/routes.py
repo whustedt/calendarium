@@ -142,7 +142,8 @@ def init_app(app):
                 'description': entry.description,
                 'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
                 'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-                'index': i - index
+                'index': i - index,
+                'isToday': entry.date == today
             }
             data.append(entry_data)
     

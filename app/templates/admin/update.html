@@ -21,7 +21,7 @@
         </div>
         Title: <input type="text" name="title" required value="{{ entry.title }}"><br>
         Description: <input type="text" name="description" value="{{ entry.description|default('', true) }}"><br>
-        Image: <input type="file" name="entryImage" accept="image/png, image/jpeg"><br>
+        Image: <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif"><br>
         <!-- Conditional checkbox for removing the image -->
         {% if entry.image_filename %}
             Current Image: <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="Current Image"><br>
