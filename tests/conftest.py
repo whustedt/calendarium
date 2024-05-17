@@ -3,7 +3,7 @@ from app import create_app, db
 from app.config import TestConfig
 from app.models import Entry
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def test_client():
     # Create a Flask app instance with test configurations
     flask_app = create_app(TestConfig)
@@ -16,7 +16,7 @@ def test_client():
             db.session.remove()
             db.drop_all()
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def init_database():
     # Populate the database with a single entry before each test
     entry = Entry(date="2021-05-20", category="birthday", title="John's Birthday", description="Birthday party")
