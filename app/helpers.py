@@ -6,6 +6,7 @@ import zipfile
 from io import BytesIO
 
 def handle_image(file, entry_id, upload_folder, allowed_extensions):
+    """Handles image upload and saves it with a new filename based on entry ID."""
     if file and allowed_file(file.filename, allowed_extensions):
         ext = file.filename.rsplit('.', 1)[1]
         filename = f"{entry_id}.{ext}"
@@ -16,21 +17,23 @@ def handle_image(file, entry_id, upload_folder, allowed_extensions):
     return None
 
 def parse_date(date_str):
-    """Parses a date string formatted as 'YYYY-MM-DD' into a datetime.date object."""
+    """Parses a date string formatted as 'YYYY-MM-DD' into a date object."""
     try:
         return datetime.strptime(date_str, '%Y-%m-%d').date()
     except ValueError:
         return None
 
 def allowed_file(filename, allowed_extensions):
+    """Checks if a file has an allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 def create_upload_folder(upload_folder):
+    """Creates the upload folder if it doesn't exist."""
     if not path.exists(upload_folder):
         makedirs(upload_folder)
 
 def get_formatted_entries(entries):
-    """Fetches and formats entries from the database."""
+    """Formats entries for display, including additional attributes."""
     data = []
     today = str(date.today())
     index = next((i for i, entry in enumerate(entries) if entry.date >= today), len(entries))
@@ -52,7 +55,7 @@ def get_formatted_entries(entries):
     return data
 
 def create_zip(entries, upload_folder):
-    """Creates a zip file containing the data and associated images."""
+    """Creates a zip file containing entries data and associated images."""
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
         # Add entries.json file

@@ -48,6 +48,10 @@ Below are the available API endpoints with their respective usage:
   - **GET** `/api/data`
   - Returns all entries in JSON format, including additional attributes such as `date_formatted` and `index` which help in sorting and formatting entries relative to the current date.
 
+- **Export Data**
+  - **GET** `/export-data`
+  - Exports all entries and associated images as a zip file.
+
 - **Batch Import**
   - **POST** `/batch-import`
   - Imports a batch of entries from a JSON file.

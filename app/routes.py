@@ -7,7 +7,7 @@ from .helpers import handle_image, parse_date, allowed_file, create_upload_folde
 def init_app(app):
     @app.after_request
     def after_request(response):
-        """Applies CORS headers to all responses."""
+        """Apply CORS headers to all responses."""
         response.headers['Access-Control-Allow-Origin'] = '*'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
         response.headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS'
@@ -15,18 +15,18 @@ def init_app(app):
     
     @app.route('/uploads/<filename>')
     def uploaded_file(filename):
-        """Sends the requested file from the upload directory."""
+        """Send the requested file from the upload directory."""
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
     @app.route('/', methods=['GET'])
     def index():
-        """Displays the main admin page with entries."""
+        """Display the main admin page with entries."""
         entries = Entry.query.order_by(Entry.date).all()
         return render_template('admin/index.html', entries=entries)
         
     @app.route('/create', methods=['POST'])
     def create():
-        """Creates a new entry and handles associated image upload."""
+        """Create a new entry and handle associated image upload."""
         try:
             category = request.form['category']
             if category not in Entry.CATEGORIES:
@@ -42,7 +42,7 @@ def init_app(app):
                 description=request.form.get('description', None) or None
             )
             db.session.add(new_entry)
-            db.session.flush()  # Ensures the ID is assigned without committing the transaction
+            db.session.flush()  # Ensure the ID is assigned without committing the transaction
     
             filename = handle_image(request.files.get('entryImage'), new_entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
             if filename:
@@ -56,7 +56,7 @@ def init_app(app):
     
     @app.route('/update/<int:id>', methods=['GET', 'POST'])
     def update(id):
-        """Updates an entry by ID, handling image uploads or deletions as necessary."""
+        """Update an entry by ID, handling image uploads or deletions as necessary."""
         entry = Entry.query.get_or_404(id)
         if request.method == 'POST':
             if request.form['category'] not in Entry.CATEGORIES:
@@ -90,7 +90,7 @@ def init_app(app):
     
     @app.route('/delete/<int:id>', methods=['POST'])
     def delete(id):
-        """Deletes an entry by ID, including any associated image."""
+        """Delete an entry by ID, including any associated image."""
         entry = Entry.query.get_or_404(id)
         if entry.image_filename:
             image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
@@ -102,7 +102,7 @@ def init_app(app):
     
     @app.route('/timeline', methods=['GET'])
     def timeline():
-        """Generates a timeline view of entries, calculating positions based on dates."""
+        """Generate a timeline view of entries, calculating positions based on dates."""
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
@@ -111,12 +111,12 @@ def init_app(app):
     
     @app.route('/api/data', methods=['GET'])
     def api_data():
-        """Returns a JSON response with data for all entries, including image URLs.""" 
+        """Return a JSON response with data for all entries, including image URLs.""" 
         return jsonify(get_formatted_entries(Entry.query.order_by(Entry.date).all()))
     
     @app.route('/update-birthdays', methods=['POST'])
     def update_birthdays():
-        """Updates all birthday entries to the current year."""
+        """Update all birthday entries to the current year."""
         current_year = datetime.now().year
         birthday_entries = Entry.query.filter_by(category='birthday').all()
         for entry in birthday_entries:
@@ -126,7 +126,7 @@ def init_app(app):
     
     @app.route('/purge-old-entries', methods=['POST'])
     def purge_old_entries():
-        """Deletes old entries that are not marked as birthdays and are past the current date."""
+        """Delete old entries that are not marked as birthdays and are past the current date."""
         current_date = datetime.now().date()
         old_entries = Entry.query.filter(Entry.date < str(current_date), Entry.category != 'birthday').all()
         for entry in old_entries:
@@ -140,7 +140,7 @@ def init_app(app):
     
     @app.route('/batch-import', methods=['POST'])
     def batch_import():
-        """Imports multiple entries from a JSON payload."""
+        """Import multiple entries from a JSON payload."""
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided"}), 400
@@ -155,7 +155,7 @@ def init_app(app):
                     date=item['date'],
                     category=item['category'],
                     title=item['title'],
-                    description=item.get('description', None) or None
+                    description=item.get('description', None)
                 )
                 db.session.add(new_entry)
             except KeyError as e:
@@ -168,7 +168,7 @@ def init_app(app):
     
     @app.route('/export-data', methods=['GET'])
     def export_data():
-        """Exports all entries and associated images as a zip file."""
+        """Export all entries and associated images as a zip file."""
         entries = get_formatted_entries(Entry.query.order_by(Entry.date).all())
         zip_buffer = create_zip(entries, app.config['UPLOAD_FOLDER'])
         
