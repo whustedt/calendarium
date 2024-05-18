@@ -1,36 +1,10 @@
-from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app
+from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file
 from .models import Entry
 from app import db
-from datetime import datetime, date, time
-from babel.dates import format_date
-from os import path, remove, makedirs
-    
+from datetime import datetime, date
+from .helpers import handle_image, parse_date, allowed_file, create_upload_folder, get_formatted_entries, create_zip
+
 def init_app(app):
-    def handle_image(file, entry_id):
-        if file and allowed_file(file.filename):
-            ext = file.filename.rsplit('.', 1)[1]
-            filename = f"{entry_id}.{ext}"
-            filepath = path.join(app.config['UPLOAD_FOLDER'], filename)
-            create_upload_folder(app.config['UPLOAD_FOLDER'])
-            file.save(filepath)
-            return filename
-        return None
-    
-    def parse_date(date_str):
-        """Parses a date string formatted as 'YYYY-MM-DD' into a datetime.date object."""
-        try:
-            return datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return None
-    
-    def allowed_file(filename):
-        return '.' in filename and \
-               filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
-    
-    def create_upload_folder(upload_folder):
-        if not path.exists(upload_folder):
-            makedirs(upload_folder) 
-    
     @app.after_request
     def after_request(response):
         """Applies CORS headers to all responses."""
@@ -70,7 +44,7 @@ def init_app(app):
             db.session.add(new_entry)
             db.session.flush()  # Ensures the ID is assigned without committing the transaction
     
-            filename = handle_image(request.files.get('entryImage'), new_entry.id)
+            filename = handle_image(request.files.get('entryImage'), new_entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
             if filename:
                 new_entry.image_filename = filename
     
@@ -94,7 +68,7 @@ def init_app(app):
             # Handle image upload or removal
             file = request.files.get('entryImage')
             if file and file.filename:
-                filename = handle_image(file, entry.id)
+                filename = handle_image(file, entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
                 if filename:
                     entry.image_filename = filename
             elif 'remove_image' in request.form and entry.image_filename:
@@ -126,42 +100,19 @@ def init_app(app):
         db.session.commit()
         return redirect(url_for('index'))
     
-    def get_formatted_entries():
-        """Fetches and formats entries from the database."""
-        today = str(date.today()) # like 2024-05-10
-        entries = Entry.query.order_by(Entry.date).all()
-        data = []
-        index = next((i for i, entry in enumerate(entries) if entry.date >= today), len(entries))
-    
-        for i, entry in enumerate(entries):
-            entry_data = {
-                'date': entry.date,
-                'date_formatted': format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
-                'category': entry.category,
-                'title': entry.title,
-                'description': entry.description,
-                'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
-                'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-                'index': i - index,
-                'isToday': entry.date == today
-            }
-            data.append(entry_data)
-    
-        return data
-    
     @app.route('/timeline', methods=['GET'])
     def timeline():
         """Generates a timeline view of entries, calculating positions based on dates."""
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
-        entries = get_formatted_entries()
+        entries = get_formatted_entries(Entry.query.order_by(Entry.date).all())
         return make_response(render_template('timeline/timeline.html', entries=entries, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
     
     @app.route('/api/data', methods=['GET'])
     def api_data():
         """Returns a JSON response with data for all entries, including image URLs.""" 
-        return jsonify(get_formatted_entries())
+        return jsonify(get_formatted_entries(Entry.query.order_by(Entry.date).all()))
     
     @app.route('/update-birthdays', methods=['POST'])
     def update_birthdays():
@@ -214,3 +165,13 @@ def init_app(app):
     
         db.session.commit()
         return jsonify({"message": "Entries successfully imported"}), 201
+    
+    @app.route('/export-data', methods=['GET'])
+    def export_data():
+        """Exports all entries and associated images as a zip file."""
+        entries = get_formatted_entries(Entry.query.order_by(Entry.date).all())
+        zip_buffer = create_zip(entries, app.config['UPLOAD_FOLDER'])
+        
+        response = make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='data_export.zip'))
+        response.headers['Content-Disposition'] = 'attachment; filename=data_export.zip'
+        return response
