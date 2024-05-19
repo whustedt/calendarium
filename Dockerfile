@@ -10,7 +10,6 @@ WORKDIR /app
 # Install any needed packages specified in requirements.txt
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-RUN pip install gunicorn
 
 # Copy the app directory contents into the container at /app
 COPY app app

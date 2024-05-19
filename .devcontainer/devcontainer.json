@@ -15,7 +15,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "sudo ln -s /workspaces/calendarium /app && sudo mkdir -p /app/data && pip3 install --user -r requirements.txt && echo 'Ready to go! Navigate to your project directory and run `flask run` to start your application.'"
+    "postCreateCommand": "sudo ln -s /workspaces/calendarium /app && sudo mkdir -p /app/data && pip3 install --user -r requirements.txt && pip3 install --user pytest && echo 'Ready to go! Navigate to your project directory and run `flask run` to start your application.'"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
