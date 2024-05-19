@@ -1,8 +1,9 @@
+from os import path, remove
 from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file
 from .models import Entry
 from app import db
-from datetime import datetime, date
-from .helpers import handle_image, parse_date, allowed_file, create_upload_folder, get_formatted_entries, create_zip
+from datetime import datetime
+from .helpers import handle_image, parse_date, get_formatted_entries, create_zip
 
 def init_app(app):
     @app.after_request
