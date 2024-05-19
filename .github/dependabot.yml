@@ -20,6 +20,6 @@ updates:
 
   # Dev Container
   - package-ecosystem: "devcontainers" # Dev Container manager
-    directory: "/.devcontainer" # Location of the devcontainer.json
+    directory: "/" # Assuming dev container configuration is in the root
     schedule:
       interval: "weekly" # Dependabot will check for updates weekly
