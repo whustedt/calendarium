@@ -19,7 +19,7 @@ updates:
       interval: "weekly" # Dependabot will check for updates to GitHub Actions weekly
 
   # Dev Container
-  - package-ecosystem: "devcontainers"
-   directory: "/"
-   schedule:
-     interval: weekly
+  - package-ecosystem: "devcontainers" # Dev Container manager
+    directory: "/.devcontainer" # Location of the devcontainer.json
+    schedule:
+      interval: "weekly" # Dependabot will check for updates weekly
