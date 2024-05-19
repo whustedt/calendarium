@@ -17,3 +17,9 @@ updates:
     directory: "/" # Location of the GitHub workflow files
     schedule:
       interval: "weekly" # Dependabot will check for updates to GitHub Actions weekly
+
+  # Dev Container
+  - package-ecosystem: "devcontainers"
+   directory: "/"
+   schedule:
+     interval: weekly
