@@ -1,5 +1,5 @@
 from os import path, remove
-from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file
+from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file, abort
 from .models import Entry
 from app import db
 from datetime import datetime
@@ -22,7 +22,7 @@ def init_app(app):
     @app.route('/', methods=['GET'])
     def index():
         """Display the main admin page with entries."""
-        entries = Entry.query.order_by(Entry.date).all()
+        entries = db.session.query(Entry).order_by(Entry.date).all()
         return render_template('admin/index.html', entries=entries)
         
     @app.route('/create', methods=['POST'])
@@ -58,7 +58,9 @@ def init_app(app):
     @app.route('/update/<int:id>', methods=['GET', 'POST'])
     def update(id):
         """Update an entry by ID, handling image uploads or deletions as necessary."""
-        entry = Entry.query.get_or_404(id)
+        entry = db.session.get(Entry, id)
+        if entry is None:
+            abort(404)
         if request.method == 'POST':
             if request.form['category'] not in Entry.CATEGORIES:
                 return jsonify({"error": "Invalid category"}), 400
@@ -92,7 +94,9 @@ def init_app(app):
     @app.route('/delete/<int:id>', methods=['POST'])
     def delete(id):
         """Delete an entry by ID, including any associated image."""
-        entry = Entry.query.get_or_404(id)
+        entry = db.session.get(Entry, id)
+        if entry is None:
+            abort(404)
         if entry.image_filename:
             image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
             if path.exists(image_path):
@@ -107,19 +111,19 @@ def init_app(app):
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
-        entries = get_formatted_entries(Entry.query.order_by(Entry.date).all())
+        entries = get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all())
         return make_response(render_template('timeline/timeline.html', entries=entries, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
     
     @app.route('/api/data', methods=['GET'])
     def api_data():
         """Return a JSON response with data for all entries, including image URLs.""" 
-        return jsonify(get_formatted_entries(Entry.query.order_by(Entry.date).all()))
+        return jsonify(get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all()))
     
     @app.route('/update-birthdays', methods=['POST'])
     def update_birthdays():
         """Update all birthday entries to the current year."""
         current_year = datetime.now().year
-        birthday_entries = Entry.query.filter_by(category='birthday').all()
+        birthday_entries = db.session.query(Entry).filter_by(category='birthday').all()
         for entry in birthday_entries:
             entry.date = f"{current_year}-{entry.date.split('-')[1]}-{entry.date.split('-')[2]}"
         db.session.commit()
@@ -129,7 +133,7 @@ def init_app(app):
     def purge_old_entries():
         """Delete old entries that are not marked as birthdays and are past the current date."""
         current_date = datetime.now().date()
-        old_entries = Entry.query.filter(Entry.date < str(current_date), Entry.category != 'birthday').all()
+        old_entries = db.session.query(Entry).filter(Entry.date < str(current_date), Entry.category != 'birthday').all()
         for entry in old_entries:
             if entry.image_filename:
                 image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
@@ -170,7 +174,7 @@ def init_app(app):
     @app.route('/export-data', methods=['GET'])
     def export_data():
         """Export all entries and associated images as a zip file."""
-        entries = get_formatted_entries(Entry.query.order_by(Entry.date).all())
+        entries = get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all())
         zip_buffer = create_zip(entries, app.config['UPLOAD_FOLDER'])
         
         response = make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='data_export.zip'))
