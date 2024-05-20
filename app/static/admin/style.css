@@ -3,7 +3,9 @@ body {
     margin: 20px;
     line-height: 1.6;
     background-image: radial-gradient(#9395b6 0.55px, #ffffff 0.55px);
-    background-size: 11px 11px;}
+    background-size: 11px 11px;
+    background-attachment: fixed;
+}
 
 
 .entry-form {
