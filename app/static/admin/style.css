@@ -2,65 +2,77 @@ body {
     font-family: Arial, sans-serif;
     margin: 20px;
     line-height: 1.6;
-}
+    background-image: radial-gradient(#9395b6 0.55px, #ffffff 0.55px);
+    background-size: 11px 11px;}
 
-form {
-    margin-bottom: 20px;
-    border-radius: 8px;
-}
 
-.createform {
+.entry-form {
     background-color: #f9f9f9;
     padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    max-width: 600px;
+    margin: 20px auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-input[type="text"],
-input[type="file"] {
+.form-section {
+    margin-bottom: 10px;
+}
+
+.form-section label {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.category-group {
+    display: flex;
+    gap: 15px;
+}
+
+.category-group label {
+    margin-right: 15px;
+}
+
+input[type="text"], input[type="file"], input[type="date"] {
     width: 100%;
     padding: 8px;
-    margin-top: 4px;
-    margin-bottom: 8px;
-    display: inline-block;
+    margin: 4px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
     box-sizing: border-box;
 }
 
-input[type="date"] {
-    width: auto; /* Constrain width of date input */
-}
-
-input[type="submit"],
-button {
+input[type="submit"], button {
     background-color: #4CAF50;
     color: white;
     padding: 10px 15px;
-    margin: 4px 0;
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
 }
 
-.form-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.create-button {
+    display: block;
+    width: 70%;
+    margin: 20px auto 0;
+    transition: background-color 0.3s ease; /* Smooth transition for the background color */
 }
 
-.category-options {
-    display: flex;
-    gap: 15px; /* Space between radio options */
+.create-button:hover {
+    background-color: #367C2B; /* A darker shade of green for the hover state */
 }
 
 input[type="radio"] {
-    margin: 0 5px 0 0;
+    margin-right: 5px;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
+    background-color: white;
 }
 
 th, td {

@@ -7,27 +7,38 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
 </head>
 <body>
-    <!-- Form for updating an entry -->
-    <form action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
-        <div class="form-row">
-            <label>Date: <input type="date" name="date" required value="{{ entry.date }}"></label>
-            <div class="category-options">
-                Category:
+    <form class="entry-form" action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
+        <div class="form-section">
+            <label>Date:</label>
+            <input type="date" name="date" required value="{{ entry.date }}">
+        </div>
+        <div class="form-section">
+            <label>Category:</label>
+            <div class="category-group">
                 <label><input type="radio" name="category" value="cake" {% if entry.category == 'cake' %} checked {% endif %} required>🍰 Cake</label>
-                <label><input type="radio" name="category" value="birthday" {% if entry.category == 'birthday' %} checked {% endif %} >🎂 Birthday</label>
-                <label><input type="radio" name="category" value="release" {% if entry.category == 'release' %} checked {% endif %} >🚀 Release</label>
-                <label><input type="radio" name="category" value="custom" {% if entry.category == 'custom' %} checked {% endif %} >🔧 Custom</label>
+                <label><input type="radio" name="category" value="birthday" {% if entry.category == 'birthday' %} checked {% endif %}>🥳 Birthday</label>
+                <label><input type="radio" name="category" value="release" {% if entry.category == 'release' %} checked {% endif %}>🚀 Release</label>
+                <label><input type="radio" name="category" value="custom" {% if entry.category == 'custom' %} checked {% endif %}>✨ Custom</label>
             </div>
         </div>
-        Title: <input type="text" name="title" required value="{{ entry.title }}"><br>
-        Description: <input type="text" name="description" value="{{ entry.description|default('', true) }}"><br>
-        Image: <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif"><br>
+        <div class="form-section">
+            <label>Title:</label>
+            <input type="text" name="title" required value="{{ entry.title }}">
+        </div>
+        <div class="form-section">
+            <label>Description:</label>
+            <input type="text" name="description" value="{{ entry.description|default('', true) }}">
+        </div>
+        <div class="form-section">
+            <label>Image:</label>
+            <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif">
+        </div>
         <!-- Conditional checkbox for removing the image -->
         {% if entry.image_filename %}
             Current Image: <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="Current Image"><br>
             Remove Image: <input type="checkbox" name="remove_image" value="1"> Remove current image<br>
         {% endif %}
-        <input type="submit" value="Update">
+        <input type="submit" value="Update Entry" class="submit-button create-button">
     </form>
 </body>
 </html>
