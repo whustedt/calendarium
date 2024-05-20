@@ -10,21 +10,21 @@
 </head>
 <body>
     <!-- Form for creating new entries -->
-    <form action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
+    <form class="createform" action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
         <div class="form-row">
             <label>Date: <input type="date" name="date" required></label>
             <div class="category-options">
                 Category:
                 <label><input type="radio" name="category" value="cake" required>🍰 Cake</label>
-                <label><input type="radio" name="category" value="birthday">🎂 Birthday</label>
+                <label><input type="radio" name="category" value="birthday">🥳 Birthday</label>
                 <label><input type="radio" name="category" value="release">🚀 Release</label>
-                <label><input type="radio" name="category" value="custom">🔧 Custom</label>
+                <label><input type="radio" name="category" value="custom">✨ Custom</label>
             </div>
         </div>
         Title: <input type="text" name="title" required><br>
         Description: <input type="text" name="description"><br>
         Image: <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif"><br>
-        <input type="submit" value="Submit">
+        <input type="submit" value="Create Entry">
     </form>
 
     <!-- Table to display entries -->
@@ -42,8 +42,20 @@
         <tbody>
             {% for entry in entries %}
                 <tr>
-                    <td>{{ entry.date }}</td>
-                    <td>{{ entry.category }}</td>
+                    <td class="nowrap">{{ entry.date }}</td>
+                    <td class="centered">
+                        {% if entry.category == 'cake' %}
+                            <span title="Cake">🍰</span>
+                        {% elif entry.category == 'birthday' %}
+                            <span title="Birthday">🥳</span>
+                        {% elif entry.category == 'release' %}
+                            <span title="Release">🚀</span>
+                        {% elif entry.category == 'custom' %}
+                            <span title="Custom">✨</span>
+                        {% else %}
+                            {{ entry.category }}
+                        {% endif %}
+                    </td>
                     <td>{{ entry.title }}</td>
                     <td>{{ entry.description|default('', true) }}</td>
                     <td>

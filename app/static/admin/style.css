@@ -6,9 +6,12 @@ body {
 
 form {
     margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.createform {
     background-color: #f9f9f9;
     padding: 15px;
-    border-radius: 8px;
 }
 
 input[type="text"],
@@ -47,7 +50,7 @@ button {
 
 .category-options {
     display: flex;
-    gap: 10px; /* Space between radio options */
+    gap: 15px; /* Space between radio options */
 }
 
 input[type="radio"] {
@@ -64,6 +67,14 @@ th, td {
     border: 1px solid #ddd;  /* Light gray border */
     padding: 8px;
     text-align: left;
+}
+
+.centered {
+    text-align: center;
+}
+
+.nowrap {
+    white-space: nowrap;
 }
 
 tr:nth-child(even) {
