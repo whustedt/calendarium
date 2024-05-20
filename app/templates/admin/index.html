@@ -3,28 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <title>Calendarium</title>
-    <!-- Linking the stylesheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
-    <!-- Including JavaScript file for table sorting -->
     <script src="{{ url_for('static', filename='admin/sort-table.js') }}"></script>
 </head>
 <body>
-    <!-- Form for creating new entries -->
-    <form action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
-        <div class="form-row">
-            <label>Date: <input type="date" name="date" required></label>
-            <div class="category-options">
-                Category:
+    <form class="entry-form" action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
+        <div class="form-section">
+            <label>Date:</label>
+            <input type="date" name="date" required>
+        </div>
+        <div class="form-section">
+            <label>Category:</label>
+            <div class="category-group">
                 <label><input type="radio" name="category" value="cake" required>🍰 Cake</label>
-                <label><input type="radio" name="category" value="birthday">🎂 Birthday</label>
+                <label><input type="radio" name="category" value="birthday">🥳 Birthday</label>
                 <label><input type="radio" name="category" value="release">🚀 Release</label>
-                <label><input type="radio" name="category" value="custom">🔧 Custom</label>
+                <label><input type="radio" name="category" value="custom">✨ Custom</label>
             </div>
         </div>
-        Title: <input type="text" name="title" required><br>
-        Description: <input type="text" name="description"><br>
-        Image: <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif"><br>
-        <input type="submit" value="Submit">
+        <div class="form-section">
+            <label>Title:</label>
+            <input type="text" name="title" required>
+        </div>
+        <div class="form-section">
+            <label>Description:</label>
+            <input type="text" name="description">
+        </div>
+        <div class="form-section">
+            <label>Image:</label>
+            <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif">
+        </div>
+        <input type="submit" value="Create Entry" class="submit-button create-button">
     </form>
 
     <!-- Table to display entries -->
@@ -42,8 +51,20 @@
         <tbody>
             {% for entry in entries %}
                 <tr>
-                    <td>{{ entry.date }}</td>
-                    <td>{{ entry.category }}</td>
+                    <td class="nowrap">{{ entry.date }}</td>
+                    <td class="centered">
+                        {% if entry.category == 'cake' %}
+                            <span title="Cake">🍰</span>
+                        {% elif entry.category == 'birthday' %}
+                            <span title="Birthday">🥳</span>
+                        {% elif entry.category == 'release' %}
+                            <span title="Release">🚀</span>
+                        {% elif entry.category == 'custom' %}
+                            <span title="Custom">✨</span>
+                        {% else %}
+                            {{ entry.category }}
+                        {% endif %}
+                    </td>
                     <td>{{ entry.title }}</td>
                     <td>{{ entry.description|default('', true) }}</td>
                     <td>
