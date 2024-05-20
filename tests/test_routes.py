@@ -24,7 +24,7 @@ def test_create_entry(test_client, init_database):
     response = test_client.post('/create', data=data, follow_redirects=True)
     
     assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}. Response: {response.data.decode('utf-8')}"
-    assert Entry.query.count() == 2  # Assuming one entry was already in the database from setup
+    assert db.session.query(Entry).count() == 2  # Assuming one entry was already in the database from setup
 
 def test_update_entry(test_client, init_database):
     """
@@ -39,7 +39,7 @@ def test_update_entry(test_client, init_database):
         'description': "Updated description"
     }, follow_redirects=True)
     assert response.status_code == 200
-    entry = Entry.query.get(1)
+    entry = db.session.get(Entry, 1)
     assert entry.title == "Updated Title"
 
 def test_delete_entry(test_client, init_database):
@@ -48,10 +48,10 @@ def test_delete_entry(test_client, init_database):
     WHEN the '/delete/<id>' endpoint is called (POST)
     THEN check that the entry is removed from the database
     """
-    initial_count = Entry.query.count()
+    initial_count = db.session.query(Entry).count()
     response = test_client.post('/delete/1', follow_redirects=True)
     assert response.status_code == 200
-    assert Entry.query.count() == initial_count - 1
+    assert db.session.query(Entry).count() == initial_count - 1
 
 def test_timeline_view(test_client):
     """
@@ -129,9 +129,9 @@ def test_batch_import(test_client):
     ]
     response = test_client.post('/batch-import', data=json.dumps(data), content_type='application/json')
     assert response.status_code == 201
-    assert Entry.query.count() == len(data)  # Assuming no existing entries
+    assert db.session.query(Entry).count() == len(data)  # Assuming no existing entries
     for entry in data:
-        db_entry = Entry.query.filter_by(title=entry['title']).first()
+        db_entry = db.session.query(Entry).filter_by(title=entry['title']).first()
         assert db_entry is not None
         assert db_entry.date == entry['date']
         assert db_entry.category == entry['category']
@@ -153,7 +153,7 @@ def test_update_birthdays(test_client, init_database):
     assert response.status_code == 200
 
     current_year = datetime.now().year
-    birthday_entries = Entry.query.filter_by(category="birthday").all()
+    birthday_entries = db.session.query(Entry).filter_by(category="birthday").all()
     for entry in birthday_entries:
         assert str(current_year) in entry.date
 
@@ -172,7 +172,7 @@ def test_purge_old_entries(test_client, init_database):
     response = test_client.post('/purge-old-entries', follow_redirects=True)
     assert response.status_code == 200
 
-    old_entries = Entry.query.filter(Entry.date < str(date.today()), Entry.category != "birthday").all()
+    old_entries = db.session.query(Entry).filter(Entry.date < str(date.today()), Entry.category != "birthday").all()
     assert len(old_entries) == 0
 
 def test_entries_sorted_by_date(test_client, init_database):
