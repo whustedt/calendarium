@@ -64,6 +64,40 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/purge-old-entries`
   - Deletes all entries where the date is in the past and the category is not 'birthday'.
 
+## Grafana Integration
+
+This application supports integration with Grafana through a Simple JSON Datasource, enabling Grafana to pull data for visualization purposes. Here are the endpoints provided for Grafana:
+
+### Grafana Endpoint Descriptions
+
+- **Test Connection** (`GET /grafana/`)
+  - Confirms the data source connection is functional.
+  
+- **Search** (`POST /grafana/search`)
+  - Returns a list of categories that can be queried (e.g., 'cake', 'birthday').
+
+- **Query** (`POST /grafana/query`)
+  - Retrieves timeseries data based on specified categories.
+
+- **Annotations** (`POST /grafana/annotations`)
+  - Delivers event annotations for graph overlays based on specific queries.
+
+- **Tag Keys** (`POST /grafana/tag-keys`)
+  - Provides tag keys for Grafana's ad hoc filtering capabilities.
+
+- **Tag Values** (`POST /grafana/tag-values`)
+  - Supplies values for the selected tag keys for further filtering.
+
+### Example Usage
+
+Query Grafana for timeseries data in the 'cake' category using this `curl` command:
+
+```bash
+curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/json" -d '{"targets":[{"target": "cake", "type": "timeserie"}]}'
+```
+
+This command will return timeseries data points for the 'cake' category if such data exists. Ensure the Grafana Simple JSON Datasource plugin is installed and properly configured to interact with these endpoints.
+
 ## Flickity License Information
 
 This project uses Flickity, which is licensed under the GPLv3. As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.

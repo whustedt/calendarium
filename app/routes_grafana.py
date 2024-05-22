@@ -22,17 +22,28 @@ def init_grafana_routes(app):
         req = request.get_json()
         try:
             response = []
+            # Iterate over each target provided by Grafana
             for target in req['targets']:
-                if target['type'] == 'timeserie':
+                # Check if the target type is 'timeserie' and target exists in categories
+                if target['type'] == 'timeserie' and target['target'] in Entry.CATEGORIES:
+                    # Query to get date and count of entries matching the category
                     data_points = db.session.query(
                         Entry.date,
                         db.func.count(Entry.id).label('count')
-                    ).group_by(Entry.date).all()
-                    datapoints = [[count, datetime.strptime(date, '%Y-%m-%d').timestamp() * 1000] for date, count in data_points if target['target'] == 'count_by_date']
+                    ).filter(Entry.category == target['target']).group_by(Entry.date).all()
+
+                    # Format data points to fit Grafana's expected format: [value, timestamp]
+                    datapoints = [
+                        [count, datetime.strptime(date, '%Y-%m-%d').timestamp() * 1000] 
+                        for date, count in data_points
+                    ]
+
+                    # Add this to response
                     response.append({
                         "target": target['target'],
                         "datapoints": datapoints
                     })
+
             return jsonify(response)
         except Exception as e:
             current_app.logger.error(f"Query failed: {e}")
