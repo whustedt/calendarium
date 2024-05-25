@@ -7,6 +7,15 @@ from io import BytesIO
 from urllib.parse import urlparse
 import requests
 
+def handle_image_upload(entry_id, file, giphy_url, upload_folder, allowed_extensions):
+    """Handle Giphy URL or file upload."""
+    if giphy_url:
+        filename = download_giphy_image(giphy_url, entry_id, upload_folder)
+    else:
+        filename = handle_image(file, entry_id, upload_folder, allowed_extensions)
+
+    return filename
+
 def download_giphy_image(url, entry_id, upload_folder):
     """Download and save a Giphy image from a valid URL to the specified folder."""
     if not is_valid_giphy_url(url):

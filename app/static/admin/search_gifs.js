@@ -12,8 +12,9 @@ document.getElementById('giphySearchInput').addEventListener('input', function(e
                 data.forEach(gif => {
                     var img = document.createElement('img');
                     img.src = gif.images.fixed_height.url;
-                    img.alt = gif.alt_text;
-                    img.title = gif.alt_text;
+                    var tooltip = `${gif.username ? `Created by ${gif.username}` : ''}${gif.username && gif.alt_text ? ': ' : ''}${gif.alt_text || ''}` || 'No additional information available';
+                    img.alt = tooltip;
+                    img.title = tooltip;
                     img.classList.add('gif-image');
                     img.onclick = function() {
                         document.querySelectorAll('.gif-image').forEach(g => {
@@ -26,6 +27,9 @@ document.getElementById('giphySearchInput').addEventListener('input', function(e
                     };
                     resultsContainer.appendChild(img);
                 });
+                var imgAttr = document.createElement('img');
+                imgAttr.src = `${attributionImg}`;
+                resultsContainer.appendChild(imgAttr);
             });
     }
 });

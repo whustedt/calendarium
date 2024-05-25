@@ -52,8 +52,8 @@ def init_app(app):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
 
             new_entry = Entry(
-                date = request.form['date']
-                category = request.form['category']
+                date = request.form['date'],
+                category = request.form['category'],
                 title = request.form['title'],
                 description = request.form.get('description')
             )
