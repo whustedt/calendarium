@@ -1,0 +1,13 @@
+{
+  // These tasks will run in order when initializing your CodeSandbox project.
+  "setupTasks": [],
+
+  // These tasks can be run from CodeSandbox. Running one will open a log in the app.
+  "tasks": {
+    "sudo ln -s $(pwd) /app && sudo mkdir -p /app/data && pip3 install --user -r requirements.txt && pip3 install --user pytest && flask run --debug": {
+      "name": "sudo ln -s $(pwd) /app && sudo mkdir -p /app/data && pip3 install --user -r requirements.txt && pip3 install --user pytest && flask run --debug",
+      "command": "sudo ln -s $(pwd) /app && sudo mkdir -p /app/data && pip3 install --user -r requirements.txt && pip3 install --user pytest && flask run --debug",
+      "runAtStart": true
+    }
+  }
+}
