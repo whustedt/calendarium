@@ -4,13 +4,33 @@ This is a simple Flask web application designed for tracking and managing event 
 
 ## Getting Started
 
-To get the application running locally:
+To get the application running locally, you have several options:
+
+### Using Docker
 
 ```bash
 docker-compose up --build
 ```
 
 The app will be available at [http://localhost:5001/](http://localhost:5001/).
+
+### Using a Development Container or Python Environment
+
+Alternatively, you can set up a development container or any other Python environment. After setting up, start the application with the following command:
+
+```bash
+flask run --debug
+```
+
+Ensure your environment has all the necessary dependencies installed as specified in the `requirements.txt` file.
+
+### Environment Variables
+
+To integrate with Giphy, create a `.env` file in the project root and add the following key:
+
+```plaintext
+GIPHY_API_TOKEN=<your_giphy_api_token>
+```
 
 ### Filling the App with Sample Data
 
@@ -100,8 +120,10 @@ This command will return timeseries data points for the 'cake' category if such 
 
 ## Flickity License Information
 
-This project uses Flickity, which is licensed under the GPLv3. As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.
+This project uses Flickity, which is licensed under the GPLv3.
+
+ As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.
 
 ## Docker Image
-You can pull the Docker image for this project from Docker Hub:
-[Docker Hub Repository](https://hub.docker.com/r/whustedt/calendarium)
+
+Instead of Docker Hub, this project's Docker images are now built and pushed through GitHub Actions to the GitHub Container Registry.
