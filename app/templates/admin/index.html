@@ -5,6 +5,13 @@
     <title>Calendarium</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
     <script src="{{ url_for('static', filename='admin/sort-table.js') }}"></script>
+
+    <script type="text/javascript">
+        // This is necessary to use the url in the external script.
+        var searchGifsUrl = "{{ url_for('search_gifs') }}";
+        var attributionImg = "{{ url_for('static', filename='admin/giphy_attribution.png') }}";
+    </script>
+
 </head>
 <body>
     <form class="entry-form" action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
@@ -33,6 +40,12 @@
             <label>Image:</label>
             <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif">
         </div>
+        <div class="form-section">
+            <label>GIF:</label>
+            <input type="text" id="giphySearchInput" placeholder="Search GIFs">
+            <input type="hidden" id="hiddenGiphyUrl" name="giphyUrl">
+            <div id="giphySearchResults"></div>
+        </div>        
         <input type="submit" value="Create Entry" class="submit-button create-button">
     </form>
 
@@ -112,5 +125,8 @@
             <button type="submit">Update Birthdays</button>
         </form>
     </div>
+
+    <script src="{{ url_for('static', filename='admin/search_gifs.js') }}"></script>
+
 </body>
 </html>

@@ -6,5 +6,7 @@ services:
       - "5001:8000"
     volumes:
       - data-volume:/app/data
+    environment:
+      - GIPHY_API_TOKEN=${GIPHY_API_TOKEN}
 volumes:
   data-volume:

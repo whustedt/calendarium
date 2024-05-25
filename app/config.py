@@ -1,4 +1,7 @@
+from dotenv import load_dotenv
+
 class Config:
+    load_dotenv()  # This loads the env variables from .env file
     SQLALCHEMY_DATABASE_URI = 'sqlite:////app/data/data.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = '/app/data/uploads'  # Directory to save uploaded images

@@ -1,0 +1,26 @@
+# Exclude virtual environment directories
+venv/
+env/
+
+# Exclude byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+
+# Exclude local configuration files
+.local/
+
+# Exclude log files and databases
+*.log
+*.sqlite
+
+# Ignore Dockerfile and docker-compose to avoid including them in the build context
+Dockerfile
+docker-compose.yml
+
+# Ignore Version control directories
+.git/
+.gitignore
+
+# Ignore .env file to ensure it does not get included in the build
+.env
