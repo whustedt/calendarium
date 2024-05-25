@@ -4,10 +4,11 @@ from babel.dates import format_date
 from os import path, makedirs
 import zipfile
 from io import BytesIO
-import re
+from urllib.parse import urlparse
 import requests
 
 def download_giphy_image(url, entry_id, upload_folder):
+    """Download and save a Giphy image from a valid URL to the specified folder."""
     if not is_valid_giphy_url(url):
         return None
     try:
@@ -22,7 +23,12 @@ def download_giphy_image(url, entry_id, upload_folder):
         return None
 
 def is_valid_giphy_url(url):
-    return bool(re.match(r'^https://media[0-9]+\.giphy\.com/media/.+', url))
+    """Check if a URL is a valid Giphy URL by its domain and path."""
+    try:
+        parsed_url = urlparse(url)
+        return parsed_url.netloc.startswith("media") and parsed_url.netloc.endswith(".giphy.com") and parsed_url.path.startswith("/media/")
+    except ValueError:
+        return False
 
 def handle_image(file, entry_id, upload_folder, allowed_extensions):
     """Handles image upload and saves it with a new filename based on entry ID."""
