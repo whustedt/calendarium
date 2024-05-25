@@ -3,3 +3,4 @@ flask_sqlalchemy
 Flask-Babel
 gunicorn
 requests
+python-dotenv

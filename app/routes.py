@@ -5,6 +5,7 @@ from .models import Entry
 from app import db
 from datetime import datetime
 from .helpers import handle_image_upload, parse_date, get_formatted_entries, create_zip
+import os
 
 def init_app(app):
     @app.after_request
@@ -28,7 +29,7 @@ def init_app(app):
         response = requests.get(
             'https://api.giphy.com/v1/gifs/search',
             params={
-                'api_key': 'mwQ1xY7jB5QPtvHOe49iOZP00XJVrROf', # TODO env variable
+                'api_key': os.getenv('GIPHY_API_TOKEN'),
                 'q': query,
                 'limit': 5
             }
