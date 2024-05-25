@@ -1,9 +1,10 @@
 from os import path, remove
 from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file, abort
+import requests
 from .models import Entry
 from app import db
 from datetime import datetime
-from .helpers import handle_image, parse_date, get_formatted_entries, create_zip
+from .helpers import download_giphy_image, handle_image, parse_date, get_formatted_entries, create_zip
 
 def init_app(app):
     @app.after_request
@@ -19,6 +20,21 @@ def init_app(app):
         """Send the requested file from the upload directory."""
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
+    @app.route('/search_gifs', methods=['GET'])
+    def search_gifs():
+        query = request.args.get('q')
+        if not query:
+            return jsonify([])  # Return empty array if no query
+        response = requests.get(
+            'https://api.giphy.com/v1/gifs/search',
+            params={
+                'api_key': 'mwQ1xY7jB5QPtvHOe49iOZP00XJVrROf', # TODO env variable
+                'q': query,
+                'limit': 5
+            }
+        )
+        return jsonify(response.json()['data'])
+
     @app.route('/', methods=['GET'])
     def index():
         """Display the main admin page with entries."""
@@ -45,7 +61,14 @@ def init_app(app):
             db.session.add(new_entry)
             db.session.flush()  # Ensure the ID is assigned without committing the transaction
     
-            filename = handle_image(request.files.get('entryImage'), new_entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
+            # Handle Giphy URL
+            giphy_url = request.form.get('giphyUrl')
+            filename = download_giphy_image(giphy_url, new_entry.id, app.config['UPLOAD_FOLDER']) if giphy_url else None
+            
+            # If no Giphy URL or download failed, handle file upload
+            if not filename:
+                filename = handle_image(request.files.get('entryImage'), new_entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
+
             if filename:
                 new_entry.image_filename = filename
     
@@ -61,34 +84,47 @@ def init_app(app):
         entry = db.session.get(Entry, id)
         if entry is None:
             abort(404)
+
         if request.method == 'POST':
+            # Validate category and date first
             if request.form['category'] not in Entry.CATEGORIES:
                 return jsonify({"error": "Invalid category"}), 400
-            
             if not parse_date(request.form['date']):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
-            
-            # Handle image upload or removal
+
+            giphy_url = request.form.get('giphyUrl')
             file = request.files.get('entryImage')
-            if file and file.filename:
-                filename = handle_image(file, entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
-                if filename:
-                    entry.image_filename = filename
-            elif 'remove_image' in request.form and entry.image_filename:
-                image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
-                if path.exists(image_path):
-                    remove(image_path)
-                entry.image_filename = None
-    
+
+            # Remove image first
+            if 'remove_image' in request.form or giphy_url or file:
+                if entry.image_filename:
+                    image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
+                    if path.exists(image_path):
+                        remove(image_path)
+                    entry.image_filename = None
+
+            new_filename = None
+
+            # If there's a Giphy URL, process it
+            if giphy_url:
+                new_filename = download_giphy_image(giphy_url, entry.id, app.config['UPLOAD_FOLDER'])
+
+            # If no Giphy URL or download failed, check for a file upload
+            if not new_filename and file and file.filename:
+                new_filename = handle_image(file, entry.id, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
+
+            if new_filename:
+                entry.image_filename = new_filename
+
             # Update other fields
             entry.date = request.form['date']
             entry.category = request.form['category']
             entry.title = request.form['title']
             entry.description = request.form.get('description', None) or None
-    
+
             db.session.commit()
             return redirect(url_for('index'))
-    
+
         return render_template('admin/update.html', entry=entry)
     
     @app.route('/delete/<int:id>', methods=['POST'])

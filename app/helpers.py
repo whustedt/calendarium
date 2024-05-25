@@ -4,6 +4,25 @@ from babel.dates import format_date
 from os import path, makedirs
 import zipfile
 from io import BytesIO
+import re
+import requests
+
+def download_giphy_image(url, entry_id, upload_folder):
+    if not is_valid_giphy_url(url):
+        return None
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            filename = f"{entry_id}.gif"
+            filepath = path.join(upload_folder, filename)
+            with open(filepath, 'wb') as f:
+                f.write(response.content)
+            return filename
+    except requests.RequestException:
+        return None
+
+def is_valid_giphy_url(url):
+    return bool(re.match(r'^https://media[0-9]+\.giphy\.com/media/.+', url))
 
 def handle_image(file, entry_id, upload_folder, allowed_extensions):
     """Handles image upload and saves it with a new filename based on entry ID."""

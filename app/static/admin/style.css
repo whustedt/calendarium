@@ -7,7 +7,6 @@ body {
     background-attachment: fixed;
 }
 
-
 .entry-form {
     background-color: #f9f9f9;
     padding: 15px;
@@ -100,6 +99,23 @@ img {
     height: auto; /* Maintain the aspect ratio */
     border-radius: 4px; /* Rounded corners for the image */
     border: 1px solid #ddd; /* Light gray border around images */
+}
+
+.gif-image {
+    transition: all 0.3s;
+    margin: 5px;
+}
+
+.gif-image.selected {
+    filter: none;
+    border-style: solid;
+    border-color: red;
+    opacity: 1;
+}
+
+.gif-image.not-selected {
+    filter: grayscale(100%);
+    opacity: .5;
 }
 
 button.edit {
