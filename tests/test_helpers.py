@@ -1,27 +1,34 @@
-import pytest
+from flask.testing import FlaskClient
 from unittest import mock
 from datetime import datetime
-from io import BytesIO
 from app.models import Entry
 from app.helpers import (
     handle_image_upload, download_giphy_image, is_valid_giphy_url, handle_image, 
     parse_date, allowed_file, get_formatted_entries, create_zip
 )
 
-# Mocking functions
-def test_handle_image_upload_file(mock_file, test_client):
+def test_handle_image_upload_file(mock_file: mock.Mock, test_client: FlaskClient):
+    # Given: A mocked file and handle_image function
+    # When: handle_image_upload is called with a file
+    # Then: It should return the filename processed by handle_image
     with mock.patch('app.helpers.handle_image') as mock_handle_image:
         mock_handle_image.return_value = 'test.jpg'
         result = handle_image_upload(1, mock_file, None, 'uploads', {'jpg', 'png'})
         assert result == 'test.jpg'
 
-def test_handle_image_upload_giphy(test_client):
+def test_handle_image_upload_giphy(test_client: FlaskClient):
+    # Given: A mocked download_giphy_image function
+    # When: handle_image_upload is called with a GIPHY URL
+    # Then: It should return the GIF filename processed by download_giphy_image
     with mock.patch('app.helpers.download_giphy_image') as mock_download_giphy_image:
         mock_download_giphy_image.return_value = '1.gif'
         result = handle_image_upload(1, None, 'https://media.giphy.com/media/test.gif', 'uploads', {'gif'})
         assert result == '1.gif'
 
-def test_download_giphy_image_valid(test_client):
+def test_download_giphy_image_valid(test_client: FlaskClient):
+    # Given: A mocked successful HTTP response for a valid GIPHY URL
+    # When: download_giphy_image is called with a valid URL
+    # Then: It should return the expected filename
     with mock.patch('requests.get') as mock_get:
         mock_response = mock.Mock()
         mock_response.status_code = 200
@@ -33,15 +40,24 @@ def test_download_giphy_image_valid(test_client):
                 result = download_giphy_image('https://media.giphy.com/media/test.gif', 1, 'uploads')
                 assert result == '1.gif'
 
-def test_download_giphy_image_invalid_url(test_client):
+def test_download_giphy_image_invalid_url(test_client: FlaskClient):
+    # Given: An invalid URL
+    # When: download_giphy_image is called with this URL
+    # Then: It should return None indicating failure
     result = download_giphy_image('https://invalid-url.com/media/test.gif', 1, 'uploads')
     assert result is None
 
 def test_is_valid_giphy_url():
+    # Given: Different URLs to test
+    # When: Checking if URLs are valid Giphy links
+    # Then: It should correctly validate the URLs
     assert is_valid_giphy_url('https://media.giphy.com/media/test.gif')
     assert not is_valid_giphy_url('https://invalid-url.com/media/test.gif')
 
-def test_handle_image_valid(mock_file, test_client):
+def test_handle_image_valid(mock_file: mock.Mock, test_client: FlaskClient):
+    # Given: A file with a valid extension and mocked necessary functions
+    # When: handle_image is called with a valid file
+    # Then: It should return the expected filename and save the file once
     with mock.patch('app.helpers.allowed_file', return_value=True):
         with mock.patch('builtins.open', mock.mock_open()):
             with mock.patch('app.helpers.create_upload_folder'):
@@ -50,20 +66,32 @@ def test_handle_image_valid(mock_file, test_client):
                 assert result == '1.jpg'
                 mock_file.save.assert_called_once()
 
-def test_handle_image_invalid_extension(mock_file, test_client):
+def test_handle_image_invalid_extension(mock_file: mock.Mock, test_client: FlaskClient):
+    # Given: A file with an invalid extension
+    # When: handle_image is called
+    # Then: It should return None indicating failure
     with mock.patch('app.helpers.allowed_file', return_value=False):
         result = handle_image(mock_file, 1, 'uploads', {'jpg', 'png'})
         assert result is None
 
 def test_parse_date():
+    # Given: Various date strings to parse
+    # When: parse_date is called
+    # Then: It should return the correct date or None for invalid input
     assert parse_date('2021-05-20') == datetime(2021, 5, 20).date()
     assert parse_date('invalid-date') is None
 
 def test_allowed_file():
+    # Given: Filename and allowed extensions
+    # When: Checking if a file is allowed
+    # Then: It should correctly determine if the file extension is allowed
     assert allowed_file('test.jpg', {'jpg', 'png'})
     assert not allowed_file('test.txt', {'jpg', 'png'})
 
-def test_get_formatted_entries(test_client, init_database):
+def test_get_formatted_entries(test_client: FlaskClient, init_database: None):
+    # Given: An initialized database and test_client context
+    # When: get_formatted_entries is called
+    # Then: It should return correctly formatted entries
     with test_client.application.app_context():
         entries = Entry.query.all()
         formatted_entries = get_formatted_entries(entries)
@@ -72,7 +100,10 @@ def test_get_formatted_entries(test_client, init_database):
         assert entry['title'] == "John's Birthday"
         assert entry['category'] == "birthday"
 
-def test_create_zip(test_client, init_database):
+def test_create_zip(test_client: FlaskClient, init_database: None):
+    # Given: A list of entries and mocked file system operations
+    # When: create_zip is called
+    # Then: It should return a buffer with the ZIP file content
     entries = [
         {
             'date': '2021-05-20',

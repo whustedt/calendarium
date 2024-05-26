@@ -6,17 +6,17 @@ html, body {
 }
 
 .timeline_with_button {
-  position: relative;
-  height: 100%;
-  margin: 0;
-  padding: 0; 
+    position: relative;
+    height: 100%;
+    margin: 0;
+    padding: 0; 
 }
 
 .edit-button {
     position: absolute;
     top: 20px;
     right: 20px;
-    background-color: hotpink;
+    background-color: #FF4081; /* A more toned-down shade of pink */
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -27,11 +27,15 @@ html, body {
     text-decoration: none;
     cursor: pointer;
     z-index: 1500;
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.9);
-    border: 1px solid #000000;
+    box-shadow: 0 0 15px rgba(255, 64, 129, 0.5); /* Softening the shadow */
+    border: medium solid #f6cb4a;
+    animation: pulsate 1.5s infinite ease-in-out; /* Subtle pulsation */
 }
+
 .edit-button:hover {
-    transform: scale(1.1);
+    background-color: #E91E63; /* A different hover color */
+    transform: scale(1.05); /* Smaller scale increase */
+    box-shadow: 0 0 20px rgba(233, 30, 99, 0.8); /* Intensifying the shadow on hover */
 }
 
 .timeline {
@@ -116,3 +120,5 @@ html, body {
 @keyframes shake-tilt { 0%, 50%, 100% { transform: translateX(0) rotate(0); } 30%, 70% { transform: translateX(2px) rotate(5deg); }}
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }}
 @keyframes pulsateShadow { 0%, 100% { box-shadow: 0 0 8px 0 orangered } 50% { box-shadow: 0 0 11px 3px orangered }}
+@keyframes pulsate {0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); }
+}
