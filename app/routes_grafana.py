@@ -4,12 +4,28 @@ from .models import Entry
 from app import db
 
 def init_grafana_routes(app):
+    """
+    Initialize Grafana routes for the Flask application.
+
+    :param app: Flask application instance
+    """
+
     @app.route('/grafana/')
     def grafana_test_connection():
+        """
+        Endpoint to test connection with Grafana.
+
+        :return: A message confirming connection establishment
+        """
         return "Connection established", 200
 
     @app.route('/grafana/search', methods=['POST'])
     def grafana_search():
+        """
+        Endpoint for Grafana to search available targets.
+
+        :return: JSON list of available categories as targets
+        """
         try:
             targets = [category for category in Entry.CATEGORIES]
             return jsonify(targets)
@@ -19,6 +35,11 @@ def init_grafana_routes(app):
 
     @app.route('/grafana/query', methods=['POST'])
     def grafana_query():
+        """
+        Endpoint for Grafana to query data.
+
+        :return: JSON formatted data points for Grafana
+        """
         req = request.get_json()
         try:
             response = []
@@ -51,6 +72,11 @@ def init_grafana_routes(app):
 
     @app.route('/grafana/annotations', methods=['POST'])
     def grafana_annotations():
+        """
+        Endpoint for Grafana to fetch annotations.
+
+        :return: JSON list of annotations
+        """
         req = request.get_json()
         try:
             annotations = []
@@ -72,6 +98,11 @@ def init_grafana_routes(app):
 
     @app.route('/grafana/tag-keys', methods=['POST'])
     def grafana_tag_keys():
+        """
+        Endpoint for Grafana to fetch tag keys.
+
+        :return: JSON list of tag keys
+        """
         return jsonify([
             {"type": "string", "text": "category"},
             {"type": "string", "text": "date"}
@@ -79,6 +110,11 @@ def init_grafana_routes(app):
 
     @app.route('/grafana/tag-values', methods=['POST'])
     def grafana_tag_values():
+        """
+        Endpoint for Grafana to fetch tag values based on key.
+
+        :return: JSON list of tag values
+        """
         req = request.get_json()
         key = req['key']
         if key == "category":
