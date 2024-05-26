@@ -25,6 +25,7 @@ def download_giphy_image(url, entry_id, upload_folder):
         if response.status_code == 200:
             filename = f"{entry_id}.gif"
             filepath = path.join(upload_folder, filename)
+            create_upload_folder(upload_folder)
             with open(filepath, 'wb') as f:
                 f.write(response.content)
             return filename

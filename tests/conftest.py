@@ -2,6 +2,7 @@ import pytest
 from app import create_app, db
 from app.config import TestConfig
 from app.models import Entry
+from unittest import mock
 
 @pytest.fixture(scope='function')
 def test_client():
@@ -28,3 +29,9 @@ def init_database():
     # Cleanup: Empty the database after tests
     db.session.query(Entry).delete()
     db.session.commit()
+
+@pytest.fixture
+def mock_file():
+    mock_file = mock.Mock()
+    mock_file.filename = 'test.jpg'
+    return mock_file
