@@ -6,6 +6,7 @@ import zipfile
 from io import BytesIO
 from urllib.parse import urlparse
 import requests
+from werkzeug.utils import secure_filename
 
 def handle_image_upload(entry_id, file, giphy_url, upload_folder, allowed_extensions):
     """Handle Giphy URL or file upload."""
@@ -43,7 +44,8 @@ def is_valid_giphy_url(url):
 def handle_image(file, entry_id, upload_folder, allowed_extensions):
     """Handles image upload and saves it with a new filename based on entry ID."""
     if file and allowed_file(file.filename, allowed_extensions):
-        ext = file.filename.rsplit('.', 1)[1]
+        filename = secure_filename(file.filename)
+        ext = filename.rsplit('.', 1)[1]
         filename = f"{entry_id}.{ext}"
         filepath = path.join(upload_folder, filename)
         create_upload_folder(upload_folder)
