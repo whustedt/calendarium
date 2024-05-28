@@ -8,7 +8,7 @@
 
     <script type="text/javascript">
         // This is necessary to use the url in the external script.
-        var searchGifsUrl = "{{ url_for('search_gifs') }}";
+        var getGiphyUrlUrl = "{{ url_for('get_giphy_url') }}";
         var attribution_img = "{{ url_for('static', filename='giphy_attribution.gif') }}";
     </script>
 
@@ -54,7 +54,7 @@
         <input type="submit" value="Update Entry" class="submit-button create-button">
     </form>
 
-    <script src="{{ url_for('static', filename='admin/search_gifs.js') }}"></script>
+    <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
 
 </body>
 </html>

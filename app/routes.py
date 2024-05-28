@@ -23,6 +23,32 @@ def init_app(app):
     
     @app.route('/search_gifs', methods=['GET'])
     def search_gifs():
+        """
+        Fetches GIFs from the Giphy API based on a user's search query. This endpoint
+        directly interacts with the Giphy API from the backend server using an API key
+        stored in environment variables, providing a secure method to handle sensitive API keys.
+        
+        The function queries the Giphy API for GIFs matching the provided search term,
+        limits the number of results, and returns them in JSON format.
+        
+        Args:
+            None directly. Utilizes query parameters from the request.
+        
+        Query Parameters:
+            q (str): The search query string input by the user.
+        
+        Returns:
+            json: A JSON response containing an array of GIFs from Giphy if a query is provided.
+                If no query is provided, it returns an empty JSON array.
+        
+        Examples:
+            Request: GET /search_gifs?q=cats
+            Response: JSON array with GIFs information related to 'cats'.
+            
+            If no query is provided:
+            Request: GET /search_gifs
+            Response: []
+        """
         query = request.args.get('q')
         if not query:
             return jsonify([])  # Return empty array if no query
@@ -35,6 +61,29 @@ def init_app(app):
             }
         )
         return jsonify(response.json()['data'])
+
+    @app.route('/get-giphy-url')
+    def get_giphy_url():
+        """
+        Generates a full request URL for Giphy's search API including the API key and returns it to the client.
+
+        This endpoint acts as a secure means to provide the Giphy API request URL to the frontend without exposing
+        the API key directly in the client-side code. It takes a search query as a parameter, constructs the URL
+        for Giphy's API, and returns this URL securely encapsulated in a JSON response.
+
+        Returns:
+            json: A JSON object containing the full URL to access Giphy's search API or an error message if the
+            query parameter is missing.
+
+        Example:
+            Request: GET /get-giphy-url?q=cats
+            Response: {"url": "https://api.giphy.com/v1/gifs/search?api_key=your_giphy_api_key&q=cats"}
+        """
+        query = request.args.get('q')
+        if not query:
+            return jsonify(error="Query is required"), 400
+        url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}"
+        return jsonify(url=url)
 
     @app.route('/', methods=['GET'])
     def index():

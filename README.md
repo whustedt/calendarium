@@ -118,6 +118,40 @@ curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/j
 
 This command will return timeseries data points for the 'cake' category if such data exists. Ensure the Grafana Simple JSON Datasource plugin is installed and properly configured to interact with these endpoints.
 
+## Giphy Integration
+
+The Calendarium application features integration with the Giphy API to enhance the user interface with dynamic content. There are two different implementations of this integration, tailored to different deployment environments and security concerns.
+
+### Direct Backend Integration (Original Version)
+
+In environments where the backend server has internet access, the application can directly interact with the Giphy API. This method involves the backend making API requests to Giphy and securely managing the API key via environment variables.
+
+- **Endpoint**: `/search_gifs`
+- **Method**: `GET`
+- **Function**: This endpoint takes a search query as a parameter, directly calls the Giphy API, and returns the GIF data. This keeps the API key secure and not exposed to the client-side.
+
+Example usage:
+```bash
+curl http://localhost:5001/search_gifs?q=cats
+```
+This implementation is found in the JavaScript file `search_gifs.js`.
+
+### Proxied API Integration (New Version)
+
+For environments where the backend does not have direct internet access, we employ a proxied approach. Here, the backend generates a URL with the API key, which is then used by the frontend to make the Giphy API call. This method ensures that the API key is not exposed in the client-side code.
+
+- **Backend Endpoint**: `/get-giphy-url`
+- **Method**: `GET`
+- **Function**: This endpoint constructs the request URL including the API key and returns it to the client. The client then uses this URL to fetch GIF data directly from Giphy.
+
+Example usage:
+```bash
+curl http://localhost:5001/get-giphy-url?q=cats
+```
+This implementation is located in the JavaScript file `search_gifs_proxied.js`.
+
+These methods are designed to accommodate different network security policies while maintaining functionality and protecting sensitive information.
+
 ## Flickity License Information
 
 This project uses Flickity, which is licensed under the GPLv3.
