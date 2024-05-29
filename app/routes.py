@@ -77,12 +77,12 @@ def init_app(app):
 
         Example:
             Request: GET /get-giphy-url?q=cats
-            Response: {"url": "https://api.giphy.com/v1/gifs/search?api_key=your_giphy_api_key&q=cats"}
+            Response: {"url": "https://api.giphy.com/v1/gifs/search?api_key=your_giphy_api_key&q=cats&limit=10"}
         """
         query = request.args.get('q')
         if not query:
             return jsonify(error="Query is required"), 400
-        url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}"
+        url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}&limit=10"
         return jsonify(url=url)
 
     @app.route('/check-giphy-enabled')

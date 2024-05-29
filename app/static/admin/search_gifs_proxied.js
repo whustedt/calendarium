@@ -56,8 +56,8 @@ function setupGiphySearch() {
                                         });
                                         img.classList.add('selected');
                                         img.classList.remove('not-selected');
-                                        // Store the selected GIF URL in a hidden input for later use.
-                                        document.getElementById('hiddenGiphyUrl').value = img.src;
+                                        // Manipulate form data
+                                        handleGifSelection(img.src);
                                     };
                                     resultsContainer.appendChild(img);
                                 });
@@ -70,5 +70,36 @@ function setupGiphySearch() {
         }, 1000);  // Wait for one second after the user stops typing to minimize unnecessary API calls.
     });
 }
+
+// Function to handle GIF selection
+function handleGifSelection(gifUrl) {
+    fetch(gifUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const file = new File([blob], 'selectedGif.gif', { type: 'image/gif' });
+            const formData = new FormData(document.getElementById('entry-form'));
+            formData.set('entryImage', file);
+ 
+            // Use this formData object for the form submission instead of the standard submission method
+            const submitButton = document.getElementById('submit-button');
+            submitButton.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the standard form submission
+                fetch(document.getElementById('entry-form').action, {
+                    method: 'POST',
+                    body: formData,
+                    redirect: 'follow'  // Ensure redirects are followed
+                })
+                .then(response => {
+                    console.log('Upload successful');
+                    if (response.redirected) {
+                        window.location.href = response.url;  // Redirect to the new URL if a redirect occurred
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading the GIF:', error);
+                });
+            });
+        });
+ }
 
 checkGiphyEnabledAndDisplay();

@@ -14,7 +14,7 @@
 
 </head>
 <body>
-    <form class="entry-form" action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
+    <form class="entry-form" id="entry-form" action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
         <div class="form-section">
             <label>Date:</label>
             <input type="date" name="date" required value="{{ entry.date }}">
@@ -51,7 +51,7 @@
             Current Image: <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="Current Image"><br>
             Remove Image: <input type="checkbox" name="remove_image" value="1"> Remove current image<br>
         {% endif %}
-        <input type="submit" value="Update Entry" class="submit-button create-button">
+        <input type="submit" value="Update Entry" class="submit-button create-button" id="submit-button">
     </form>
 
     <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
