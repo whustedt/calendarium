@@ -85,6 +85,22 @@ def init_app(app):
         url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}"
         return jsonify(url=url)
 
+    @app.route('/check-giphy-enabled')
+    def check_giphy_enabled():
+        """
+        Checks if GIPHY integration is enabled by verifying the presence of the GIPHY API token in the environment variables.
+
+        This endpoint is useful for front-end applications to conditionally enable or disable features that require GIPHY integration, 
+        based on the availability of the API token.
+    
+        Returns:
+            json: A JSON object with a boolean 'enabled' key that indicates whether the GIPHY API token is available.
+        """
+        # Check if the 'GIPHY_API_TOKEN' environment variable is set and not empty
+        is_enabled = 'GIPHY_API_TOKEN' in os.environ and bool(os.getenv('GIPHY_API_TOKEN'))
+
+        return jsonify(enabled=is_enabled)
+
     @app.route('/', methods=['GET'])
     def index():
         """Display the main admin page with entries."""
