@@ -1,4 +1,5 @@
 let debounceTimeout;
+let selectedGifFile = null; // To store the selected GIF as a File object
 
 // Checks if Giphy is enabled and sets up the search interface accordingly
 function checkGiphyEnabledAndDisplay() {
@@ -28,7 +29,7 @@ function setupGiphySearch() {
             let query = searchInput.value;
             if (query.length === 0) {
                 resultsContainer.innerHTML = '';
-                // TODO Reset Submitbutton
+                selectedGifFile = null; // Reset selected GIF when input cleared
             } else if (query.length > 2) {
                 fetchGiphyData(query, resultsContainer);
             }
@@ -55,19 +56,20 @@ function updateResultsContainer(giphyData, resultsContainer) {
         img.alt = tooltip;
         img.title = tooltip;
         img.classList.add('gif-image');
-        img.onclick = () => selectGif(img, gif.images.fixed_height.url, resultsContainer);
+        img.onclick = () => selectGif(img, gif.images.fixed_height.url);
         resultsContainer.appendChild(img);
     });
-    // Add Giphy attributioon
-    var imgAttr = document.createElement('img');
-    imgAttr.src = `${attributionImg}`;
-    resultsContainer.appendChild(imgAttr);
+        // Add Giphy attributioon
+        var imgAttr = document.createElement('img');
+        imgAttr.src = `${attributionImg}`;
+        resultsContainer.appendChild(imgAttr);
 }
 
 // Handles GIF selection and applies style changes
-function selectGif(imgElement, gifUrl, resultsContainer) {
+function selectGif(imgElement, gifUrl) {
     // Update styles for all images to indicate non-selection
-    resultsContainer.querySelectorAll('.gif-image').forEach(img => {
+    const images = document.querySelectorAll('.gif-image');
+    images.forEach(img => {
         img.classList.remove('selected');
         img.classList.add('not-selected');
     });
@@ -76,28 +78,29 @@ function selectGif(imgElement, gifUrl, resultsContainer) {
     imgElement.classList.add('selected');
     imgElement.classList.remove('not-selected');
 
+    // Fetch the GIF and store it as a File
     fetch(gifUrl)
         .then(response => response.blob())
         .then(blob => {
-            const file = new File([blob], 'selectedGif.gif', { type: 'image/gif' });
-            const form = document.getElementById('entry-form');
-            const formData = new FormData(form);
-            formData.set('entryImage', file);
-
-            // Set up form submission
-            setUpFormSubmission(form, formData);
+            selectedGifFile = new File([blob], 'selectedGif.gif', { type: 'image/gif' });
+            setUpFormSubmission(document.getElementById('entry-form'));
         });
 }
 
-
 // Sets up form submission
-function setUpFormSubmission(form, formData) {
+function setUpFormSubmission(form) {
     const submitButton = document.getElementById('submit-button');
     submitButton.addEventListener('click', function(event) {
         event.preventDefault(); // Always prevent the default form submission
 
+        // Prepare FormData with the latest form inputs and the selected GIF
+        const formData = new FormData(form);
+        if (selectedGifFile) {
+            formData.set('entryImage', selectedGifFile); // Include the selected GIF in the form data
+        }
+
         // Check the form validity and report any errors
-        if (true || form.checkValidity()) { // TODO turn on again after debugging
+        if (form.checkValidity()) {
             submitForm(form.action, formData); // Only submit if the form is valid
         } else {
             form.reportValidity(); // This will show the validation messages
