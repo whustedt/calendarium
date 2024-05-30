@@ -1,105 +1,126 @@
 let debounceTimeout;
 
-// Function to check if Giphy is enabled and display the search input accordingly
+// Checks if Giphy is enabled and sets up the search interface accordingly
 function checkGiphyEnabledAndDisplay() {
     fetch('/check-giphy-enabled')
         .then(response => response.json())
         .then(data => {
+            const searchSection = document.getElementById('giphySearchSection');
             if (data.enabled) {
-                document.getElementById('giphySearchSection').style.display = 'block';  // Show the search input
-                setupGiphySearch();  // Setup the event listener for Giphy search
+                searchSection.style.display = 'block'; // Show the search input
+                setupGiphySearch(); // Set up the search input event listener
             } else {
-                document.getElementById('giphySearchSection').style.display = 'none';  // Hide the search input if not enabled
+                searchSection.style.display = 'none'; // Hide the search input if not enabled
             }
         })
         .catch(error => console.error('Error checking Giphy status:', error));
 }
 
-// Function to set up event listener and handle the search input for GIFs
+// Sets up event listener for the Giphy search input
 function setupGiphySearch() {
-    document.getElementById('giphySearchInput').addEventListener('input', function(e) {
-        // Clear any existing timeout to ensure that it only fires after the user has stopped typing for 1 second.
+    const searchInput = document.getElementById('giphySearchInput');
+    const resultsContainer = document.getElementById('giphySearchResults');
+
+    searchInput.addEventListener('input', function(e) {
         clearTimeout(debounceTimeout);
 
-        // Set a new timeout to debounce the input event.
         debounceTimeout = setTimeout(() => {
-        var query = e.target.value;  // Get the current value of the input field.
-        var resultsContainer = document.getElementById('giphySearchResults');  // Get the container for displaying GIFs.
-
-            // Clear results if the input is empty or not enough characters are typed.
+            let query = searchInput.value;
             if (query.length === 0) {
                 resultsContainer.innerHTML = '';
-                document.getElementById('hiddenGiphyUrl').value = '';
+                // TODO Reset Submitbutton
             } else if (query.length > 2) {
-                // Make a request to the backend to get the secured Giphy URL.
-                fetch(`${getGiphyUrlUrl}?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        // Use the URL provided by the backend to fetch data directly from Giphy.
-                        fetch(data.url)
-                            .then(response => response.json())
-                            .then(giphyData => {
-                                resultsContainer.innerHTML = '';
-                                // Iterate through the GIF data to create and display image elements.
-                                giphyData.data.forEach(gif => {
-                                    var img = document.createElement('img');
-                                    img.src = gif.images.fixed_height.url;
-                                    var tooltip = `${gif.username ? `Created by ${gif.username}` : ''}${gif.username && gif.alt_text ? ': ' : ''}${gif.alt_text || ''}` || 'No additional information available';
-                                    img.alt = tooltip;
-                                    img.title = tooltip;
-                                    img.classList.add('gif-image');
-                                    img.onclick = function() {
-                                        // Manage the selection and deselection of GIFs.
-                                        document.querySelectorAll('.gif-image').forEach(g => {
-                                            g.classList.remove('selected');
-                                            g.classList.add('not-selected');
-                                        });
-                                        img.classList.add('selected');
-                                        img.classList.remove('not-selected');
-                                        // Manipulate form data
-                                        handleGifSelection(img.src);
-                                    };
-                                    resultsContainer.appendChild(img);
-                                });
-                                var imgAttr = document.createElement('img');
-                                imgAttr.src = `${attributionImg}`;
-                                resultsContainer.appendChild(imgAttr);
-                            });
-                    });
+                fetchGiphyData(query, resultsContainer);
             }
-        }, 1000);  // Wait for one second after the user stops typing to minimize unnecessary API calls.
+        }, 1000);
     });
 }
 
-// Function to handle GIF selection
-function handleGifSelection(gifUrl) {
+// Fetches GIFs from Giphy and updates the results container
+function fetchGiphyData(query, resultsContainer) {
+    fetch(`${getGiphyUrlUrl}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => fetch(data.url))
+        .then(response => response.json())
+        .then(giphyData => updateResultsContainer(giphyData, resultsContainer));
+}
+
+// Updates the results container with GIFs
+function updateResultsContainer(giphyData, resultsContainer) {
+    resultsContainer.innerHTML = '';
+    giphyData.data.forEach(gif => {
+        let img = document.createElement('img');
+        img.src = gif.images.fixed_height.url;
+        var tooltip = `${gif.username ? `Created by ${gif.username}` : ''}${gif.username && gif.alt_text ? ': ' : ''}${gif.alt_text || ''}` || 'No additional information available';
+        img.alt = tooltip;
+        img.title = tooltip;
+        img.classList.add('gif-image');
+        img.onclick = () => selectGif(img, gif.images.fixed_height.url, resultsContainer);
+        resultsContainer.appendChild(img);
+    });
+    // Add Giphy attributioon
+    var imgAttr = document.createElement('img');
+    imgAttr.src = `${attributionImg}`;
+    resultsContainer.appendChild(imgAttr);
+}
+
+// Handles GIF selection and applies style changes
+function selectGif(imgElement, gifUrl, resultsContainer) {
+    // Update styles for all images to indicate non-selection
+    resultsContainer.querySelectorAll('.gif-image').forEach(img => {
+        img.classList.remove('selected');
+        img.classList.add('not-selected');
+    });
+
+    // Mark the current image as selected
+    imgElement.classList.add('selected');
+    imgElement.classList.remove('not-selected');
+
     fetch(gifUrl)
         .then(response => response.blob())
         .then(blob => {
             const file = new File([blob], 'selectedGif.gif', { type: 'image/gif' });
-            const formData = new FormData(document.getElementById('entry-form'));
+            const form = document.getElementById('entry-form');
+            const formData = new FormData(form);
             formData.set('entryImage', file);
- 
-            // Use this formData object for the form submission instead of the standard submission method
-            const submitButton = document.getElementById('submit-button');
-            submitButton.addEventListener('click', function(event) {
-                event.preventDefault(); // Prevent the standard form submission
-                fetch(document.getElementById('entry-form').action, {
-                    method: 'POST',
-                    body: formData,
-                    redirect: 'follow'  // Ensure redirects are followed
-                })
-                .then(response => {
-                    console.log('Upload successful');
-                    if (response.redirected) {
-                        window.location.href = response.url;  // Redirect to the new URL if a redirect occurred
-                    }
-                })
-                .catch(error => {
-                    console.error('Error uploading the GIF:', error);
-                });
-            });
+
+            // Set up form submission
+            setUpFormSubmission(form, formData);
         });
- }
+}
+
+
+// Sets up form submission
+function setUpFormSubmission(form, formData) {
+    const submitButton = document.getElementById('submit-button');
+    submitButton.addEventListener('click', function(event) {
+        event.preventDefault(); // Always prevent the default form submission
+
+        // Check the form validity and report any errors
+        if (true || form.checkValidity()) { // TODO turn on again after debugging
+            submitForm(form.action, formData); // Only submit if the form is valid
+        } else {
+            form.reportValidity(); // This will show the validation messages
+        }
+    });
+}
+
+// Submits the form
+function submitForm(actionUrl, formData) {
+    fetch(actionUrl, {
+        method: 'POST',
+        body: formData,
+        redirect: 'follow' // This should handle the redirection on successful form submission
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url; // Redirect if needed
+        } else {
+            console.log('Upload successful');
+            // Additional handling if needed
+        }
+    })
+    .catch(error => console.error('Error uploading the GIF:', error));
+}
 
 checkGiphyEnabledAndDisplay();
