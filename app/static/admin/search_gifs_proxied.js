@@ -90,8 +90,16 @@ function selectGif(imgElement, gifUrl) {
 // Sets up form submission
 function setUpFormSubmission(form) {
     const submitButton = document.getElementById('submit-button');
-    submitButton.addEventListener('click', function(event) {
-        event.preventDefault(); // Always prevent the default form submission
+    
+    // Remove existing event listeners to prevent multiple submissions
+    submitButton.removeEventListener('click', handleSubmit);
+
+    // Add event listener for 'click' event
+    submitButton.addEventListener('click', handleSubmit);
+
+    // Define the event handling logic in a separate function to manage it easily
+    function handleSubmit(event) {
+        event.preventDefault(); // Prevent the default form submission
 
         // Prepare FormData with the latest form inputs and the selected GIF
         const formData = new FormData(form);
@@ -105,7 +113,7 @@ function setUpFormSubmission(form) {
         } else {
             form.reportValidity(); // This will show the validation messages
         }
-    });
+    }
 }
 
 // Submits the form
