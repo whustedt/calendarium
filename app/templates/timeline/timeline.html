@@ -30,7 +30,7 @@
         <a href="{{ url_for('index') }}" target="_blank" class="edit-button">✏️</a>
 
         <!-- Timeline container with Flickity options -->
-        <div class="timeline" data-flickity='{"initialIndex": ".initial-focus", "cellAlign": "left", "pageDots": false, "prevNextButtons": false, "contain": true, "resize": false}'>
+        <div class="timeline" data-flickity='{"initialIndex": ".initial-focus", "cellAlign": "left", "pageDots": false, "contain": true, "resize": false}'>
             <!-- Loop through entries to display timeline items -->
             {% for entry in entries %}
 
@@ -48,19 +48,6 @@
             {% endfor %}
         </div>
     </div>
-
-    <!-- Script to conditionally hide the edit button based on url -->
-    <script>
-        function maybeHideEditButton() {
-            var editButton = document.querySelector('.edit-button');
-            var urlParams = new URLSearchParams(window.location.search);
-
-            if (urlParams.has('kiosk')) {
-                editButton.style.display = 'none'; // Hide the edit button
-            } 
-        }
-        maybeHideEditButton();
-    </script>
 
     <!-- Scripts for Flickity and optional confetti animation -->
     <script type="text/javascript" src="{{ url_for('static', filename='timeline/flickity.pkgd.min.js') }}"></script>

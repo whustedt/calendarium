@@ -22,6 +22,11 @@ Alternatively, you can set up a development container or any other Python enviro
 flask run --debug
 ```
 
+For production you would use Gunicorn as a WSGI server:
+```bash
+gunicorn -w 4 -b "localhost:5001" "app:create_app()"
+```
+
 Ensure your environment has all the necessary dependencies installed as specified in the `requirements.txt` file.
 
 ### Environment Variables

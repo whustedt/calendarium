@@ -13,6 +13,7 @@ html, body {
 }
 
 .edit-button {
+    display: none; /* Only visible on hover */
     position: absolute;
     top: 20px;
     right: 20px;
@@ -20,7 +21,6 @@ html, body {
     border-radius: 50%;
     width: 60px;
     height: 60px;
-    display: flex;
     align-items: center;
     justify-content: center;
     font-size: 30px;
@@ -36,6 +36,10 @@ html, body {
     background-color: #E91E63; /* A different hover color */
     transform: scale(1.05); /* Smaller scale increase */
     box-shadow: 0 0 20px rgba(233, 30, 99, 0.8); /* Intensifying the shadow on hover */
+}
+
+.timeline_with_button:hover .edit-button {
+    display: flex;
 }
 
 .timeline {
