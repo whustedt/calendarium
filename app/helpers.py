@@ -26,7 +26,6 @@ def download_giphy_image(url, entry_id, upload_folder):
         if response.status_code == 200:
             filename = f"{entry_id}.gif"
             filepath = path.join(upload_folder, filename)
-            create_upload_folder(upload_folder)
             with open(filepath, 'wb') as f:
                 f.write(response.content)
             return filename
@@ -48,7 +47,6 @@ def handle_image(file, entry_id, upload_folder, allowed_extensions):
         ext = filename.rsplit('.', 1)[1]
         filename = f"{entry_id}.{ext}"
         filepath = path.join(upload_folder, filename)
-        create_upload_folder(upload_folder)
         file.save(filepath)
         return filename
     return None
@@ -82,6 +80,7 @@ def get_formatted_entries(entries):
             'category': entry.category,
             'title': entry.title,
             'description': entry.description,
+            'last_updated_by': entry.last_updated_by,
             'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
             'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
             'index': i - index,
