@@ -1,8 +1,8 @@
-"""empty message
+"""Added audit column
 
 Revision ID: f0c496637ec3
 Revises: 
-Create Date: 2024-06-01 12:16:01.056635
+Create Date: 2024-06-01 14:16:01.056635
 
 """
 from alembic import op
