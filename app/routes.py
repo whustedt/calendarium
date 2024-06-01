@@ -121,7 +121,8 @@ def init_app(app):
                 date = request.form['date'],
                 category = request.form['category'],
                 title = request.form['title'],
-                description = request.form.get('description')
+                description = request.form.get('description'),
+                last_updated_by = request.remote_addr
             )
             db.session.add(new_entry)
             db.session.flush()  # Ensure the ID is assigned without committing the transaction
@@ -171,6 +172,7 @@ def init_app(app):
             entry.category = request.form['category']
             entry.title = request.form['title']
             entry.description = request.form.get('description')
+            entry.last_updated_by = request.remote_addr
             db.session.commit()
             return redirect(url_for('index'))
 

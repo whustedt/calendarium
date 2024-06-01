@@ -4,3 +4,4 @@ Flask-Babel
 gunicorn
 requests
 python-dotenv
+Flask-Migrate
