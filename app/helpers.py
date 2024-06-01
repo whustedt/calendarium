@@ -65,7 +65,7 @@ def allowed_file(filename, allowed_extensions):
 def create_upload_folder(upload_folder):
     """Creates the upload folder if it doesn't exist."""
     if not path.exists(upload_folder):
-        makedirs(upload_folder)
+        makedirs(upload_folder, exist_ok=True)
 
 def get_formatted_entries(entries):
     """Formats entries for display, including additional attributes."""

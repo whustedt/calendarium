@@ -13,6 +13,7 @@ RUN pip install -r requirements.txt
 
 # Copy the app directory contents into the container at /app
 COPY app app
+COPY migrations migrations
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
