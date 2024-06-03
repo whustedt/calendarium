@@ -14,13 +14,14 @@ RUN pip install -r requirements.txt
 # Copy the app directory contents into the container at /app
 COPY app app
 COPY migrations migrations
+COPY entrypoint.sh entrypoint.sh
 
 # Make port 8000 available to the world outside this container
 EXPOSE 8000
 
 # Define environment variable
-ENV FLASK_APP=app:app
 ENV PYTHONPATH=/app
 
-# Run app.py when the container launches
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:create_app()"]
+# Make the entrypoint script executable and run it
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
