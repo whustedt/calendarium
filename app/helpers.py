@@ -80,6 +80,7 @@ def get_formatted_entries(entries):
             'category': entry.category,
             'title': entry.title,
             'description': entry.description,
+            'url': entry.url,
             'last_updated_by': entry.last_updated_by,
             'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
             'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,

@@ -1,4 +1,3 @@
-from os import path, remove
 from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file, abort
 import requests
 from .models import Entry
@@ -6,6 +5,7 @@ from app import db
 from datetime import datetime
 from .helpers import handle_image_upload, parse_date, get_formatted_entries, create_zip
 import os
+import validators
 
 def init_app(app):
     @app.after_request
@@ -116,12 +116,15 @@ def init_app(app):
                 return jsonify({"error": "Invalid category"}), 400
             if not parse_date(request.form['date']):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
+            if request.form.get('url') and not validators.url(request.form.get('url')):
+                return jsonify({"error": "Invalid URL"}), 400
 
             new_entry = Entry(
                 date = request.form['date'],
                 category = request.form['category'],
                 title = request.form['title'],
                 description = request.form.get('description'),
+                url = request.form.get('url'),
                 last_updated_by = request.remote_addr
             )
             db.session.add(new_entry)
@@ -151,6 +154,8 @@ def init_app(app):
                 return jsonify({"error": "Invalid category"}), 400
             if not parse_date(request.form['date']):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
+            if request.form.get('url') and not validators.url(request.form.get('url')):
+                return jsonify({"error": "Invalid URL"}), 400
 
             giphy_url = request.form.get('giphyUrl')
             file = request.files.get('entryImage')
@@ -158,9 +163,9 @@ def init_app(app):
             # Remove current image if applicable
             if 'remove_image' in request.form or giphy_url or file:
                 if entry.image_filename:
-                    image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
-                    if path.exists(image_path):
-                        remove(image_path)
+                    image_path = os.path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
+                    if os.path.exists(image_path):
+                        os.remove(image_path)
                     entry.image_filename = None
 
             filename = handle_image_upload(entry.id, file, giphy_url, app.config['UPLOAD_FOLDER'], app.config['ALLOWED_EXTENSIONS'])
@@ -172,6 +177,7 @@ def init_app(app):
             entry.category = request.form['category']
             entry.title = request.form['title']
             entry.description = request.form.get('description')
+            entry.url = request.form.get('url')
             entry.last_updated_by = request.remote_addr
             db.session.commit()
             return redirect(url_for('index'))
@@ -185,9 +191,9 @@ def init_app(app):
         if entry is None:
             abort(404)
         if entry.image_filename:
-            image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
-            if path.exists(image_path):
-                remove(image_path)
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
+            if os.path.exists(image_path):
+                os.remove(image_path)
         db.session.delete(entry)
         db.session.commit()
         return redirect(url_for('index'))
@@ -223,9 +229,9 @@ def init_app(app):
         old_entries = db.session.query(Entry).filter(Entry.date < str(current_date), Entry.category != 'birthday').all()
         for entry in old_entries:
             if entry.image_filename:
-                image_path = path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
-                if path.exists(image_path):
-                    remove(image_path)
+                image_path = os.path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
+                if os.path.exists(image_path):
+                    os.remove(image_path)
             db.session.delete(entry)
         db.session.commit()
         return jsonify({"message": "Old entries have been purged"}), 200
@@ -242,12 +248,16 @@ def init_app(app):
                 return jsonify({"error": f"Invalid category in data: {item.get('category', 'None')}"}), 400
             if not parse_date(item['date']):
                 return jsonify({"error": f"Invalid date format for {item.get('date', 'None')}, must be YYYY-MM-DD"}), 400 
+            if item.get('url') and not validators.url(item['url']):
+                return jsonify({"error": f"Invalid URL in data: {item.get('url')}"}), 400
+            
             try:
                 new_entry = Entry(
                     date=item['date'],
                     category=item['category'],
                     title=item['title'],
-                    description=item.get('description', None)
+                    description=item.get('description', None),
+                    url = item.get('url', None)
                 )
                 db.session.add(new_entry)
             except KeyError as e:

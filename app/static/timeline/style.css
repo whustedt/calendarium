@@ -119,6 +119,29 @@ html, body {
 .timeline-item.release::before { content: "🚀"; animation: float 3s infinite ease-in-out; }
 .timeline-item.past::before { filter: grayscale(100%); animation: none;}
 
+.timeline-item a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10cqh;
+    height: 10cqh;
+    clip-path: polygon(100% 0, 0 100%, 100% 100%);
+    background-color: blue;
+    border-radius: 0 0 10px 0;
+    box-sizing: border-box;
+}
+
+.timeline-item a::before {
+    content: "🔗";
+    position: absolute;
+    bottom: 1cqh;
+    right: 1cqh;
+    font-size: 3.2cqh;
+    color: white;
+    z-index: 3;
+}
+
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); }}
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); }}
 @keyframes shake-tilt { 0%, 50%, 100% { transform: translateX(0) rotate(0); } 30%, 70% { transform: translateX(2px) rotate(5deg); }}

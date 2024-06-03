@@ -16,11 +16,11 @@
 <body>
     <form class="entry-form" id="entry-form" action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
         <div class="form-section">
-            <label>Date:</label>
+            <label class="required">Date:</label>
             <input type="date" name="date" required>
         </div>
         <div class="form-section">
-            <label>Category:</label>
+            <label class="required">Category:</label>
             <div class="category-group">
                 <label><input type="radio" name="category" value="cake" required>🍰 Cake</label>
                 <label><input type="radio" name="category" value="birthday">🥳 Birthday</label>
@@ -29,12 +29,16 @@
             </div>
         </div>
         <div class="form-section">
-            <label>Title:</label>
+            <label class="required">Title:</label>
             <input type="text" name="title" required>
         </div>
         <div class="form-section">
             <label>Description:</label>
             <input type="text" name="description">
+        </div>
+        <div class="form-section">
+            <label>URL:</label>
+            <input type="url" name="url">
         </div>
         <div class="form-section">
             <label>Image:</label>
@@ -57,8 +61,9 @@
                 <th onclick="sortTable(1)">Category</th>
                 <th onclick="sortTable(2)">Title</th>
                 <th onclick="sortTable(3)">Description</th>
-                <th onclick="sortTable(4)">Image</th>
-                <th onclick="sortTable(5)">Actions</th>
+                <th onclick="sortTable(4)">URL</th>
+                <th onclick="sortTable(5)">Image</th>
+                <th onclick="sortTable(6)">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -80,6 +85,10 @@
                     </td>
                     <td>{{ entry.title }}</td>
                     <td>{{ entry.description|default('', true) }}</td>
+                    <td class="centered">
+                        {% if entry.url %}
+                            <a href="{{ entry.url }}" target="_blank">🔗</a>
+                        {% endif %}
                     <td>
                         {% if entry.image_filename %}
                             <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="User uploaded image">

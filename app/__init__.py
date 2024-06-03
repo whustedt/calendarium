@@ -27,8 +27,6 @@ def create_app(config_class=Config):
             from .helpers import create_upload_folder
             create_upload_folder(app.config['UPLOAD_FOLDER'])
 
-        if not os.path.exists(app.config['SQLALCHEMY_DATABASE_URI'].split('///')[-1]):
-            db.create_all()  # Create the database file and tables if not exists
         upgrade() # Apply any pending migrations
  
     return app

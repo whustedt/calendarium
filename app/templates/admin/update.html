@@ -16,11 +16,11 @@
 <body>
     <form class="entry-form" id="entry-form" action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
         <div class="form-section">
-            <label>Date:</label>
+            <label class="required">Date:</label>
             <input type="date" name="date" required value="{{ entry.date }}">
         </div>
         <div class="form-section">
-            <label>Category:</label>
+            <label class="required">Category:</label>
             <div class="category-group">
                 <label><input type="radio" name="category" value="cake" {% if entry.category == 'cake' %} checked {% endif %} required>🍰 Cake</label>
                 <label><input type="radio" name="category" value="birthday" {% if entry.category == 'birthday' %} checked {% endif %}>🥳 Birthday</label>
@@ -29,13 +29,16 @@
             </div>
         </div>
         <div class="form-section">
-            <label>Title:</label>
+            <label class="required">Title:</label>
             <input type="text" name="title" required value="{{ entry.title }}">
         </div>
         <div class="form-section">
             <label>Description:</label>
             <input type="text" name="description" value="{{ entry.description|default('', true) }}">
         </div>
+        <div class="form-section">
+            <label>URL:</label>
+            <input type="url" name="url" value="{{ entry.url|default('', true) }}">
         <div class="form-section">
             <label>Image:</label>
             <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif">

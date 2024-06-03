@@ -44,6 +44,9 @@
                     {% if entry.description %}
                         <span class="description">{{ entry.description }}</span>
                     {% endif %}
+                    {% if entry.url %}
+                        <a href="{{ entry.url }}" target="_blank"></a>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
