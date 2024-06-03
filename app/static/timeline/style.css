@@ -124,8 +124,8 @@ html, body {
     position: absolute;
     bottom: 0;
     right: 0;
-    width: 10cqh;
-    height: 10cqh;
+    width: 20cqh;
+    height: 20cqh;
     clip-path: polygon(100% 0, 0 100%, 100% 100%);
     background-color: blue;
     border-radius: 0 0 10px 0;
@@ -135,9 +135,9 @@ html, body {
 .timeline-item a::before {
     content: "🔗";
     position: absolute;
-    bottom: 1cqh;
-    right: 1cqh;
-    font-size: 3.2cqh;
+    bottom: .5cqh;
+    right: .5cqh;
+    font-size: 10cqh;
     color: white;
     z-index: 3;
 }
