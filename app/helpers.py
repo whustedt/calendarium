@@ -85,7 +85,8 @@ def get_formatted_entries(entries):
             'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
             'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
             'index': i - index,
-            'isToday': entry.date == today
+            'isToday': entry.date == today,
+            'cancelled': entry.cancelled
         }
         data.append(entry_data)
 

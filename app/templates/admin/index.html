@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Calendarium</title>
@@ -13,8 +14,10 @@
     </script>
 
 </head>
+
 <body>
-    <form class="entry-form" id="entry-form" action="{{ url_for('create') }}" method="post" enctype="multipart/form-data">
+    <form class="entry-form" id="entry-form" action="{{ url_for('create') }}" method="post"
+        enctype="multipart/form-data">
         <div class="form-section">
             <label class="required">Date:</label>
             <input type="date" name="date" required>
@@ -49,7 +52,7 @@
             <input type="text" id="giphySearchInput" placeholder="Search GIFs">
             <input type="hidden" id="hiddenGiphyUrl" name="giphyUrl">
             <div id="giphySearchResults"></div>
-        </div>        
+        </div>
         <input type="submit" value="Create Entry" class="submit-button create-button" id="submit-button">
     </form>
 
@@ -68,45 +71,51 @@
         </thead>
         <tbody>
             {% for entry in entries %}
-                <tr>
-                    <td class="nowrap">{{ entry.date }}</td>
-                    <td class="centered">
-                        {% if entry.category == 'cake' %}
-                            <span title="Cake">🍰</span>
-                        {% elif entry.category == 'birthday' %}
-                            <span title="Birthday">🥳</span>
-                        {% elif entry.category == 'release' %}
-                            <span title="Release">🚀</span>
-                        {% elif entry.category == 'custom' %}
-                            <span title="Custom">✨</span>
-                        {% else %}
-                            {{ entry.category }}
-                        {% endif %}
-                    </td>
-                    <td>{{ entry.title }}</td>
-                    <td>{{ entry.description|default('', true) }}</td>
-                    <td class="centered">
-                        {% if entry.url %}
-                            <a href="{{ entry.url }}" target="_blank">🔗</a>
-                        {% endif %}
-                    <td>
-                        {% if entry.image_filename %}
-                            <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="User uploaded image">
-                        {% else %}
-                            No Image
-                        {% endif %}
-                    </td>
-                    <td>
-                        <!-- Form for editing an entry -->
-                        <form action="{{ url_for('update', id=entry.id) }}" method="get" style="display: inline;">
-                            <button type="submit" class="edit">Edit</button>
-                        </form>
-                        <!-- Form for deleting an entry -->
-                        <form action="{{ url_for('delete', id=entry.id) }}" method="post" style="display: inline;">
-                            <button type="submit" class="delete">Delete</button>
-                        </form>
-                    </td>
-                </tr>
+            <tr>
+                <td class="nowrap">{{ entry.date }}</td>
+                <td class="centered">
+                    {% if entry.category == 'cake' %}
+                    <span title="Cake">🍰</span>
+                    {% elif entry.category == 'birthday' %}
+                    <span title="Birthday">🥳</span>
+                    {% elif entry.category == 'release' %}
+                    <span title="Release">🚀</span>
+                    {% elif entry.category == 'custom' %}
+                    <span title="Custom">✨</span>
+                    {% else %}
+                    {{ entry.category }}
+                    {% endif %}
+                </td>
+                <td>{{ entry.title }}</td>
+                <td>{{ entry.description|default('', true) }}</td>
+                <td class="centered">
+                    {% if entry.url %}
+                    <a href="{{ entry.url }}" target="_blank">🔗</a>
+                    {% endif %}
+                <td>
+                    {% if entry.image_filename %}
+                    <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="User uploaded image">
+                    {% else %}
+                    No Image
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Form for editing an entry -->
+                    <form action="{{ url_for('update', id=entry.id) }}" method="get" style="display: inline;">
+                        <button type="submit" class="edit">Edit</button>
+                    </form>
+                    <!-- Conditional form to cancel or restore based on entry.cancelled -->
+                    <form action="{{ url_for('toggle_cancelled', id=entry.id) }}" method="post" style="display: inline;">
+                        <button type="submit" class="cancel-restore">
+                            {{ 'Restore' if entry.cancelled else 'Cancel' }}
+                        </button>
+                    </form>
+                    <!-- Form for deleting an entry -->
+                    <form action="{{ url_for('delete', id=entry.id) }}" method="post" style="display: inline;">
+                        <button type="submit" class="delete">Delete</button>
+                    </form>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
@@ -138,4 +147,5 @@
     <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
 
 </body>
+
 </html>

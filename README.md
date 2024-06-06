@@ -69,6 +69,10 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/delete/<int:id>`
   - Deletes an entry by ID.
 
+- **Toggle Entry Cancellation**
+  - **POST** `/toggle_canceled/<int:id>`
+  - Toggles the cancellation status of an entry by ID. The route changes the `canceled` state of the entry to either `True` or `False` depending on its current state. A successful operation will redirect back to the main page, updating the entry's status in the view.
+
 - **API Data Access**
   - **GET** `/api/data`
   - Returns all entries in JSON format, including additional attributes such as `date_formatted` and `index` which help in sorting and formatting entries relative to the current date.
@@ -163,6 +167,10 @@ This project uses Flickity, which is licensed under the GPLv3.
 
  As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.
 
+## Icon Attribution
+
+This project uses the icon "cracked glass" by Olena Panasovska from [Noun Project](https://thenounproject.com/icon/cracked-glass-3292568/) licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). To meet the attribution requirements, this link points directly to the icon's detail page. Please refer to the Noun Project's guidelines for detailed information on how to properly attribute the creator in different formats and mediums.
+ 
 ## Docker Image
 
 Instead of Docker Hub, this project's Docker images are now built and pushed through GitHub Actions to the GitHub Container Registry.

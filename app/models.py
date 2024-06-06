@@ -8,6 +8,7 @@ class Entry(db.Model):
     description = db.Column(db.String(1000), nullable=True)
     image_filename = db.Column(db.String(100), nullable=True)
     url = db.Column(db.String(1000), nullable=True)
+    cancelled = db.Column(db.Boolean, nullable=False, default=False)
     last_updated_by = db.Column(db.String(130), nullable=True)
 
     # Define category choices

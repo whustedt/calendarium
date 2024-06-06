@@ -132,7 +132,7 @@ img {
     opacity: .5;
 }
 
-button.edit {
+button.edit, button.cancel-restore, button.delete {
     background-color: #008CBA; /* Blue for edit */
     color: white;
     border: none;
@@ -140,16 +140,11 @@ button.edit {
     cursor: pointer;
     font-size: 1rem;
     border-radius: 4px;
+    margin: 1px 0px;
 }
 
 button.delete {
     background-color: #f44336; /* Red for delete */
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    border-radius: 4px;
 }
 
 .maintenance-panel {

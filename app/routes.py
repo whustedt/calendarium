@@ -198,6 +198,23 @@ def init_app(app):
         db.session.commit()
         return redirect(url_for('index'))
     
+    @app.route('/toggle_cancelled/<int:id>', methods=['POST'])
+    def toggle_cancelled(id):
+        """Toggle the cancelled state of an entry."""
+        try:
+            entry = db.session.query(Entry).get(id)
+            if entry is None:
+                return jsonify({"error": "Entry not found"}), 404
+    
+            # Toggle the cancelled state
+            entry.cancelled = not entry.cancelled
+            db.session.commit()
+    
+            return redirect(url_for('index'))
+        except Exception as e:
+            current_app.logger.error(f"Error toggling the cancelled state of the entry: {e}")
+            return jsonify({"error": "Failed to update entry"}), 500
+    
     @app.route('/timeline', methods=['GET'])
     def timeline():
         """Generate a timeline view of entries, calculating positions based on dates."""
@@ -257,7 +274,8 @@ def init_app(app):
                     category=item['category'],
                     title=item['title'],
                     description=item.get('description', None),
-                    url = item.get('url', None)
+                    url = item.get('url', None),
+                    cancelled = item.get('cancelled', False)
                 )
                 db.session.add(new_entry)
             except KeyError as e:
