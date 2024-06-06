@@ -18,7 +18,7 @@ depends_on = None
 def upgrade():
     # Connect to the current target database
     conn = op.get_bind()
-    inspector = Inspector.from_engine(conn)
+    inspector = sa.inspect(conn)
     # Check if the 'entry' table already exists
     if 'entry' not in inspector.get_table_names():
         op.create_table('entry',
