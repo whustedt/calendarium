@@ -78,46 +78,26 @@ html, body {
 }
 .timeline-item .title {font-size: 12cqh; margin-top: 5px;} /* fallback value */
 .timeline-item .description {font-size: 10cqh;} /* fallback value */
-.timeline-item.cake { 
-    background: linear-gradient(135deg, #FF8A65, #FF7043); /* Warmer and brighter shades of orange */
-    background-color: #FF8A65; /* this is used when blending an img */
-}
-.timeline-item.release { 
-    background: linear-gradient(135deg, #42A5F5, #1E88E5); /* Brighter shades of blue */
-    background-color: #42A5F5; /* this is used when blending an img */
-}
-.timeline-item.birthday { 
-    background: linear-gradient(135deg, #AED581, #7CB342); /* Lively shades of green */
-    background-color: #AED581; /* this is used when blending an img */
-}
-.timeline-item.custom { 
-    background: linear-gradient(135deg, #4DD0E1, #26C6DA); /* Vibrant teal shades */
-    background-color: #4DD0E1; /* this is used when blending an img */
-}
-.timeline-item.past { 
-    background: linear-gradient(135deg, #5c6370, #434A54); /* Light Slate Gray to Darker Slate Gray */
-    background-color: #5c6370; /* this is used when blending an img */
-}
 .timeline-item.highlight {
     animation: pulsateShadow 1s infinite ease-in-out;
 }
 .timeline-item.with-img {
     /* Styles background-image of timeline-items */
-    background-size: cover;
-    background-position: center;
-    background-blend-mode: darken;
+    background-size: cover !important;
+    background-position: center !important;
+    background-blend-mode: darken !important;
 }
-.timeline-item::before {
+.timeline-item .symbol {
     content: "";
     position: absolute;
     top: 5px;
     left: 15px;
     font-size: 10cqh;
 }
-.timeline-item.cake::before { content: "🍰"; animation: pulse 2s infinite ease-in-out; }
-.timeline-item.birthday::before { content: "🥳"; animation: shake-tilt 2s infinite ease-in-out; }
-.timeline-item.release::before { content: "🚀"; animation: float 3s infinite ease-in-out; }
-.timeline-item.past::before { filter: grayscale(100%); animation: none;}
+.timeline-item .symbol.Cake { animation: pulse 2s infinite ease-in-out; }
+.timeline-item .symbol.Birthday { animation: shake-tilt 2s infinite ease-in-out; }
+.timeline-item .symbol.Release { animation: float 3s infinite ease-in-out; }
+.timeline-item.past .symbol { animation: none;}
 
 .timeline-item a::after {
     content: "";

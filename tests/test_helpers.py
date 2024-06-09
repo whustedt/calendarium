@@ -1,10 +1,11 @@
 from flask.testing import FlaskClient
 from unittest import mock
 from datetime import datetime
-from app.models import Entry
+from app.models import Entry, Category
+from app import db
 from app.helpers import (
     handle_image_upload, download_giphy_image, is_valid_giphy_url, handle_image, 
-    parse_date, allowed_file, get_formatted_entries, create_zip
+    parse_date, allowed_file, get_data, create_zip
 )
 
 def test_handle_image_upload_file(mock_file: mock.Mock, test_client: FlaskClient):
@@ -88,35 +89,48 @@ def test_allowed_file():
     assert allowed_file('test.jpg', {'jpg', 'png'})
     assert not allowed_file('test.txt', {'jpg', 'png'})
 
-def test_get_formatted_entries(test_client: FlaskClient, init_database: None):
+def test_get_data(test_client: FlaskClient, init_database: None):
     # Given: An initialized database and test_client context
-    # When: get_formatted_entries is called
+    # When: get_data is called
     # Then: It should return correctly formatted entries
     with test_client.application.app_context():
-        entries = Entry.query.all()
-        formatted_entries = get_formatted_entries(entries)
-        assert len(formatted_entries) == 1
-        entry = formatted_entries[0]
+        formatted_entries = get_data(db)
+        assert len(formatted_entries) == 2
+        entry = formatted_entries['entries'][0]
         assert entry['title'] == "John's Birthday"
-        assert entry['category'] == "birthday"
+        assert entry['category']['name'] == "Birthday"
 
 def test_create_zip(test_client: FlaskClient, init_database: None):
     # Given: A list of entries and mocked file system operations
     # When: create_zip is called
     # Then: It should return a buffer with the ZIP file content
-    entries = [
+    
+    data = {
+    'categories': [
         {
-            'date': '2021-05-20',
-            'category': 'birthday',
-            'title': "John's Birthday",
-            'description': 'Birthday party',
-            'image_url': 'uploads/test.jpg'
+        'color_hex': '#FF8A65',
+        'name': 'Cake',
+        'symbol': '🍰'
+        }
+    ],
+    'entries': [
+        {
+        'category': {
+            'color_hex': '#FF8A65',
+            'name': 'Cake',
+            'symbol': '🍰'
+        },
+        'date': '2024-06-01',
+        'image_url': '/uploads/test.jpg',
+        'title': 'Old',
         }
     ]
+    }
+
     with mock.patch('os.path.exists', return_value=True):
         with mock.patch('builtins.open', mock.mock_open(read_data='test content')):
             with mock.patch('app.helpers.path.join', return_value='uploads/test.jpg'):
                 with mock.patch('zipfile.ZipFile.write') as mock_write:
-                    zip_buffer = create_zip(entries, 'uploads')
+                    zip_buffer = create_zip(data, 'uploads')
                     assert zip_buffer is not None
                     mock_write.assert_any_call('uploads/test.jpg', arcname='test.jpg')

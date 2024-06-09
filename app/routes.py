@@ -1,9 +1,9 @@
 from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file, abort
 import requests
-from .models import Entry
+from .models import Entry, Category
 from app import db
 from datetime import datetime
-from .helpers import handle_image_upload, parse_date, get_formatted_entries, create_zip
+from .helpers import handle_image_upload, parse_date, get_data, create_zip
 import os
 import validators
 
@@ -21,6 +21,11 @@ def init_app(app):
         """Send the requested file from the upload directory."""
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
     
+    @app.route('/favicon.ico')
+    def favicon():
+        """Send the favicon."""
+        return send_from_directory(os.path.join(app.root_path, 'static/favicon'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
     @app.route('/search_gifs', methods=['GET'])
     def search_gifs():
         """
@@ -57,7 +62,7 @@ def init_app(app):
             params={
                 'api_key': os.getenv('GIPHY_API_TOKEN'),
                 'q': query,
-                'limit': 5
+                'limit': 15
             }
         )
         return jsonify(response.json()['data'])
@@ -82,7 +87,7 @@ def init_app(app):
         query = request.args.get('q')
         if not query:
             return jsonify(error="Query is required"), 400
-        url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}&limit=10"
+        url = f"https://api.giphy.com/v1/gifs/search?api_key={os.getenv('GIPHY_API_TOKEN')}&q={query}&limit=15"
         return jsonify(url=url)
 
     @app.route('/check-giphy-enabled')
@@ -103,16 +108,17 @@ def init_app(app):
 
     @app.route('/', methods=['GET'])
     def index():
-        """Display the main admin page with entries."""
-        entries = db.session.query(Entry).order_by(Entry.date).all()
-        return render_template('admin/index.html', entries=entries)
+        """Display the main admin page."""
+        data = get_data(db)
+        return render_template('admin/index.html', entries=data['entries'], categories=data['categories'])
 
     @app.route('/create', methods=['POST'])
     def create():
         """Create a new entry and handle associated image upload."""
         try:
-            # Validate category and date first
-            if request.form['category'] not in Entry.CATEGORIES:
+            category_name = request.form['category']
+            category = db.session.query(Category).filter_by(name=category_name).first()
+            if not category:
                 return jsonify({"error": "Invalid category"}), 400
             if not parse_date(request.form['date']):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
@@ -121,7 +127,7 @@ def init_app(app):
 
             new_entry = Entry(
                 date = request.form['date'],
-                category = request.form['category'],
+                category_id = category.id,  # use the ID of the category
                 title = request.form['title'],
                 description = request.form.get('description'),
                 url = request.form.get('url'),
@@ -149,14 +155,15 @@ def init_app(app):
             abort(404)
 
         if request.method == 'POST':
-            # Validate category and date first
-            if request.form['category'] not in Entry.CATEGORIES:
+            category_name = request.form['category']
+            category = db.session.query(Category).filter_by(name=category_name).first()
+            if not category:
                 return jsonify({"error": "Invalid category"}), 400
             if not parse_date(request.form['date']):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
             if request.form.get('url') and not validators.url(request.form.get('url')):
                 return jsonify({"error": "Invalid URL"}), 400
-
+            
             giphy_url = request.form.get('giphyUrl')
             file = request.files.get('entryImage')
 
@@ -172,9 +179,9 @@ def init_app(app):
             if filename:
                 entry.image_filename = filename
 
-            # Update other fields
+            # Update the entry with the new category ID and other fields
+            entry.category_id = category.id
             entry.date = request.form['date']
-            entry.category = request.form['category']
             entry.title = request.form['title']
             entry.description = request.form.get('description')
             entry.url = request.form.get('url')
@@ -182,7 +189,7 @@ def init_app(app):
             db.session.commit()
             return redirect(url_for('index'))
 
-        return render_template('admin/update.html', entry=entry)
+        return render_template('admin/update.html', entry=entry, categories=get_data(db)['categories'])
 
     @app.route('/delete/<int:id>', methods=['POST'])
     def delete(id):
@@ -221,29 +228,36 @@ def init_app(app):
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
-        entries = get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all())
-        return make_response(render_template('timeline/timeline.html', entries=entries, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
+        data = get_data(db)
+        display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration') for entry in data.get('entries'))
+        return make_response(render_template('timeline/timeline.html', entries=data.get('entries'), categories=data.get('categories'), display_celebration=display_celebration, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
     
     @app.route('/api/data', methods=['GET'])
     def api_data():
-        """Return a JSON response with data for all entries, including image URLs.""" 
-        return jsonify(get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all()))
+        """Return a JSON response with data for all data, including image URLs.""" 
+        return jsonify(get_data(db))
     
-    @app.route('/update-birthdays', methods=['POST'])
-    def update_birthdays():
-        """Update all birthday entries to the current year."""
+    @app.route('/update-serial-entries', methods=['POST'])
+    def update_serial_entries():
+        """Update all serial entries to the current year for categories that repeat annually."""
         current_year = datetime.now().year
-        birthday_entries = db.session.query(Entry).filter_by(category='birthday').all()
-        for entry in birthday_entries:
+        serial_categories = db.session.query(Category).filter_by(repeat_annually=True).all()
+        category_ids = [category.id for category in serial_categories]
+    
+        serial_entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids)).all()
+        for entry in serial_entries:
             entry.date = f"{current_year}-{entry.date.split('-')[1]}-{entry.date.split('-')[2]}"
         db.session.commit()
-        return jsonify({"message": "All birthday entries have been updated to the current year"}), 200
-    
+        return jsonify({"message": "All serial entries have been updated to the current year"}), 200
+
     @app.route('/purge-old-entries', methods=['POST'])
     def purge_old_entries():
-        """Delete old entries that are not marked as birthdays and are past the current date."""
+        """Delete old entries that are linked to categories that are not protected and are past the current date."""
         current_date = datetime.now().date()
-        old_entries = db.session.query(Entry).filter(Entry.date < str(current_date), Entry.category != 'birthday').all()
+        unprotected_categories = db.session.query(Category).filter_by(is_protected=False).all()
+        category_ids = [category.id for category in unprotected_categories]
+    
+        old_entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids), Entry.date < str(current_date)).all()
         for entry in old_entries:
             if entry.image_filename:
                 image_path = os.path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
@@ -260,37 +274,64 @@ def init_app(app):
         if not data:
             return jsonify({"error": "No data provided"}), 400
     
-        for item in data:
-            if 'category' not in item or item['category'] not in Entry.CATEGORIES:
-                return jsonify({"error": f"Invalid category in data: {item.get('category', 'None')}"}), 400
-            if not parse_date(item['date']):
-                return jsonify({"error": f"Invalid date format for {item.get('date', 'None')}, must be YYYY-MM-DD"}), 400 
-            if item.get('url') and not validators.url(item['url']):
-                return jsonify({"error": f"Invalid URL in data: {item.get('url')}"}), 400
-            
-            try:
+        # Process categories first
+        if 'categories' in data:
+            for category_data in data['categories']:
+                category = db.session.query(Category).filter_by(name=category_data['name']).first()
+                if not category:
+                    # If category does not exist, create a new one
+                    category = Category(
+                        name=category_data['name'],
+                        symbol=category_data.get('symbol', ''),
+                        color_hex=category_data.get('color_hex', '#FFFFFF'),
+                        repeat_annually=category_data.get('repeat_annually', False),
+                        display_celebration=category_data.get('display_celebration', False),
+                        is_protected=category_data.get('is_protected', False),
+                        last_updated_by=category_data.get('last_updated_by', request.remote_addr)
+                    )
+                    db.session.add(category)
+                else:
+                    # Update existing category with new details
+                    category.symbol = category_data.get('symbol', category.symbol)
+                    category.color_hex = category_data.get('color_hex', category.color_hex)
+                    category.repeat_annually = category_data.get('repeat_annually', category.repeat_annually)
+                    category.display_celebration = category_data.get('display_celebration', category.display_celebration)
+                    category.is_protected = category_data.get('is_protected', category.is_protected)
+                    category.last_updated_by = category_data.get('last_updated_by', request.remote_addr)
+    
+        # Ensure all categories are processed before adding entries
+        db.session.flush()
+    
+        # Process entries
+        if 'entries' in data:
+            for entry_data in data['entries']:
+                category = db.session.query(Category).filter_by(name=entry_data.get('category').get('name')).first()
+                if not category:
+                    return jsonify({"error": f"Category '{entry_data.get('category')}' not found"}), 400
+                if not parse_date(entry_data['date']):
+                    return jsonify({"error": f"Invalid date format for {entry_data['date']}, must be YYYY-MM-DD"}), 400
+                if entry_data.get('url') and not validators.url(entry_data['url']):
+                    return jsonify({"error": f"Invalid URL in data: {entry_data['url']}"}), 400
+    
                 new_entry = Entry(
-                    date=item['date'],
-                    category=item['category'],
-                    title=item['title'],
-                    description=item.get('description', None),
-                    url = item.get('url', None),
-                    cancelled = item.get('cancelled', False)
+                    date=entry_data['date'],
+                    category_id=category.id,
+                    title=entry_data['title'],
+                    description=entry_data.get('description', None),
+                    url=entry_data.get('url', None),
+                    cancelled=entry_data.get('cancelled', False),
+                    last_updated_by=entry_data.get('last_updated_by', request.remote_addr)
                 )
                 db.session.add(new_entry)
-            except KeyError as e:
-                return jsonify({"error": f"Missing key in data: {e}"}), 400
-            except Exception as e:
-                return jsonify({"error": str(e)}), 500
     
         db.session.commit()
-        return jsonify({"message": "Entries successfully imported"}), 201
+        return jsonify({"message": "Categories and entries successfully imported"}), 201
     
     @app.route('/export-data', methods=['GET'])
     def export_data():
-        """Export all entries and associated images as a zip file."""
-        entries = get_formatted_entries(db.session.query(Entry).order_by(Entry.date).all())
-        zip_buffer = create_zip(entries, app.config['UPLOAD_FOLDER'])
+        """Export all data and associated images as a zip file."""
+        data = get_data(db)
+        zip_buffer = create_zip(data, app.config['UPLOAD_FOLDER'])
         
         response = make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='data_export.zip'))
         response.headers['Content-Disposition'] = 'attachment; filename=data_export.zip'

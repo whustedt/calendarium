@@ -4,6 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Calendarium</title>
+    <link rel="icon" type="image/vnd.microsoft.icon" sizes="32x32 48x48" href="{{ url_for('static', filename='favicon/favicon.ico', _external=True) }}">
+    <link rel="icon" sizes="128x128" href="{{ url_for('static', filename='favicon/favicon.icns', _external=True) }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.png', _external=True) }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
     <script src="{{ url_for('static', filename='admin/sort-table.js') }}"></script>
 
@@ -16,19 +19,20 @@
 </head>
 
 <body>
-    <form class="entry-form" id="entry-form" action="{{ url_for('create') }}" method="post"
-        enctype="multipart/form-data">
+    <h1>Events</h1>
+    <form class="entry-form" id="entry-form" action="{{ url_for('create') }}" method="post" 
+    enctype="multipart/form-data">
         <div class="form-section">
             <label class="required">Date:</label>
             <input type="date" name="date" required>
         </div>
         <div class="form-section">
-            <label class="required">Category:</label>
+            <label class="required"><a href="{{ url_for('categories') }}">Category:</a></label>
             <div class="category-group">
-                <label><input type="radio" name="category" value="cake" required>🍰 Cake</label>
-                <label><input type="radio" name="category" value="birthday">🥳 Birthday</label>
-                <label><input type="radio" name="category" value="release">🚀 Release</label>
-                <label><input type="radio" name="category" value="custom">✨ Custom</label>
+                {% for category in categories %}
+                    <label><input type="radio" name="category" value="{{ category.name }}" required>{{ category.symbol }} {{ category.name }}</label>
+                {% endfor %}
+                </div>
             </div>
         </div>
         <div class="form-section">
@@ -74,17 +78,7 @@
             <tr>
                 <td class="nowrap">{{ entry.date }}</td>
                 <td class="centered">
-                    {% if entry.category == 'cake' %}
-                    <span title="Cake">🍰</span>
-                    {% elif entry.category == 'birthday' %}
-                    <span title="Birthday">🥳</span>
-                    {% elif entry.category == 'release' %}
-                    <span title="Release">🚀</span>
-                    {% elif entry.category == 'custom' %}
-                    <span title="Custom">✨</span>
-                    {% else %}
-                    {{ entry.category }}
-                    {% endif %}
+                    <span title="{{ entry.category.name }}">{{ entry.category.symbol }}</span>
                 </td>
                 <td>{{ entry.title }}</td>
                 <td>{{ entry.description|default('', true) }}</td>
@@ -92,25 +86,23 @@
                     {% if entry.url %}
                     <a href="{{ entry.url }}" target="_blank">🔗</a>
                     {% endif %}
+                </td>
                 <td>
-                    {% if entry.image_filename %}
-                    <img src="{{ url_for('uploaded_file', filename=entry.image_filename) }}" alt="User uploaded image">
+                    {% if entry.image_url %}
+                    <img src="{{ entry.image_url }}" alt="User uploaded image">
                     {% else %}
                     No Image
                     {% endif %}
                 </td>
                 <td>
-                    <!-- Form for editing an entry -->
                     <form action="{{ url_for('update', id=entry.id) }}" method="get" style="display: inline;">
                         <button type="submit" class="edit">Edit</button>
                     </form>
-                    <!-- Conditional form to cancel or restore based on entry.cancelled -->
                     <form action="{{ url_for('toggle_cancelled', id=entry.id) }}" method="post" style="display: inline;">
                         <button type="submit" class="cancel-restore">
                             {{ 'Restore' if entry.cancelled else 'Cancel' }}
                         </button>
                     </form>
-                    <!-- Form for deleting an entry -->
                     <form action="{{ url_for('delete', id=entry.id) }}" method="post" style="display: inline;">
                         <button type="submit" class="delete">Delete</button>
                     </form>
@@ -120,32 +112,27 @@
         </tbody>
     </table>
 
-    <!-- Maintenance panel with links for additional actions -->
     <div class="maintenance-panel">
-        <!-- Form for visiting timeline view -->
         <form action="{{ url_for('timeline') }}" method="get">
             <button type="submit">Go to Timeline View</button>
         </form>
-        <!-- Button to Download JSON Data -->
+        <form action="{{ url_for('categories') }}" method="get">
+            <button type="submit">Manage Categories</button>
+        </form>
         <form action="{{ url_for('api_data') }}" method="get">
-            <button type="submit">Download JSON Data</button>
+            <button class="maintenance" type="submit">Download JSON Data</button>
         </form>
-        <!-- Button to Export Data as ZIP -->
         <form action="{{ url_for('export_data') }}" method="get">
-            <button type="submit">Export Data as ZIP</button>
+            <button class="maintenance" type="submit">Export Data as ZIP</button>
         </form>
-        <!-- Form for removing old entries -->
         <form action="{{ url_for('purge_old_entries') }}" method="post">
-            <button type="submit">Remove Old Entries</button>
+            <button class="maintenance" type="submit">Remove Old Entries</button>
         </form>
-        <!-- Form for updating birthdays -->
-        <form action="{{ url_for('update_birthdays') }}" method="post">
-            <button type="submit">Update Birthdays</button>
+        <form action="{{ url_for('update_serial_entries') }}" method="post">
+            <button class="maintenance" type="submit">Update Serial Entries</button>
         </form>
     </div>
 
     <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
-
 </body>
-
 </html>

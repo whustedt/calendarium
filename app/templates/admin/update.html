@@ -3,29 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Calendarium: Update Entry</title>
-    <!-- Linking the stylesheet -->
+    <link rel="icon" type="image/vnd.microsoft.icon" sizes="32x32 48x48" href="{{ url_for('static', filename='favicon/favicon.ico', _external=True) }}">
+    <link rel="icon" sizes="128x128" href="{{ url_for('static', filename='favicon/favicon.icns', _external=True) }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.png', _external=True) }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
-
     <script type="text/javascript">
-        // This is necessary to use the url in the external script.
         var getGiphyUrlUrl = "{{ url_for('get_giphy_url') }}";
         var attribution_img = "{{ url_for('static', filename='giphy_attribution.gif') }}";
     </script>
 
 </head>
 <body>
+    <h1>Event {{ entry.id }} </h1>
     <form class="entry-form" id="entry-form" action="{{ url_for('update', id=entry.id) }}" method="post" enctype="multipart/form-data">
         <div class="form-section">
             <label class="required">Date:</label>
             <input type="date" name="date" required value="{{ entry.date }}">
         </div>
         <div class="form-section">
-            <label class="required">Category:</label>
+            <label class="required"><a href="{{ url_for('categories') }}">Category:</a></label>
             <div class="category-group">
-                <label><input type="radio" name="category" value="cake" {% if entry.category == 'cake' %} checked {% endif %} required>🍰 Cake</label>
-                <label><input type="radio" name="category" value="birthday" {% if entry.category == 'birthday' %} checked {% endif %}>🥳 Birthday</label>
-                <label><input type="radio" name="category" value="release" {% if entry.category == 'release' %} checked {% endif %}>🚀 Release</label>
-                <label><input type="radio" name="category" value="custom" {% if entry.category == 'custom' %} checked {% endif %}>✨ Custom</label>
+                {% for category in categories %}
+                <label>
+                    <input type="radio" name="category" value="{{ category.name }}" {% if entry.category.name == category.name %}checked{% endif %} required>
+                    {{ category.symbol }} {{ category.name }}
+                </label>
+                {% endfor %}
             </div>
         </div>
         <div class="form-section">
@@ -39,6 +42,7 @@
         <div class="form-section">
             <label>URL:</label>
             <input type="url" name="url" value="{{ entry.url|default('', true) }}">
+        </div>
         <div class="form-section">
             <label>Image:</label>
             <input type="file" name="entryImage" accept="image/png, image/jpeg, image/gif">
@@ -56,8 +60,6 @@
         {% endif %}
         <input type="submit" value="Update Entry" class="submit-button create-button" id="submit-button">
     </form>
-
     <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
-
 </body>
 </html>

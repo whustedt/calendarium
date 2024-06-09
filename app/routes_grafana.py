@@ -1,6 +1,6 @@
 from flask import request, jsonify, current_app
 from datetime import datetime
-from .models import Entry
+from .models import Entry, Category
 from app import db
 
 def init_grafana_routes(app):
@@ -22,12 +22,11 @@ def init_grafana_routes(app):
     @app.route('/grafana/search', methods=['POST'])
     def grafana_search():
         """
-        Endpoint for Grafana to search available targets.
-
-        :return: JSON list of available categories as targets
+        Endpoint for Grafana to search available targets based on dynamic categories.
         """
         try:
-            targets = [category for category in Entry.CATEGORIES]
+            categories = db.session.query(Category.name).all()
+            targets = [category.name for category in categories]
             return jsonify(targets)
         except Exception as e:
             current_app.logger.error(f"Search failed: {e}")
@@ -36,35 +35,29 @@ def init_grafana_routes(app):
     @app.route('/grafana/query', methods=['POST'])
     def grafana_query():
         """
-        Endpoint for Grafana to query data.
-
-        :return: JSON formatted data points for Grafana
+        Endpoint for Grafana to query data dynamically based on category names.
         """
         req = request.get_json()
         try:
             response = []
-            # Iterate over each target provided by Grafana
             for target in req['targets']:
-                # Check if the target type is 'timeserie' and target exists in categories
-                if target['type'] == 'timeserie' and target['target'] in Entry.CATEGORIES:
-                    # Query to get date and count of entries matching the category
+                category = db.session.query(Category).filter_by(name=target['target']).first()
+                if category and target['type'] == 'timeserie':
                     data_points = db.session.query(
-                        Entry.date,
+                        Entry.date, 
                         db.func.count(Entry.id).label('count')
-                    ).filter(Entry.category == target['target']).group_by(Entry.date).all()
-
-                    # Format data points to fit Grafana's expected format: [value, timestamp]
+                    ).filter(Entry.category_id == category.id).group_by(Entry.date).all()
+    
                     datapoints = [
-                        [count, datetime.strptime(date, '%Y-%m-%d').timestamp() * 1000] 
+                        [count, datetime.strptime(date, '%Y-%m-%d').timestamp() * 1000]
                         for date, count in data_points
                     ]
-
-                    # Add this to response
+    
                     response.append({
                         "target": target['target'],
                         "datapoints": datapoints
                     })
-
+    
             return jsonify(response)
         except Exception as e:
             current_app.logger.error(f"Query failed: {e}")
@@ -73,22 +66,25 @@ def init_grafana_routes(app):
     @app.route('/grafana/annotations', methods=['POST'])
     def grafana_annotations():
         """
-        Endpoint for Grafana to fetch annotations.
-
-        :return: JSON list of annotations
+        Endpoint for Grafana to fetch annotations based on multiple category names.
         """
         req = request.get_json()
         try:
             annotations = []
-            query = req['annotation']['query']
-            if query == '#deploy':
-                entries = db.session.query(Entry).filter(Entry.category == 'release').all()
+            query_categories = req['annotation']['query'].split(',')  # Split the query by commas
+            query_categories = [name.strip() for name in query_categories]  # Clean whitespace
+    
+            categories = db.session.query(Category).filter(Category.name.in_(query_categories)).all()
+            category_ids = [cat.id for cat in categories]  # List of category IDs from the query
+    
+            if category_ids:
+                entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids)).all()
                 for entry in entries:
                     annotations.append({
                         "annotation": req['annotation'],
                         "time": datetime.strptime(entry.date, '%Y-%m-%d').timestamp() * 1000,
                         "title": entry.title,
-                        "tags": [entry.category],
+                        "tags": [entry.category.name],
                         "text": entry.description or ""
                     })
             return jsonify(annotations)
@@ -111,20 +107,23 @@ def init_grafana_routes(app):
     @app.route('/grafana/tag-values', methods=['POST'])
     def grafana_tag_values():
         """
-        Endpoint for Grafana to fetch tag values based on key.
-
-        :return: JSON list of tag values
+        Endpoint for Grafana to fetch tag values based on key dynamically.
         """
         req = request.get_json()
         key = req['key']
-        if key == "category":
-            values = [{"text": cat} for cat in Entry.CATEGORIES]
-        elif key == "date":
-            dates = db.session.query(Entry.date).distinct().all()
-            values = [{"text": date[0]} for date in dates]
-        else:
-            values = []
-        return jsonify(values)
+        try:
+            if key == "category":
+                categories = db.session.query(Category.name).distinct().all()
+                values = [{"text": category.name} for category in categories]
+            elif key == "date":
+                dates = db.session.query(Entry.date).distinct().all()
+                values = [{"text": date[0]} for date in dates]
+            else:
+                values = []
+            return jsonify(values)
+        except Exception as e:
+            current_app.logger.error(f"Failed to fetch tag values: {e}")
+            return jsonify({"error": "Failed to fetch tag values"}), 500
 
     app.add_url_rule('/grafana/', view_func=grafana_test_connection)
     app.add_url_rule('/grafana/search', view_func=grafana_search, methods=['POST'])

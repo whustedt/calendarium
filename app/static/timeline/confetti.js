@@ -142,6 +142,4 @@
             containerElement.style.zIndex = "9999",
             initializeAnimation();
         }
-        if (document.querySelector(".birthday.highlight")) {
-            startConfettiAnimation();
-        }
+        startConfettiAnimation();

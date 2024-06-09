@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Categories</title>
+    <link rel="icon" type="image/vnd.microsoft.icon" sizes="32x32 48x48" href="{{ url_for('static', filename='favicon/favicon.ico', _external=True) }}">
+    <link rel="icon" sizes="128x128" href="{{ url_for('static', filename='favicon/favicon.icns', _external=True) }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.png', _external=True) }}" type="image/x-icon">
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
+    <script src="{{ url_for('static', filename='admin/sort-table.js') }}"></script>
+</head>
+<body>
+    <h1>Categories</h1>
+    <form class="entry-form" id="entry-form" action="{{ url_for('categories') }}" method="post">
+        <div class="form-section">
+            <label class="required">Name:</label>
+            <input type="text" name="name" placeholder="Category Name" maxlength="100" required>
+        </div>
+        <div class="form-section">
+            <label class="required">Symbol:</label>
+            <input type="text" name="symbol" placeholder="Symbol" maxlength="3" required>
+        </div>
+        <div class="form-section">
+            <label class="required">Color:</label>
+            <input type="color" name="color_hex" placeholder="Color" required>
+        </div>
+        <div class="form-section">
+            <label>Options:</label>
+            <div class="checkbox-group">
+                <label title="Automatically refreshes the event every year"><input type="checkbox" name="repeat_annually">🗓️ Annual Refresh</label>
+                <label title="Enables a special animation for the event on the timeline"><input type="checkbox" name="display_celebration">🎉 Celebration Effect</label>
+                <label title="Shields the event from being removed during routine maintenance or updates"><input type="checkbox" name="is_protected">🛡️ Purge-Protection</label>
+            </div>
+        </div>
+        <button type="submit" class="submit-button create-button" id="submit-button">Add Category</button>
+    </form>
+    <table id="sortableTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">Name</th>
+                <th onclick="sortTable(1)">Symbol</th>
+                <th onclick="sortTable(2)">Color</th>
+                <th onclick="sortTable(3)" title="Automatically refreshes the event every year">🗓️ Annual Refresh</th>
+                <th onclick="sortTable(4)" title="Enables a special animation for the event on the timeline">🎉 Celebration Effect</th>
+                <th onclick="sortTable(5)" title="Shields the event from being removed during routine maintenance or updates">🛡️ Purge-Protection</th>
+                <th onclick="sortTable(6)">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr>
+                <form action="{{ url_for('update_category', id=category.id) }}" method="post">
+                    <td><input type="text" name="name" value="{{ category.name }}" maxlength="100" required></td>
+                    <td><input type="text" inputmode=“emoji” name="symbol" value="{{ category.symbol }}" maxlength="3" required></td>
+                    <td><input type="color" name="color_hex" value="{{ category.color_hex }}" required></td>
+                    <td><input type="checkbox" title="Automatically refreshes the event every year" name="repeat_annually" {{ 'checked' if category.repeat_annually else '' }}></td>
+                    <td><input type="checkbox" title="Enables a special animation for the event on the timeline" name="display_celebration" {{ 'checked' if category.display_celebration else '' }}></td>
+                    <td><input type="checkbox" title="Shields the event from being removed during routine maintenance or updates" name="is_protected" {{ 'checked' if category.is_protected else '' }}></td>
+                    <td>
+                        <button type="submit" class="edit">Update</button>
+                </form>
+                <form action="{{ url_for('delete_category', id=category.id) }}" method="post">
+                    <button type="submit" class="delete" onclick="return confirm('Are you sure?');">Delete</button>
+                </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="maintenance-panel">
+        <form action="{{ url_for('timeline') }}" method="get">
+            <button type="submit">Go to Timeline View</button>
+        </form>
+        <form action="{{ url_for('index') }}" method="get">
+            <button type="submit">Go to Event list</button>
+        </form>
+        <form action="{{ url_for('api_data') }}" method="get">
+            <button class="maintenance" type="submit">Download JSON Data</button>
+        </form>
+        <form action="{{ url_for('export_data') }}" method="get">
+            <button class="maintenance" type="submit">Export Data as ZIP</button>
+        </form>
+        <form action="{{ url_for('purge_old_entries') }}" method="post">
+            <button class="maintenance" type="submit">Remove Old Entries</button>
+        </form>
+        <form action="{{ url_for('update_serial_entries') }}" method="post">
+            <button class="maintenance" type="submit">Update Serial Entries</button>
+        </form>
+    </div>
+
+</body>
+</html>

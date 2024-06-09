@@ -1,6 +1,6 @@
 # Calendarium
 
-This is a simple Flask web application designed for tracking and managing event data, featuring a dynamic timeline view.
+This is a Flask-based web application designed to manage events and visualize them on a dynamic timeline. This application supports integration with Grafana for visual analytics and the Giphy API for enhanced user interaction.
 
 ## Getting Started
 
@@ -12,7 +12,7 @@ To get the application running locally, you have several options:
 docker-compose up --build
 ```
 
-The app will be available at [http://localhost:5001/](http://localhost:5001/).
+The app will be available at [http://127.0.0.1:5000/](http://127.0.0.1:5000/).
 
 ### Using a Development Container or Python Environment
 
@@ -24,7 +24,7 @@ flask run --debug
 
 For production you would use Gunicorn as a WSGI server:
 ```bash
-gunicorn -w 4 -b "localhost:5001" "app:create_app()"
+gunicorn -w 4 -b "127.0.0.1:5000" "app:create_app()"
 ```
 
 Ensure your environment has all the necessary dependencies installed as specified in the `requirements.txt` file.
@@ -42,7 +42,7 @@ GIPHY_API_TOKEN=<your_giphy_api_token>
 To populate the application with sample data, run:
 
 ```bash
-curl -X POST http://localhost:5001/batch-import -H "Content-Type: application/json" -d @testdata.json
+curl -X POST http://127.0.0.1:5000/batch-import -H "Content-Type: application/json" -d @testdata.json
 ```
 
 ## API Endpoints
@@ -85,13 +85,27 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/batch-import`
   - Imports a batch of entries from a JSON file.
 
-- **Update Birthdays**
-  - **PUT** `/update-birthdays`
-  - Updates all birthday entries to the current year.
+- **Update Serial Entries**
+  - **POST** `/update-serial-entries`
+  - Updates all entries linked to categories that are set to repeat annually, adjusting their dates to the current year.
 
 - **Purge Old Entries**
   - **POST** `/purge-old-entries`
-  - Deletes all entries where the date is in the past and the category is not 'birthday'.
+  - Deletes all entries where the date is in the past and the category is not marked as protected.
+
+## Category Management
+
+- **View and Manage Categories**
+  - **GET/POST** `/categories`
+  - Displays and allows management of categories including creation and update.
+
+- **Update Category**
+  - **POST** `/categories/update/<int:id>`
+  - Allows updating details for a specific category by ID.
+
+- **Delete Category**
+  - **POST** `/categories/delete/<int:id>`
+  - Deletes a category if it is not associated with any entries.
 
 ## Grafana Integration
 
@@ -101,7 +115,7 @@ This application supports integration with Grafana through a Simple JSON Datasou
 
 - **Test Connection** (`GET /grafana/`)
   - Confirms the data source connection is functional.
-  
+
 - **Search** (`POST /grafana/search`)
   - Returns a list of categories that can be queried (e.g., 'cake', 'birthday').
 
@@ -122,7 +136,7 @@ This application supports integration with Grafana through a Simple JSON Datasou
 Query Grafana for timeseries data in the 'cake' category using this `curl` command:
 
 ```bash
-curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/json" -d '{"targets":[{"target": "cake", "type": "timeserie"}]}'
+curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/json" -d '{"targets":[{"target": "Cake", "type": "timeserie"}]}'
 ```
 
 This command will return timeseries data points for the 'cake' category if such data exists. Ensure the Grafana Simple JSON Datasource plugin is installed and properly configured to interact with these endpoints.
@@ -141,7 +155,7 @@ In environments where the backend server has internet access, the application ca
 
 Example usage:
 ```bash
-curl http://localhost:5001/search_gifs?q=cats
+curl http://127.0.0.1:5000/search_gifs?q=cats
 ```
 This implementation is found in the JavaScript file `search_gifs.js`.
 
@@ -155,7 +169,7 @@ For environments where the backend does not have direct internet access, we empl
 
 Example usage:
 ```bash
-curl http://localhost:5001/get-giphy-url?q=cats
+curl http://127.0.0.1:5000/get-giphy-url?q=cats
 ```
 This implementation is located in the JavaScript file `search_gifs_proxied.js`.
 
@@ -170,7 +184,7 @@ This project uses Flickity, which is licensed under the GPLv3.
 ## Icon Attribution
 
 This project uses the icon "cracked glass" by Olena Panasovska from [Noun Project](https://thenounproject.com/icon/cracked-glass-3292568/) licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). To meet the attribution requirements, this link points directly to the icon's detail page. Please refer to the Noun Project's guidelines for detailed information on how to properly attribute the creator in different formats and mediums.
- 
+
 ## Docker Image
 
 Instead of Docker Hub, this project's Docker images are now built and pushed through GitHub Actions to the GitHub Container Registry.

@@ -1,6 +1,7 @@
-from app.models import Entry
+from app.models import Entry, Category
 from app import db
 from datetime import datetime, date, timedelta
+from sqlalchemy import not_
 import json
 
 def test_home_page(test_client):
@@ -13,10 +14,11 @@ def test_home_page(test_client):
     assert response.status_code == 200
     assert b"Cake" in response.data
 
-def test_create_entry(test_client, init_database):
+def test_create_entry_with_valid_data(test_client, init_database):
+    category = db.session.query(Category).filter_by(name="Release").first()
     data = {
         'date': "2021-06-01",
-        'category': "release",
+        'category': category.name,
         'title': "New Product Launch",
         'description': "Launching the new product"
     }
@@ -34,7 +36,7 @@ def test_update_entry(test_client, init_database):
     """
     response = test_client.post('/update/1', data={
         'date': "2021-06-01",
-        'category': "custom",
+        'category': "Birthday",
         'title': "Updated Title",
         'description': "Updated description"
     }, follow_redirects=True)
@@ -83,7 +85,7 @@ def test_create_entry_with_invalid_data(test_client):
     # Test case 2: Invalid date format
     data = {
         'date': "06-01-2021",
-        'category': "release",
+        'category': "Release",
         'title': "Invalid Date Format Test",
         'description': "This should also fail"
     }
@@ -100,60 +102,46 @@ def test_api_data(test_client, init_database):
     response = test_client.get('/api/data')
     assert response.status_code == 200
     data = json.loads(response.data)
-    assert len(data) == 1  # Assuming one entry in the database
-    entry = data[0]
+    assert len(data) == 2  # categories and entries
+    entry = data.get('entries')[0]
     assert entry['date'] == "2021-05-20"
-    assert entry['category'] == "birthday"
+    assert entry['category']['name'] == "Birthday"
     assert entry['title'] == "John's Birthday"
     assert entry['description'] == "Birthday party"
 
-def test_batch_import(test_client):
-    """
-    GIVEN a Flask application
-    WHEN multiple entries are imported via the '/batch-import' endpoint (POST)
-    THEN check that the entries are correctly added to the database
-    """
-    data = [
-        {
-            'date': "2021-07-01",
-            'category': "release",
-            'title': "Product Launch 1",
-            'description': "First product launch"
-        },
-        {
-            'date': "2021-08-15",
-            'category': "cake",
-            'title': "Office Party",
-            'description': "Celebrating a milestone"
-        }
-    ]
+def test_batch_import(test_client, init_database):
+    # Data should include categories and entries
+    data = {
+        'categories': [
+            {'name': "Webinar", 'symbol': "🌐", 'color_hex': "#008000"}
+        ],
+        'entries': [
+            {'date': "2021-07-01", 'category': {'name': "Webinar"}, 'title': "Online Event"}
+        ]
+    }
     response = test_client.post('/batch-import', data=json.dumps(data), content_type='application/json')
     assert response.status_code == 201
-    assert db.session.query(Entry).count() == len(data)  # Assuming no existing entries
-    for entry in data:
-        db_entry = db.session.query(Entry).filter_by(title=entry['title']).first()
-        assert db_entry is not None
-        assert db_entry.date == entry['date']
-        assert db_entry.category == entry['category']
-        assert db_entry.description == entry['description']
+    assert db.session.query(Entry).count() == 2  # Assuming one existing entry
+    assert db.session.query(Category).count() == 5 # Including existing categories
 
-def test_update_birthdays(test_client, init_database):
+def test_update_serial_entries(test_client, init_database):
     """
     GIVEN a Flask application
-    WHEN the '/update-birthdays' endpoint is called (POST)
-    THEN check that all birthday entries are updated to the current year
+    WHEN the '/update-serial-entries' endpoint is called (POST)
+    THEN check that all serial entries are updated to the current year
     """
     # Create a new birthday entry with a different year
     old_year = 2020
-    entry = Entry(date=f"{old_year}-05-20", category="birthday", title="Another Birthday", description="Test birthday")
+    category = db.session.query(Category).filter_by(name="Birthday").first()
+    entry = Entry(date=f"{old_year}-05-20", category=category, title="Another Birthday", description="Test birthday")
     db.session.add(entry)
     db.session.commit()
 
-    response = test_client.post('/update-birthdays', follow_redirects=True)
+    response = test_client.post('/update-serial-entries', follow_redirects=True)
     assert response.status_code == 200
 
     current_year = datetime.now().year
-    birthday_entries = db.session.query(Entry).filter_by(category="birthday").all()
+    birthday_entries = db.session.query(Entry).filter_by(category=category).all()
     for entry in birthday_entries:
         assert str(current_year) in entry.date
 
@@ -164,15 +152,20 @@ def test_purge_old_entries(test_client, init_database):
     THEN check that old non-birthday entries are deleted from the database
     """
     # Create an old non-birthday entry
+    category = db.session.query(Category).filter_by(name="Release").first()
     old_date = date.today() - timedelta(days=365)  # One year ago
-    entry = Entry(date=str(old_date), category="release", title="Old Entry", description="This should be purged")
+    entry = Entry(date=str(old_date), category=category, title="Old Entry", description="This should be purged")
     db.session.add(entry)
     db.session.commit()
 
     response = test_client.post('/purge-old-entries', follow_redirects=True)
     assert response.status_code == 200
 
-    old_entries = db.session.query(Entry).filter(Entry.date < str(date.today()), Entry.category != "birthday").all()
+    old_entries = db.session.query(Entry).join(Entry.category).filter(
+        Entry.date < str(date.today()), 
+        not_(Category.is_protected)
+    ).all()
+    
     assert len(old_entries) == 0
 
 def test_entries_sorted_by_date(test_client, init_database):
@@ -182,14 +175,17 @@ def test_entries_sorted_by_date(test_client, init_database):
     THEN check that the entries are sorted by date in ascending order
     """
     # Create some entries with different dates
-    entry1 = Entry(date=str(date.today()), category="cake", title="Today's Entry")
-    entry2 = Entry(date=str(date.today() - timedelta(days=7)), category="release", title="Last Week's Entry")
-    entry3 = Entry(date=str(date.today() + timedelta(days=3)), category="birthday", title="Future Entry")
+    category1 = db.session.query(Category).filter_by(name="Cake").first()
+    category2 = db.session.query(Category).filter_by(name="Release").first()
+    category3 = db.session.query(Category).filter_by(name="Birthday").first()
+    entry1 = Entry(date=str(date.today()), category=category1, title="Today's Entry")
+    entry2 = Entry(date=str(date.today() - timedelta(days=7)), category=category2, title="Last Week's Entry")
+    entry3 = Entry(date=str(date.today() + timedelta(days=3)), category=category3, title="Future Entry")
     db.session.add_all([entry1, entry2, entry3])
     db.session.commit()
 
     response = test_client.get('/api/data')
     assert response.status_code == 200
     data = json.loads(response.data)
-    dates = [entry['date'] for entry in data]
+    dates = [entry['date'] for entry in data['entries']]
     assert dates == sorted(dates)

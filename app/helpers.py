@@ -7,6 +7,10 @@ from io import BytesIO
 from urllib.parse import urlparse
 import requests
 from werkzeug.utils import secure_filename
+from colorsys import rgb_to_hls, hls_to_rgb
+from .models import Entry, Category
+from sqlalchemy.orm import joinedload
+
 
 def handle_image_upload(entry_id, file, giphy_url, upload_folder, allowed_extensions):
     """Handle Giphy URL or file upload."""
@@ -67,41 +71,66 @@ def create_upload_folder(upload_folder):
     if not path.exists(upload_folder):
         makedirs(upload_folder, exist_ok=True)
 
-def get_formatted_entries(entries):
-    """Formats entries for display, including additional attributes."""
-    data = []
-    today = str(date.today())
-    index = next((i for i, entry in enumerate(entries) if entry.date >= today), len(entries))
+def get_data(db):
+    """Returns formatted entries and categories data with complete category details for each entry."""
+    # Preload categories to avoid N+1 query issues
+    entries = db.session.query(Entry).options(joinedload(Entry.category)).order_by(Entry.date).all()
+    categories = db.session.query(Category).all()
 
-    for i, entry in enumerate(entries):
-        entry_data = {
-            'date': entry.date,
-            'date_formatted': format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
-            'category': entry.category,
-            'title': entry.title,
-            'description': entry.description,
-            'url': entry.url,
-            'last_updated_by': entry.last_updated_by,
-            'image_url': url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
-            'image_url_external': url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-            'index': i - index,
-            'isToday': entry.date == today,
-            'cancelled': entry.cancelled
-        }
-        data.append(entry_data)
+    # Determine the first upcoming or current entry
+    today_str = str(date.today())
+    index = next((i for i, entry in enumerate(entries) if entry.date >= today_str), len(entries))
+    
+    formatted_entries = [{
+        "id": entry.id,
+        "date": entry.date,
+        "date_formatted": format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
+        "title": entry.title,
+        "description": entry.description,
+        "category": {
+            "id": entry.category.id,
+            "name": entry.category.name,
+            "symbol": entry.category.symbol,
+            "color_hex": entry.category.color_hex,
+            "color_hex_variation": adjust_lightness(entry.category.color_hex),  # Assumes a function to adjust color brightness
+            "repeat_annually": entry.category.repeat_annually,
+            "display_celebration": entry.category.display_celebration,
+            "is_protected": entry.category.is_protected,
+            "last_updated_by": entry.category.last_updated_by
+        },
+        "url": entry.url,
+        "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
+        "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
+        "index": i - index,
+        "is_today": entry.date == today_str,
+        "cancelled": entry.cancelled,
+        "last_updated_by": entry.last_updated_by
+    } for i, entry in enumerate(entries)]
+    
+    formatted_categories = [{
+        "id": category.id,
+        "name": category.name,
+        "symbol": category.symbol,
+        "color_hex": category.color_hex,
+        "color_hex_variation": adjust_lightness(category.color_hex),
+        "repeat_annually": category.repeat_annually,
+        "display_celebration": category.display_celebration,
+        "is_protected": category.is_protected,
+        "last_updated_by": category.last_updated_by
+    } for category in categories]
 
-    return data
+    return {"entries": formatted_entries, "categories": formatted_categories}
 
-def create_zip(entries, upload_folder):
+def create_zip(data, upload_folder):
     """Creates a zip file containing entries data and associated images."""
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
         # Add entries.json file
-        entries_json = jsonify(entries).get_data(as_text=True)
-        zip_file.writestr('entries.json', entries_json)
+        entries_json = jsonify(data).get_data(as_text=True)
+        zip_file.writestr('data.json', entries_json)
         
         # Add image files
-        for entry in entries:
+        for entry in data.get('entries'):
             if entry['image_url']:
                 image_filename = entry['image_url'].split('/')[-1]
                 image_path = path.join(upload_folder, image_filename)
@@ -110,3 +139,21 @@ def create_zip(entries, upload_folder):
     
     zip_buffer.seek(0)
     return zip_buffer
+
+def hex_to_rgb(value):
+    """Convert hex to RGB"""
+    value = value.lstrip('#')
+    lv = len(value)
+    return tuple(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+
+def rgb_to_hex(rgb):
+    """Convert RGB to hex"""
+    return '#%02x%02x%02x' % rgb
+
+def adjust_lightness(color, adjustment_factor=0.9):
+    """Adjust the lightness of the color"""
+    r, g, b = hex_to_rgb(color)
+    h, l, s = rgb_to_hls(r/255., g/255., b/255.)
+    l = max(0, min(1, l * adjustment_factor))  # Ensure lightness stays within 0 to 1
+    r, g, b = hls_to_rgb(h, l, s)
+    return rgb_to_hex((int(r * 255), int(g * 255), int(b * 255)))
