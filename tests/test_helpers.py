@@ -1,3 +1,7 @@
+from io import BytesIO
+from os import path
+from urllib.parse import unquote_plus
+import zipfile
 from flask.testing import FlaskClient
 from unittest import mock
 from datetime import datetime
@@ -100,37 +104,35 @@ def test_get_data(test_client: FlaskClient, init_database: None):
         assert entry['title'] == "John's Birthday"
         assert entry['category']['name'] == "Birthday"
 
-def test_create_zip(test_client: FlaskClient, init_database: None):
-    # Given: A list of entries and mocked file system operations
-    # When: create_zip is called
-    # Then: It should return a buffer with the ZIP file content
-    
+def test_create_zip(test_client, init_database):
     data = {
-    'categories': [
-        {
-        'color_hex': '#FF8A65',
-        'name': 'Cake',
-        'symbol': '🍰'
-        }
-    ],
-    'entries': [
-        {
-        'category': {
-            'color_hex': '#FF8A65',
-            'name': 'Cake',
-            'symbol': '🍰'
-        },
-        'date': '2024-06-01',
-        'image_url': '/uploads/test.jpg',
-        'title': 'Old',
-        }
-    ]
+        'categories': [{'color_hex': '#FF8A65', 'name': 'Cake', 'symbol': '🍰'}],
+        'entries': [{
+            'category': {'color_hex': '#FF8A65', 'name': 'Cake', 'symbol': '🍰'},
+            'date': '2024-06-01',
+            'image_url': '/uploads/test.jpg',
+            'title': 'Old',
+        }]
     }
 
+    # Assuming the path '/uploads/test.jpg' needs to be converted to an absolute path
+    # This would typically depend on how your application resolves paths
+    upload_folder = '/full/path/to/uploads'
+    expected_image_path = path.join(upload_folder, 'test.jpg')
+    db_uri = 'sqlite:////app/data/data.db'
+    expected_db_path = unquote_plus(db_uri[10:])
+
+    # Mock the os.path.exists to always return True
     with mock.patch('os.path.exists', return_value=True):
-        with mock.patch('builtins.open', mock.mock_open(read_data='test content')):
-            with mock.patch('app.helpers.path.join', return_value='uploads/test.jpg'):
-                with mock.patch('zipfile.ZipFile.write') as mock_write:
-                    zip_buffer = create_zip(data, 'uploads')
-                    assert zip_buffer is not None
-                    mock_write.assert_any_call('uploads/test.jpg', arcname='test.jpg')
+        with mock.patch('builtins.open', mock.mock_open(read_data='test content'), create=True):
+            with mock.patch('zipfile.ZipFile') as mock_zip:
+                zip_file_instance = mock_zip.return_value.__enter__.return_value
+                zip_file_instance.write = mock.Mock()
+
+                # Call function
+                create_zip(data, upload_folder, db_uri)
+
+                # Check if the image and database file were correctly written to the zip
+                zip_file_instance.write.assert_any_call(expected_image_path, arcname='test.jpg')
+                zip_file_instance.write.assert_any_call(expected_db_path, arcname='data.db')
+

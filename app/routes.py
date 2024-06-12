@@ -221,17 +221,20 @@ def init_app(app):
         except Exception as e:
             current_app.logger.error(f"Error toggling the cancelled state of the entry: {e}")
             return jsonify({"error": "Failed to update entry"}), 500
-    
+
     @app.route('/timeline', methods=['GET'])
     def timeline():
         """Generate a timeline view of entries, calculating positions based on dates."""
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
-        data = get_data(db)
+        category_filter = request.args.get('categories')  # Get category filter from query parameters
+        
+        data = get_data(db, category_filter)
         display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration') for entry in data.get('entries'))
+        
         return make_response(render_template('timeline/timeline.html', entries=data.get('entries'), categories=data.get('categories'), display_celebration=display_celebration, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
-    
+
     @app.route('/api/data', methods=['GET'])
     def api_data():
         """Return a JSON response with data for all data, including image URLs.""" 
@@ -331,7 +334,7 @@ def init_app(app):
     def export_data():
         """Export all data and associated images as a zip file."""
         data = get_data(db)
-        zip_buffer = create_zip(data, app.config['UPLOAD_FOLDER'])
+        zip_buffer = create_zip(data, app.config['UPLOAD_FOLDER'], app.config['SQLALCHEMY_DATABASE_URI'])
         
         response = make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='data_export.zip'))
         response.headers['Content-Disposition'] = 'attachment; filename=data_export.zip'

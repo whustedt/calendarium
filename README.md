@@ -22,7 +22,7 @@ Alternatively, you can set up a development container or any other Python enviro
 flask run --debug
 ```
 
-For production you would use Gunicorn as a WSGI server:
+For production, you would use Gunicorn as a WSGI server:
 ```bash
 gunicorn -w 4 -b "127.0.0.1:5000" "app:create_app()"
 ```
@@ -54,8 +54,8 @@ Below are the available API endpoints with their respective usage:
   - Returns the main page of the application.
 
 - **Timeline**
-  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>`
-  - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, and `font-scale` query parameters to adjust the height of the timeline, set the font, and apply a scale factor to the font size respectively (e.g., `timeline-height=100%`, `font-family=Arial`, `font-scale=1.5`). This view uses the Flickity library.
+  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>&categories=<category_names>`
+  - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, `font-scale`, and `categories` query parameters to adjust the height of the timeline, set the font, apply a scale factor to the font size, and filter entries by specified categories respectively (e.g., `categories=Cake,Birthday`).
 
 - **Create Entry**
   - **POST** `/create`

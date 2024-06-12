@@ -4,7 +4,7 @@ from babel.dates import format_date
 from os import path, makedirs
 import zipfile
 from io import BytesIO
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote_plus
 import requests
 from werkzeug.utils import secure_filename
 from colorsys import rgb_to_hls, hls_to_rgb
@@ -71,10 +71,19 @@ def create_upload_folder(upload_folder):
     if not path.exists(upload_folder):
         makedirs(upload_folder, exist_ok=True)
 
-def get_data(db):
+def get_data(db, category_filter=None):
     """Returns formatted entries and categories data with complete category details for each entry."""
+    # Parse the category_filter if provided
+    filter_categories = category_filter.split(',') if category_filter else None
+
     # Preload categories to avoid N+1 query issues
-    entries = db.session.query(Entry).options(joinedload(Entry.category)).order_by(Entry.date).all()
+    query = db.session.query(Entry).options(joinedload(Entry.category)).order_by(Entry.date)
+    
+    if filter_categories:
+        # Filter entries based on the category names
+        query = query.join(Category).filter(Category.name.in_(filter_categories))
+    
+    entries = query.all()
     categories = db.session.query(Category).all()
 
     # Determine the first upcoming or current entry
@@ -121,8 +130,8 @@ def get_data(db):
 
     return {"entries": formatted_entries, "categories": formatted_categories}
 
-def create_zip(data, upload_folder):
-    """Creates a zip file containing entries data and associated images."""
+def create_zip(data, upload_folder, db_uri):
+    """Creates a zip file containing entries data, associated images, and the database file."""
     zip_buffer = BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
         # Add entries.json file
@@ -136,7 +145,13 @@ def create_zip(data, upload_folder):
                 image_path = path.join(upload_folder, image_filename)
                 if path.exists(image_path):
                     zip_file.write(image_path, arcname=image_filename)
-    
+
+        # Add the database file if the URI points to a SQLite database
+        if db_uri.startswith("sqlite:///"):
+            db_path = unquote_plus(db_uri[10:])  # Strip 'sqlite:///' and decode URI encoding
+            if path.exists(db_path):
+                zip_file.write(db_path, arcname='data.db')
+
     zip_buffer.seek(0)
     return zip_buffer
 

@@ -1,3 +1,4 @@
+from app.helpers import get_data
 from app.models import Entry, Category
 from app import db
 from datetime import datetime, date, timedelta
@@ -64,6 +65,51 @@ def test_timeline_view(test_client):
     response = test_client.get('/timeline')
     assert response.status_code == 200
     # Additional assertions can check specific content or data structures1
+
+def test_timeline_view_with_category_filter(test_client, init_database):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN the '/timeline' page is requested (GET) with a category filter
+    THEN check the response is valid and only entries from specified categories are returned
+    """
+    # Add another category and entry to test filtering
+    category = db.session.query(Category).filter_by(name="Release").first()
+    if not category:
+        category = Category(name="Release", symbol="🚀", color_hex="#FF6347", repeat_annually=False, display_celebration=False, is_protected=False)
+        db.session.add(category)
+        db.session.commit()
+
+    entry = Entry(date="2023-06-01", category_id=category.id, title="Release Update", description="Major software release.")
+    db.session.add(entry)
+    db.session.commit()
+
+    # Request timeline with category filter
+    response = test_client.get('/timeline?categories=Release')
+    assert response.status_code == 200
+    assert b"Release Update" in response.data
+    assert b"Birthday" not in response.data  # Entry from another category should not appear
+
+def test_timeline_view_without_category_filter(test_client, init_database):
+    """
+    GIVEN a Flask application configured for testing
+    WHEN the '/timeline' page is requested (GET) without a category filter
+    THEN check the response is valid and all entries are returned
+    """
+    # Add another category and entry to test filtering
+    category = db.session.query(Category).filter_by(name="Release").first()
+    if not category:
+        category = Category(name="Release", symbol="🚀", color_hex="#FF6347", repeat_annually=False, display_celebration=False, is_protected=False)
+        db.session.add(category)
+        db.session.commit()
+    
+    entry = Entry(date="2023-06-01", category_id=category.id, title="Release Update", description="Major software release.")
+    db.session.add(entry)
+    db.session.commit()
+
+    response = test_client.get('/timeline')
+    assert response.status_code == 200
+    assert b"Birthday" in response.data  # Ensure entries from all categories are displayed
+    assert b"Release Update" in response.data  # Assuming this entry was added in the previous test
 
 def test_create_entry_with_invalid_data(test_client):
     """
