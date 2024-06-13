@@ -107,6 +107,39 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/categories/delete/<int:id>`
   - Deletes a category if it is not associated with any entries.
 
+## Database Schema
+
+Below is the database schema visualized using a Mermaid diagram:
+
+```mermaid
+classDiagram
+    class Category {
+        +int id
+        +string name : unique, not null
+        +string symbol : not null
+        +string color_hex : not null
+        +bool repeat_annually : default=false, not null
+        +bool display_celebration : default=false, not null
+        +bool is_protected : default=false, not null
+        +string last_updated_by : nullable [IP of last editor]
+    }
+
+    class Entry {
+        +int id
+        +string date : not null
+        +int category_id : ForeignKey, not null
+        +Category category : relationship
+        +string title : not null
+        +string description : nullable
+        +string image_filename : nullable
+        +string url : nullable
+        +bool cancelled : default=false, not null
+        +string last_updated_by : nullable [IP of last editor]
+    }
+
+    Category "1" o-- "*" Entry
+```
+
 ## Grafana Integration
 
 This application supports integration with Grafana through a Simple JSON Datasource, enabling Grafana to pull data for visualization purposes. Here are the endpoints provided for Grafana:
