@@ -37,14 +37,19 @@
             {% for entry in entries %}
                 {% set date_class = "highlight" if entry.is_today else ("past" if entry.index < 0 else "") %}
                 {% set initial_focus = "initial-focus" if entry.index == -2 else "" %}
-                {% set img_class = "with-img" if entry.image_url else "" %}
                 {% set cancelled_class = "cancelled" if entry.cancelled else "" %}
                 {% if date_class == "past" %}
                     {% set background_style = "background: linear-gradient(135deg, #5c6370, #434A54); background-color: #5c6370;" %}
                 {% else %}
                     {% set background_style = "background: linear-gradient(135deg, " ~ entry.category.color_hex ~ ", " ~ entry.category.color_hex_variation ~ "); background-color: " ~ entry.category.color_hex ~ ";" %}
-                {% endif %}  
-                {% set img_style = "background-image: url('" + entry.image_url + "');" if entry.image_url else "" %}
+                {% endif %}
+                {% if entry.image_url and (date_class != 'past' or load_past_images) %}
+                    {% set img_class = "with-img" %}
+                    {% set img_style = "background-image: url('" + entry.image_url + "');" %}
+                {% else %}
+                    {% set img_class = "" %}
+                    {% set img_style = "" %}
+                {% endif %}
                 {% set filter_style = "filter: grayscale(100%);" if date_class == "past" else "" %}
                 <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
                     <span class="symbol {{ entry.category.name }}">{{ entry.category.symbol }}</span> <!-- Display the category symbol -->

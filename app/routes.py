@@ -229,11 +229,12 @@ def init_app(app):
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
         category_filter = request.args.get('categories')  # Get category filter from query parameters
+        load_past_images = request.args.get('load-past-images', default='true').lower() == 'true'
         
         data = get_data(db, category_filter)
         display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration') for entry in data.get('entries'))
         
-        return make_response(render_template('timeline/timeline.html', entries=data.get('entries'), categories=data.get('categories'), display_celebration=display_celebration, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
+        return make_response(render_template('timeline/timeline.html', entries=data.get('entries'), categories=data.get('categories'), load_past_images=load_past_images, display_celebration=display_celebration, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
 
     @app.route('/api/data', methods=['GET'])
     def api_data():

@@ -54,8 +54,9 @@ Below are the available API endpoints with their respective usage:
   - Returns the main page of the application.
 
 - **Timeline**
-  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>&categories=<category_names>`
-  - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, `font-scale`, and `categories` query parameters to adjust the height of the timeline, set the font, apply a scale factor to the font size, and filter entries by specified categories respectively (e.g., `categories=Cake,Birthday`).
+  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>&categories=<category_names>&load-past-images=<load>`
+  - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, `font-scale`, `categories`, and `load-past-images` query parameters to adjust the height of the timeline, set the font, apply a scale factor to the font size, filter entries by specified categories, and control the loading of images for past entries respectively. 
+    - Example: `/timeline?timeline-height=100%&font-family=Arial&font-scale=1.5&categories=Cake,Birthday&load-past-images=false` This would render a timeline with Arial font, increased by 1.5 times, showing only entries under 'Cake' and 'Birthday' categories, without loading images for past events.
 
 - **Create Entry**
   - **POST** `/create`
