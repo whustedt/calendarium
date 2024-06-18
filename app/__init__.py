@@ -16,7 +16,6 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     scheduler.init_app(app)
-    logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
     from .routes import init_app as init_routes
     init_routes(app, scheduler)
@@ -32,8 +31,8 @@ def create_app(config_class=Config):
         if not app.config['TESTING']:
             from .helpers import create_upload_folder
             create_upload_folder(app.config['UPLOAD_FOLDER'])
-
+            scheduler.start()
+        
         upgrade() # Apply any pending migrations
-        scheduler.start()
     
     return app

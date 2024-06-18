@@ -254,6 +254,7 @@ def init_app(app, scheduler):
             for entry in serial_entries:
                 entry.date = f"{current_year}-{entry.date.split('-')[1]}-{entry.date.split('-')[2]}"
             db.session.commit()
+            scheduler.app.logger.info("All serial entries have been updated to the current year")
             return jsonify({"message": "All serial entries have been updated to the current year"}), 200
 
     @scheduler.task('cron', id='purge_old_entries', month='*', day=1, hour=5, minute=0)
@@ -273,6 +274,7 @@ def init_app(app, scheduler):
                         os.remove(image_path)
                 db.session.delete(entry)
             db.session.commit()
+            scheduler.app.logger.info("Old entries have been purged")
             return jsonify({"message": "Old entries have been purged"}), 200
     
     @app.route('/batch-import', methods=['POST'])
