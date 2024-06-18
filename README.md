@@ -45,6 +45,17 @@ To populate the application with sample data, run:
 curl -X POST http://127.0.0.1:5000/batch-import -H "Content-Type: application/json" -d @testdata.json
 ```
 
+## Scheduled Tasks
+
+### Task Configuration
+
+- **Purge Old Entries**
+  - Set to automatically execute at the start of each month.
+- **Update Serial Entries**
+  - Scheduled to run at the start of every new year.
+
+These tasks use the APScheduler, with the scheduler API enabled for enhanced interaction through HTTP endpoints. More details and the API can be accessed here: [APScheduler API Documentation](https://viniciuschiele.github.io/flask-apscheduler/rst/api.html).
+
 ## API Endpoints
 
 Below are the available API endpoints with their respective usage:

@@ -6,3 +6,4 @@ requests
 python-dotenv
 Flask-Migrate
 validators
+Flask-APScheduler
