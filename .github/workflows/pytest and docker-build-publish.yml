@@ -63,7 +63,7 @@ jobs:
       # Build and push Docker image with Buildx (only if tests pass)
       - name: Build and push Docker image
         if: success()  # This ensures this step only runs if previous steps (including tests) are successful
-        uses: docker/build-push-action@v6.0.0
+        uses: docker/build-push-action@v6.2.0
         with:
           context: .
           push: true
