@@ -69,6 +69,18 @@ Below are the available API endpoints with their respective usage:
   - Displays a timeline of all entries. Allows optional `timeline-height`, `font-family`, `font-scale`, `categories`, and `load-past-images` query parameters to adjust the height of the timeline, set the font, apply a scale factor to the font size, filter entries by specified categories, and control the loading of images for past entries respectively. 
     - Example: `/timeline?timeline-height=100%&font-family=Arial&font-scale=1.5&categories=Cake,Birthday&load-past-images=false` This would render a timeline with Arial font, increased by 1.5 times, showing only entries under 'Cake' and 'Birthday' categories, without loading images for past events.
 
+- **Timeline**
+  - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>&categories=<category_names>&max-past-entries=<number>`
+  - Displays a timeline of all entries. Supports the following optional query parameters:
+    - timeline-height: Sets the CSS height of the timeline.
+    - font-family: Specifies the font used.
+    - font-scale: Applies a scaling factor to the font sizes.
+    - categories: Comma-separated list of category names to filter entries.
+    - max-past-entries: Limits the number of past entries displayed (only the most recent past entries up to this number are shown).
+  - Example:
+    /timeline?timeline-height=100%&font-family=Arial&font-scale=1.5&categories=Cake,Birthday&max-past-entries=5
+    This renders a timeline using Arial font scaled by 1.5, filtering to show only entries under “Cake” and “Birthday” categories and including at most the last five past entries.
+
 - **Create Entry**
   - **POST** `/create`
   - Creates a new entry. Requires form data including `date`, `category`, `title`, and `description`.

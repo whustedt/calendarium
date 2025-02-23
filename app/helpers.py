@@ -71,8 +71,11 @@ def create_upload_folder(upload_folder):
     if not path.exists(upload_folder):
         makedirs(upload_folder, exist_ok=True)
 
-def get_data(db, category_filter=None):
-    """Returns formatted entries and categories data with complete category details for each entry."""
+def get_data(db, category_filter=None, max_past_entries=None):
+    """Returns formatted entries and categories data with complete category details for each entry.
+    
+    If max_past_entries is provided, only the most recent past entries up to that count will be included.
+    """
     # Parse the category_filter if provided
     filter_categories = category_filter.split(',') if category_filter else None
 
@@ -86,9 +89,18 @@ def get_data(db, category_filter=None):
     entries = query.all()
     categories = db.session.query(Category).all()
 
-    # Determine the first upcoming or current entry
+    # Determine the pivot: the first upcoming or current entry (based on today’s date)
     today_str = str(date.today())
-    index = next((i for i, entry in enumerate(entries) if entry.date >= today_str), len(entries))
+    pivot = next((i for i, entry in enumerate(entries) if entry.date >= today_str), len(entries))
+    
+    # Split past and upcoming entries. Limit past entries if max_past_entries is provided.
+    past_entries = entries[:pivot]
+    future_entries = entries[pivot:]
+    if max_past_entries is not None:
+        past_entries = past_entries[-max_past_entries:]
+    filtered_entries = past_entries + future_entries
+    # The pivot for the filtered list is now the count of past entries kept
+    filtered_pivot = len(past_entries)
     
     formatted_entries = [{
         "id": entry.id,
@@ -101,7 +113,7 @@ def get_data(db, category_filter=None):
             "name": entry.category.name,
             "symbol": entry.category.symbol,
             "color_hex": entry.category.color_hex,
-            "color_hex_variation": adjust_lightness(entry.category.color_hex),  # Assumes a function to adjust color brightness
+            "color_hex_variation": adjust_lightness(entry.category.color_hex),
             "repeat_annually": entry.category.repeat_annually,
             "display_celebration": entry.category.display_celebration,
             "is_protected": entry.category.is_protected,
@@ -110,11 +122,11 @@ def get_data(db, category_filter=None):
         "url": entry.url,
         "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
         "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-        "index": i - index,
+        "index": i - filtered_pivot,
         "is_today": entry.date == today_str,
         "cancelled": entry.cancelled,
         "last_updated_by": entry.last_updated_by
-    } for i, entry in enumerate(entries)]
+    } for i, entry in enumerate(filtered_entries)]
     
     formatted_categories = [{
         "id": category.id,
@@ -129,7 +141,7 @@ def get_data(db, category_filter=None):
     } for category in categories]
 
     return {"entries": formatted_entries, "categories": formatted_categories}
-
+    
 def create_zip(data, upload_folder, db_uri):
     """Creates a zip file containing entries data, associated images, and the database file."""
     zip_buffer = BytesIO()
