@@ -16,10 +16,10 @@
     <!-- Inline style to handle dynamic height and font family -->
     <style>
         html, body {
-            font-family: {{ font_family }}; /* Use the font-family value passed from Flask */
+            font-family: {{ font_family }};
         }
         .timeline {
-            height: {{ timeline_height }}; /* Use the height value passed from Flask */
+            height: {{ timeline_height }};
         }
         .timeline-item .date {font-size: calc(8cqh * {{ font_scale }});}
         .timeline-item .title {font-size: calc(12cqh * {{ font_scale }});}
@@ -43,7 +43,7 @@
                 {% else %}
                     {% set background_style = "background: linear-gradient(135deg, " ~ entry.category.color_hex ~ ", " ~ entry.category.color_hex_variation ~ "); background-color: " ~ entry.category.color_hex ~ ";" %}
                 {% endif %}
-                {% if entry.image_url and (date_class != 'past' or load_past_images) %}
+                {% if entry.image_url %}
                     {% set img_class = "with-img" %}
                     {% set img_style = "background-image: url('" + entry.image_url + "');" %}
                 {% else %}
@@ -52,7 +52,7 @@
                 {% endif %}
                 {% set filter_style = "filter: grayscale(100%);" if date_class == "past" else "" %}
                 <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
-                    <span class="symbol {{ entry.category.name }}">{{ entry.category.symbol }}</span> <!-- Display the category symbol -->
+                    <span class="symbol {{ entry.category.name }}">{{ entry.category.symbol }}</span>
                     <span class="date">{{ entry.date_formatted }}</span>
                     <span class="title">{{ entry.title }}</span>
                     {% if entry.description %}

@@ -224,18 +224,33 @@ def init_app(app, scheduler):
 
     @app.route('/timeline', methods=['GET'])
     def timeline():
-        """Generate a timeline view of entries, calculating positions based on dates."""
+        """Generate a timeline view of entries, calculating positions based on dates.
+        
+        Accepts the following query parameters:
+          - timeline-height: CSS height value for the timeline.
+          - font-family: CSS font-family value.
+          - font-scale: Scale factor for font sizes.
+          - categories: Comma-separated list of category names to filter entries.
+          - max-past-entries: Maximum number of past entries to include.
+        """
         timeline_height = request.args.get('timeline-height', default='calc(50vh - 20px)')[:25]
         font_family = request.args.get('font-family', default='sans-serif')[:35]
         font_scale = request.args.get('font-scale', default='1')[:5]
-        category_filter = request.args.get('categories')  # Get category filter from query parameters
-        load_past_images = request.args.get('load-past-images', default='true').lower() == 'true'
+        category_filter = request.args.get('categories')
+        max_past_entries = request.args.get('max-past-entries', default=None, type=int)
         
-        data = get_data(db, category_filter)
-        display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration') for entry in data.get('entries'))
+        data = get_data(db, category_filter, max_past_entries)
+        display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration')
+                                   for entry in data.get('entries'))
         
-        return make_response(render_template('timeline/timeline.html', entries=data.get('entries'), categories=data.get('categories'), load_past_images=load_past_images, display_celebration=display_celebration, timeline_height=timeline_height, font_family=font_family, font_scale=font_scale))
-
+        return make_response(render_template('timeline/timeline.html', 
+                                             entries=data.get('entries'), 
+                                             categories=data.get('categories'),
+                                             display_celebration=display_celebration,
+                                             timeline_height=timeline_height, 
+                                             font_family=font_family, 
+                                             font_scale=font_scale))
+    
     @app.route('/api/data', methods=['GET'])
     def api_data():
         """Return a JSON response with data for all data, including image URLs.""" 
