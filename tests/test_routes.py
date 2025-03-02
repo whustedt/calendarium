@@ -1,4 +1,4 @@
-from app.helpers import get_data
+from app.helpers import get_entry_data
 from app.models import Entry, Category
 from app import db
 from datetime import datetime, date, timedelta

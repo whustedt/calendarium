@@ -30,13 +30,26 @@ a {
 }
 
 .form-section {
+    display: flex;
+    flex-direction: column;
     margin-bottom: 10px;
 }
 
 .form-section label {
     display: flex;
     margin-bottom: 4px;
+    font-weight: bold;
     flex: 1; /* Allows the label to take up the maximum width */
+}
+
+textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    min-height: 100px;
+    resize: vertical;
 }
 
 .form-section label.required::after {
@@ -66,9 +79,9 @@ a {
 
 input[type="text"], input[type="file"], input[type="date"], input[type="url"] {
     width: 100%;
-    padding: 8px;
+    padding: 6px;
     margin: 4px 0;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
 }
@@ -103,12 +116,23 @@ table {
     border-collapse: collapse;
     margin-top: 20px;
     background-color: white;
+    table-layout: fixed; /* Ensures even spacing */
 }
 
 th, td {
     border: 1px solid #ddd;  /* Light gray border */
     padding: 8px;
     text-align: left;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+td textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 6px;
+    border: 1px solid #ddd;
+    resize: vertical;
 }
 
 .centered {
@@ -156,6 +180,9 @@ button.edit, button.cancel-restore, button.delete {
     font-size: 1rem;
     border-radius: 4px;
     margin: 1px 0px;
+    display: block;
+    width: 100%;
+    margin-top: 5px;
 }
 
 button.delete {
