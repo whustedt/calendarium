@@ -23,6 +23,7 @@ flask run --debug
 ```
 
 For production, you would use Gunicorn as a WSGI server:
+
 ```bash
 gunicorn -w 4 -b "127.0.0.1:5000" "app:create_app()"
 ```
@@ -67,13 +68,15 @@ Below are the available API endpoints with their respective usage:
 - **Timeline**
   - **GET** `/timeline?timeline-height=<height>&font-family=<font>&font-scale=<scale>&categories=<category_names>&max-past-entries=<number>`
   - Displays a timeline of all entries. Supports the following optional query parameters:
-    - timeline-height: Sets the CSS height of the timeline.
-    - font-family: Specifies the font used.
-    - font-scale: Applies a scaling factor to the font sizes.
-    - categories: Comma-separated list of category names to filter entries.
-    - max-past-entries: Limits the number of past entries displayed (only the most recent past entries up to this number are shown).
-  - Example:
+    - `timeline-height`: Sets the CSS height of the timeline.
+    - `font-family`: Specifies the font used.
+    - `font-scale`: Applies a scaling factor to the font sizes.
+    - `categories`: Comma-separated list of category names to filter entries.
+    - `max-past-entries`: Limits the number of past entries displayed (only the most recent past entries up to this number are shown).
+  - **Example:**
+    ```
     /timeline?timeline-height=100%&font-family=Arial&font-scale=1.5&categories=Cake,Birthday&max-past-entries=5
+    ```
     This renders a timeline using Arial font scaled by 1.5, filtering to show only entries under “Cake” and “Birthday” categories and including at most the last five past entries.
 
 - **Create Entry**
@@ -90,7 +93,7 @@ Below are the available API endpoints with their respective usage:
 
 - **Toggle Entry Cancellation**
   - **POST** `/toggle_canceled/<int:id>`
-  - Toggles the cancellation status of an entry by ID. The route changes the `canceled` state of the entry to either `True` or `False` depending on its current state. A successful operation will redirect back to the main page, updating the entry's status in the view.
+  - Toggles the cancellation status of an entry by ID. The route changes the `cancelled` state of the entry to either `True` or `False` depending on its current state. A successful operation will redirect back to the main page, updating the entry's status in the view.
 
 - **API Data Access**
   - **GET** `/api/data`
@@ -102,7 +105,7 @@ Below are the available API endpoints with their respective usage:
 
 - **Batch Import**
   - **POST** `/batch-import`
-  - Imports a batch of entries from a JSON file.
+  - Imports a batch of entries from a JSON file. *Note: This endpoint now also processes quotes.*
 
 - **Update Serial Entries**
   - **POST** `/update-serial-entries`
@@ -111,6 +114,41 @@ Below are the available API endpoints with their respective usage:
 - **Purge Old Entries**
   - **POST** `/purge-old-entries`
   - Deletes all entries where the date is in the past and the category is not marked as protected.
+
+## Quote Management
+
+The application now includes full quote management functionality. Quotes can be managed via dedicated API endpoints as well as through an integrated admin interface.
+
+### Quote API Endpoints
+
+- **View and Manage Quotes**
+  - **GET** `/quotes/`
+  - Returns an HTML page displaying all quotes along with a form to add a new quote.
+
+- **Create Quote**
+  - **POST** `/quotes/create`
+  - Creates a new quote. Requires form data including:
+    - `text`: The quote content.
+    - `author`: The author of the quote.
+
+- **Update Quote**
+  - **POST** `/quotes/edit/<int:id>`
+  - Updates an existing quote with the provided ID. Accepts form data with new values for `text` and `author`.
+
+- **Delete Quote**
+  - **POST** `/quotes/delete/<int:id>`
+  - Deletes the quote with the specified ID.
+
+- **Current Quote API**
+  - **GET** `/quotes/current`
+  - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given week (using the calendar week as a seed), ensuring that the "current quote" remains the same throughout the week.
+
+### Admin Interface for Quote Management
+
+The quote management interface has been simplified into a single HTML file (accessible via `/quotes/`) which includes:
+- A form at the top for adding new quotes.
+- An inline editable table for updating or deleting existing quotes.
+- Full-width text areas for better readability of quote text.
 
 ## Category Management
 
@@ -153,6 +191,13 @@ classDiagram
         +string image_filename : nullable
         +string url : nullable
         +bool cancelled : default=false, not null
+        +string last_updated_by : nullable [IP of last editor]
+    }
+
+    class Quote {
+        +int id
+        +string text : not null
+        +string author : not null
         +string last_updated_by : nullable [IP of last editor]
     }
 
@@ -231,7 +276,7 @@ These methods are designed to accommodate different network security policies wh
 
 This project uses Flickity, which is licensed under the GPLv3.
 
- As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.
+As such, modifications to the Flickity source code used in this project are documented in the repository. To comply with the GPLv3, all source code for this application is available under the same license. The full license text is included in the LICENSE file in this repository.
 
 ## Icon Attribution
 

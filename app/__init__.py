@@ -26,6 +26,12 @@ def create_app(config_class=Config):
     from .routes_categories import init_categories_routes
     init_categories_routes(app)
 
+    from .routes_quotes import init_quote_routes
+    init_quote_routes(app)
+
+    from .routes_maintenance import init_maintenance_routes
+    init_maintenance_routes(app)
+
     with app.app_context():
 
         if not app.config['TESTING']:

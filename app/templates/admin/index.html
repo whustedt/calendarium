@@ -119,6 +119,9 @@
         <form action="{{ url_for('categories') }}" method="get">
             <button type="submit">Manage Categories</button>
         </form>
+        <form action="{{ url_for('list_quotes') }}" method="get">
+            <button type="submit">Manage Quotes</button>
+        </form>
         <form action="{{ url_for('api_data') }}" method="get">
             <button class="maintenance" type="submit">Download JSON Data</button>
         </form>

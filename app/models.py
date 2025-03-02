@@ -21,3 +21,9 @@ class Entry(db.Model):
     url = db.Column(db.String(1000), nullable=True)
     cancelled = db.Column(db.Boolean, nullable=False, default=False)
     last_updated_by = db.Column(db.String(130), nullable=True)
+
+class Quote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(1000), nullable=False)
+    author = db.Column(db.String(200), nullable=False)
+    last_updated_by = db.Column(db.String(130), nullable=True)

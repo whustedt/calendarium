@@ -9,7 +9,7 @@ from app.models import Entry, Category
 from app import db
 from app.helpers import (
     handle_image_upload, download_giphy_image, is_valid_giphy_url, handle_image, 
-    parse_date, allowed_file, get_data, create_zip
+    parse_date, allowed_file, get_entry_data, create_zip
 )
 
 def test_handle_image_upload_file(mock_file: mock.Mock, test_client: FlaskClient):
@@ -98,7 +98,7 @@ def test_get_data(test_client: FlaskClient, init_database: None):
     # When: get_data is called
     # Then: It should return correctly formatted entries
     with test_client.application.app_context():
-        formatted_entries = get_data(db)
+        formatted_entries = get_entry_data(db)
         assert len(formatted_entries) == 2
         entry = formatted_entries['entries'][0]
         assert entry['title'] == "John's Birthday"

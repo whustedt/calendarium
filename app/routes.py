@@ -3,7 +3,7 @@ import requests
 from .models import Entry, Category
 from app import db
 from datetime import datetime
-from .helpers import handle_image_upload, parse_date, get_data, create_zip
+from .helpers import handle_image_upload, parse_date, get_entry_data, create_zip
 import os
 import validators
 
@@ -109,7 +109,7 @@ def init_app(app, scheduler):
     @app.route('/', methods=['GET'])
     def index():
         """Display the main admin page."""
-        data = get_data(db)
+        data = get_entry_data(db)
         return render_template('admin/index.html', entries=data['entries'], categories=data['categories'])
 
     @app.route('/create', methods=['POST'])
@@ -189,7 +189,7 @@ def init_app(app, scheduler):
             db.session.commit()
             return redirect(url_for('index'))
 
-        return render_template('admin/update.html', entry=entry, categories=get_data(db)['categories'])
+        return render_template('admin/update.html', entry=entry, categories=get_entry_data(db)['categories'])
 
     @app.route('/delete/<int:id>', methods=['POST'])
     def delete(id):
@@ -239,7 +239,7 @@ def init_app(app, scheduler):
         category_filter = request.args.get('categories')
         max_past_entries = request.args.get('max-past-entries', default=None, type=int)
         
-        data = get_data(db, category_filter, max_past_entries)
+        data = get_entry_data(db, category_filter, max_past_entries)
         display_celebration = any(entry.get('is_today') and entry.get('category').get('display_celebration')
                                    for entry in data.get('entries'))
         
@@ -254,7 +254,7 @@ def init_app(app, scheduler):
     @app.route('/api/data', methods=['GET'])
     def api_data():
         """Return a JSON response with data for all data, including image URLs.""" 
-        return jsonify(get_data(db))
+        return jsonify(get_entry_data(db))
     
     @scheduler.task('cron', id='update_serial_entries', month=1, day=1, hour=3, minute=0)
     @app.route('/update-serial-entries', methods=['POST'])
@@ -291,73 +291,3 @@ def init_app(app, scheduler):
             db.session.commit()
             scheduler.app.logger.info("Old entries have been purged")
             return jsonify({"message": "Old entries have been purged"}), 200
-    
-    @app.route('/batch-import', methods=['POST'])
-    def batch_import():
-        """Import multiple entries from a JSON payload."""
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "No data provided"}), 400
-    
-        # Process categories first
-        if 'categories' in data:
-            for category_data in data['categories']:
-                category = db.session.query(Category).filter_by(name=category_data['name']).first()
-                if not category:
-                    # If category does not exist, create a new one
-                    category = Category(
-                        name=category_data['name'],
-                        symbol=category_data.get('symbol', ''),
-                        color_hex=category_data.get('color_hex', '#FFFFFF'),
-                        repeat_annually=category_data.get('repeat_annually', False),
-                        display_celebration=category_data.get('display_celebration', False),
-                        is_protected=category_data.get('is_protected', False),
-                        last_updated_by=category_data.get('last_updated_by', request.remote_addr)
-                    )
-                    db.session.add(category)
-                else:
-                    # Update existing category with new details
-                    category.symbol = category_data.get('symbol', category.symbol)
-                    category.color_hex = category_data.get('color_hex', category.color_hex)
-                    category.repeat_annually = category_data.get('repeat_annually', category.repeat_annually)
-                    category.display_celebration = category_data.get('display_celebration', category.display_celebration)
-                    category.is_protected = category_data.get('is_protected', category.is_protected)
-                    category.last_updated_by = category_data.get('last_updated_by', request.remote_addr)
-    
-        # Ensure all categories are processed before adding entries
-        db.session.flush()
-    
-        # Process entries
-        if 'entries' in data:
-            for entry_data in data['entries']:
-                category = db.session.query(Category).filter_by(name=entry_data.get('category').get('name')).first()
-                if not category:
-                    return jsonify({"error": f"Category '{entry_data.get('category')}' not found"}), 400
-                if not parse_date(entry_data['date']):
-                    return jsonify({"error": f"Invalid date format for {entry_data['date']}, must be YYYY-MM-DD"}), 400
-                if entry_data.get('url') and not validators.url(entry_data['url']):
-                    return jsonify({"error": f"Invalid URL in data: {entry_data['url']}"}), 400
-    
-                new_entry = Entry(
-                    date=entry_data['date'],
-                    category_id=category.id,
-                    title=entry_data['title'],
-                    description=entry_data.get('description', None),
-                    url=entry_data.get('url', None),
-                    cancelled=entry_data.get('cancelled', False),
-                    last_updated_by=entry_data.get('last_updated_by', request.remote_addr)
-                )
-                db.session.add(new_entry)
-    
-        db.session.commit()
-        return jsonify({"message": "Categories and entries successfully imported"}), 201
-    
-    @app.route('/export-data', methods=['GET'])
-    def export_data():
-        """Export all data and associated images as a zip file."""
-        data = get_data(db)
-        zip_buffer = create_zip(data, app.config['UPLOAD_FOLDER'], app.config['SQLALCHEMY_DATABASE_URI'])
-        
-        response = make_response(send_file(zip_buffer, mimetype='application/zip', as_attachment=True, download_name='data_export.zip'))
-        response.headers['Content-Disposition'] = 'attachment; filename=data_export.zip'
-        return response

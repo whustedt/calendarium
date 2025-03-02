@@ -71,7 +71,7 @@ def create_upload_folder(upload_folder):
     if not path.exists(upload_folder):
         makedirs(upload_folder, exist_ok=True)
 
-def get_data(db, category_filter=None, max_past_entries=None):
+def get_entry_data(db, category_filter=None, max_past_entries=None):
     """Returns formatted entries and categories data with complete category details for each entry.
     
     If max_past_entries is provided, only the most recent past entries up to that count will be included.
