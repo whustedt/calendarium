@@ -139,9 +139,13 @@ The application now includes full quote management functionality. Quotes can be 
   - **POST** `/quotes/delete/<int:id>`
   - Deletes the quote with the specified ID.
 
-- **Current Quote API**
-  - **GET** `/quotes/current`
+- **Current Week Quote API**
+  - **GET** `/quotes/weekly`
   - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given week (using the calendar week as a seed), ensuring that the "current quote" remains the same throughout the week.
+
+- **Current Day Quote API**
+  - **GET** `/quotes/daily`
+  - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given day (using the day as a seed), ensuring that the "current quote" remains the same throughout the day.
 
 ### Admin Interface for Quote Management
 
