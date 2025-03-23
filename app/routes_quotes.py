@@ -39,17 +39,24 @@ def init_quote_routes(app):
         db.session.commit()
         return redirect(url_for('list_quotes'))
 
-    @app.route('/quotes/current', methods=['GET'])
-    def current_quote():
+    def get_random_quote(seed):
         quotes = Quote.query.all()
         if not quotes:
             return jsonify({"error": "No quotes available"}), 404
-        # Use the current calendar week as a seed for consistent random selection
-        week_seed = date.today().isocalendar()[1]
-        random.seed(week_seed)
+        random.seed(seed)
         quote = random.choice(quotes)
         return jsonify({
             "id": quote.id,
             "text": quote.text,
             "author": quote.author
         })
+
+    @app.route('/quotes/weekly', methods=['GET'])
+    def weekly_quote():
+        week_seed = date.today().isocalendar()[1]
+        return get_random_quote(week_seed)
+
+    @app.route('/quotes/daily', methods=['GET'])
+    def daily_quote():
+        day_seed = date.today().day
+        return get_random_quote(day_seed)
