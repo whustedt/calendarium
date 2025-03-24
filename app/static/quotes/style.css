@@ -1,0 +1,71 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
+    color-scheme: light dark;
+    color: var(--text-color);
+    background: transparent;
+}
+
+.quote-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quote {
+    max-width: 80%;
+    text-align: center;
+}
+
+blockquote {
+    margin: 0;
+    font-size: 1.4em;
+    line-height: 1.5;
+    font-style: italic;
+    color: inherit;
+}
+
+footer {
+    margin-top: 1.5rem;
+    font-size: 1rem;
+    color: var(--subtle-color);
+    font-style: normal;
+}
+
+.category {
+    font-size: 0.8em;
+    color: var(--subtle-color);
+    margin-left: 1em;
+    font-style: normal;
+    opacity: 0.6;
+}
+
+.source-link {
+    display: inline-block;
+    color: var(--subtle-color);
+    text-decoration: none;
+    font-size: 1em;
+    font-style: normal;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    margin-left: 0.3em;
+}
+
+.source-link:hover {
+    text-decoration: none;
+    opacity: 1;
+}
+
+:root {
+    --text-color: #000;
+    --subtle-color: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: #fff;
+        --subtle-color: #999;
+    }
+}

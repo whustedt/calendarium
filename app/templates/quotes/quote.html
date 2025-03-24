@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ period }} Quote</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='quotes/style.css') }}">
+</head>
+<body>
+    <div class="quote-container">
+        <div class="quote">
+            <blockquote>
+                {{ quote.text }}
+                <footer>
+                    — <cite>{{ quote.author }}</cite>
+                    {% if quote.url %}
+                    <a href="{{ quote.url }}" target="_blank" class="source-link">•</a>
+                    {% endif %}
+                    {% if quote.category %}
+                    <span class="category">{{ quote.category }}</span>
+                    {% endif %}
+                </footer>
+            </blockquote>
+        </div>
+    </div>
+</body>
+</html>

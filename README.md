@@ -117,48 +117,85 @@ Below are the available API endpoints with their respective usage:
 
 ## Quote Management
 
-The application now includes full quote management functionality. Quotes can be managed via dedicated API endpoints as well as through an integrated admin interface.
+The application includes full quote management functionality with both API endpoints and HTML views.
 
-### Quote API Endpoints
+### Quote Endpoints
 
+#### JSON API Endpoints
+- **Current Week Quote**
+  - **GET** `/quotes/weekly`
+  - Returns a JSON response containing a randomly selected quote
+  - Quote selection is consistent throughout the week using the calendar week as seed
+  - Optional query parameter:
+    - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+
+- **Current Day Quote**
+  - **GET** `/quotes/daily`
+  - Returns a JSON response containing a randomly selected quote
+  - Quote selection is consistent throughout the day using the day as seed
+  - Optional query parameter:
+    - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+
+#### HTML View Endpoints
+- **Weekly Quote View**
+  - **GET** `/quotes/weekly/view`
+  - Returns a styled HTML page displaying the weekly quote
+  - Uses same selection logic as the JSON endpoint
+  - Optional query parameter:
+    - `category`: Filter by category
+
+- **Daily Quote View**
+  - **GET** `/quotes/daily/view`
+  - Returns a styled HTML page displaying the daily quote
+  - Uses same selection logic as the JSON endpoint
+  - Optional query parameter:
+    - `category`: Filter by category
+
+#### Management Endpoints
 - **View and Manage Quotes**
   - **GET** `/quotes/`
-  - Returns an HTML page displaying all quotes along with a form to add a new quote.
+  - Returns an HTML page displaying all quotes with management interface
 
 - **Create Quote**
   - **POST** `/quotes/create`
-  - Creates a new quote. Requires form data including:
-    - `text`: The quote content.
-    - `author`: The author of the quote.
-    - `category`: The category of the quote (optional)
-    - `url`: A URL reference (optional)
+  - Creates a new quote
+  - Required fields:
+    - `text`: Quote content
+    - `author`: Quote author
+  - Optional fields:
+    - `category`: Quote category
+    - `url`: Reference URL
 
 - **Update Quote**
   - **POST** `/quotes/edit/<int:id>`
-  - Updates an existing quote with the provided ID. Accepts form data with new values for `text` and `author`.
+  - Updates existing quote
+  - Accepts same fields as create
 
 - **Delete Quote**
   - **POST** `/quotes/delete/<int:id>`
-  - Deletes the quote with the specified ID.
+  - Deletes quote by ID
 
-- **Current Week Quote API**
-  - **GET** `/quotes/weekly`
-  - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given week (using the calendar week as a seed), ensuring that the "current quote" remains the same throughout the week.
-  - Optional query parameter:
-    - `category`: Filter quotes by category. Multiple categories can be specified as comma-separated values (e.g., `?category=inspiration,motivation`)
+### Example Responses
 
-- **Current Day Quote API**
-  - **GET** `/quotes/daily`
-  - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given day (using the day as a seed), ensuring that the "current quote" remains the same throughout the day.
-  - Optional query parameter:
-    - `category`: Filter quotes by category. Multiple categories can be specified as comma-separated values (e.g., `?category=inspiration,motivation`)
+#### JSON Response
+```json
+{
+    "id": 1,
+    "text": "The quote text",
+    "author": "Author Name",
+    "category": "Inspiration",
+    "url": "https://example.com/source"
+}
+```
 
-### Admin Interface for Quote Management
-
-The quote management interface has been simplified into a single HTML file (accessible via `/quotes/`) which includes:
-- A form at the top for adding new quotes.
-- An inline editable table for updating or deleting existing quotes.
-- Full-width text areas for better readability of quote text.
+#### HTML View
+The HTML views provide a styled presentation including:
+- Formatted quote text
+- Author attribution
+- Category tag (if present)
+- Source link (if URL provided)
+- Responsive layout
+- Consistent styling across different screen sizes
 
 ## Category Management
 

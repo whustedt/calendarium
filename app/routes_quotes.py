@@ -72,12 +72,46 @@ def init_quote_routes(app):
 
     @app.route('/quotes/weekly', methods=['GET'])
     def weekly_quote():
+        """JSON endpoint for weekly quote"""
         week_seed = date.today().isocalendar()[1]
         category = request.args.get('category')
         return get_random_quote(week_seed, category)
 
+    @app.route('/quotes/weekly/view', methods=['GET'])
+    def weekly_quote_view():
+        """HTML endpoint for weekly quote"""
+        week_seed = date.today().isocalendar()[1]
+        category = request.args.get('category')
+        quotes = Quote.query
+        if category:
+            categories = [cat.strip() for cat in category.split(',')]
+            quotes = quotes.filter(Quote.category.in_(categories))
+        quotes = quotes.all()
+        if not quotes:
+            return render_template('quotes/no_quote.html'), 404
+        random.seed(week_seed)
+        quote = random.choice(quotes)
+        return render_template('quotes/quote.html', quote=quote, period="Weekly")
+
     @app.route('/quotes/daily', methods=['GET'])
     def daily_quote():
+        """JSON endpoint for daily quote"""
         day_seed = date.today().day
         category = request.args.get('category')
         return get_random_quote(day_seed, category)
+
+    @app.route('/quotes/daily/view', methods=['GET'])
+    def daily_quote_view():
+        """HTML endpoint for daily quote"""
+        day_seed = date.today().day
+        category = request.args.get('category')
+        quotes = Quote.query
+        if category:
+            categories = [cat.strip() for cat in category.split(',')]
+            quotes = quotes.filter(Quote.category.in_(categories))
+        quotes = quotes.all()
+        if not quotes:
+            return render_template('quotes/no_quote.html'), 404
+        random.seed(day_seed)
+        quote = random.choice(quotes)
+        return render_template('quotes/quote.html', quote=quote, period="Daily")
