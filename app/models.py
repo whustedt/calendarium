@@ -26,4 +26,6 @@ class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(1000), nullable=False)
     author = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(100), nullable=True)
+    url = db.Column(db.String(1000), nullable=True)
     last_updated_by = db.Column(db.String(130), nullable=True)

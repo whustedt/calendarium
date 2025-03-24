@@ -25,6 +25,8 @@ def upgrade():
             sa.Column('id', sa.Integer(), nullable=False),
             sa.Column('text', sa.String(length=1000), nullable=False),
             sa.Column('author', sa.String(length=200), nullable=False),
+            sa.Column('category', sa.String(length=100), nullable=True),
+            sa.Column('url', sa.String(length=1000), nullable=True),
             sa.Column('last_updated_by', sa.String(length=130), nullable=True),
             sa.PrimaryKeyConstraint('id')
         )

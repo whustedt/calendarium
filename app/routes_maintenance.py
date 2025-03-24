@@ -63,6 +63,8 @@ def init_maintenance_routes(app):
                     new_quote = Quote(
                         text=quote_data['text'],
                         author=quote_data['author'],
+                        category=quote_data.get('category', None),
+                        url=quote_data.get('url', None),
                         last_updated_by=quote_data.get('last_updated_by', request.remote_addr)
                     )
                     db.session.add(new_quote)
@@ -78,6 +80,8 @@ def init_maintenance_routes(app):
             "id": quote.id,
             "text": quote.text,
             "author": quote.author,
+            "category": quote.category,
+            "url": quote.url,
             "last_updated_by": quote.last_updated_by
         } for quote in Quote.query.all()]
         data["quotes"] = quotes

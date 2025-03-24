@@ -130,6 +130,8 @@ The application now includes full quote management functionality. Quotes can be 
   - Creates a new quote. Requires form data including:
     - `text`: The quote content.
     - `author`: The author of the quote.
+    - `category`: The category of the quote (optional)
+    - `url`: A URL reference (optional)
 
 - **Update Quote**
   - **POST** `/quotes/edit/<int:id>`
@@ -202,6 +204,8 @@ classDiagram
         +int id
         +string text : not null
         +string author : not null
+        +string category : nullable
+        +string url : nullable
         +string last_updated_by : nullable [IP of last editor]
     }
 

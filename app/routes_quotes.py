@@ -15,10 +15,20 @@ def init_quote_routes(app):
     def create_quote():
         text = request.form.get('text')
         author = request.form.get('author')
+        category = request.form.get('category')
+        url = request.form.get('url')
+
         if not text or not author:
             flash("Please provide both quote and author.")
             return redirect(url_for('list_quotes'))
-        new_quote = Quote(text=text, author=author, last_updated_by=request.remote_addr)
+        
+        new_quote = Quote(
+            text=text,
+            author=author,
+            category=category if category else None,
+            url=url if url else None,
+            last_updated_by=request.remote_addr
+        )
         db.session.add(new_quote)
         db.session.commit()
         return redirect(url_for('list_quotes'))
@@ -28,6 +38,8 @@ def init_quote_routes(app):
         quote = Quote.query.get_or_404(id)
         quote.text = request.form.get('text')
         quote.author = request.form.get('author')
+        quote.category = request.form.get('category')
+        quote.url = request.form.get('url')
         quote.last_updated_by = request.remote_addr
         db.session.commit()
         return redirect(url_for('list_quotes'))
@@ -48,7 +60,9 @@ def init_quote_routes(app):
         return jsonify({
             "id": quote.id,
             "text": quote.text,
-            "author": quote.author
+            "author": quote.author,
+            "category": quote.category,
+            "url": quote.url
         })
 
     @app.route('/quotes/weekly', methods=['GET'])

@@ -8,6 +8,21 @@
     <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.png') }}" type="image/x-icon">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin/style.css') }}">
     <script src="{{ url_for('static', filename='admin/sort-table.js') }}"></script>
+
+
+    <script>
+        function updateKnownCategories() {
+            const categories = Array.from(document.querySelectorAll('td input[name="category"]'))
+                .map(input => input.value)
+                .filter(Boolean);
+            const uniqueCategories = [...new Set(categories)];
+            const datalist = document.getElementById('knownCategories');
+            datalist.innerHTML = uniqueCategories
+                .map(cat => `<option value="${cat}">`)
+                .join('');
+        }
+        window.onload = updateKnownCategories;
+    </script>
 </head>
 <body>
     <h1>Quotes</h1>
@@ -20,6 +35,17 @@
             <label class="required">Author:</label>
             <input type="text" name="author" placeholder="Author Name" maxlength="200" required>
         </div>
+        <div class="form-section">
+            <label>Category:</label>
+            <input type="text" name="category" list="knownCategories" placeholder="Optional category">
+            <datalist id="knownCategories">
+                <!-- Will be populated by JavaScript -->
+            </datalist>
+        </div>
+        <div class="form-section">
+            <label>URL:</label>
+            <input type="url" name="url" placeholder="Optional URL">
+        </div>
         <button type="submit" class="submit-button create-button" id="submit-button">Add Quote</button>
     </form>
     <table id="sortableTable">
@@ -27,19 +53,19 @@
             <tr>
                 <th onclick="sortTable(0)">Quote</th>
                 <th onclick="sortTable(1)">Author</th>
-                <th onclick="sortTable(2)">Actions</th>
+                <th onclick="sortTable(2)">Category</th>
+                <th onclick="sortTable(3)">URL</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for quote in quotes %}
             <tr>
                 <form action="{{ url_for('edit_quote', id=quote.id) }}" method="post">
-                    <td>
-                        <textarea name="text" required>{{ quote.text }}</textarea>
-                    </td>
-                    <td>
-                        <input type="text" name="author" value="{{ quote.author }}" maxlength="200" required>
-                    </td>
+                    <td><textarea name="text" required>{{ quote.text }}</textarea></td>
+                    <td><input type="text" name="author" value="{{ quote.author }}" required></td>
+                    <td><input type="text" name="category" value="{{ quote.category if quote.category else '' }}" list="knownCategories" onchange="updateKnownCategories()"></td>
+                    <td><input type="url" name="url" value="{{ quote.url if quote.url else '' }}"></td>
                     <td>
                         <button type="submit" class="edit">Update</button>
                 </form>
