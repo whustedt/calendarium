@@ -51,10 +51,15 @@ def init_quote_routes(app):
         db.session.commit()
         return redirect(url_for('list_quotes'))
 
-    def get_random_quote(seed):
-        quotes = Quote.query.all()
+    def get_random_quote(seed, category=None):
+        query = Quote.query
+        if category:
+            categories = [cat.strip() for cat in category.split(',')]
+            query = query.filter(Quote.category.in_(categories))
+        
+        quotes = query.all()
         if not quotes:
-            return jsonify({"error": "No quotes available"}), 404
+            return jsonify({"error": "No quotes found matching the criteria"}), 404
         random.seed(seed)
         quote = random.choice(quotes)
         return jsonify({
@@ -68,9 +73,11 @@ def init_quote_routes(app):
     @app.route('/quotes/weekly', methods=['GET'])
     def weekly_quote():
         week_seed = date.today().isocalendar()[1]
-        return get_random_quote(week_seed)
+        category = request.args.get('category')
+        return get_random_quote(week_seed, category)
 
     @app.route('/quotes/daily', methods=['GET'])
     def daily_quote():
         day_seed = date.today().day
-        return get_random_quote(day_seed)
+        category = request.args.get('category')
+        return get_random_quote(day_seed, category)

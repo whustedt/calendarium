@@ -144,10 +144,14 @@ The application now includes full quote management functionality. Quotes can be 
 - **Current Week Quote API**
   - **GET** `/quotes/weekly`
   - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given week (using the calendar week as a seed), ensuring that the "current quote" remains the same throughout the week.
+  - Optional query parameter:
+    - `category`: Filter quotes by category. Multiple categories can be specified as comma-separated values (e.g., `?category=inspiration,motivation`)
 
 - **Current Day Quote API**
   - **GET** `/quotes/daily`
   - Returns a JSON response containing a randomly selected quote. The quote selection is consistent for a given day (using the day as a seed), ensuring that the "current quote" remains the same throughout the day.
+  - Optional query parameter:
+    - `category`: Filter quotes by category. Multiple categories can be specified as comma-separated values (e.g., `?category=inspiration,motivation`)
 
 ### Admin Interface for Quote Management
 
