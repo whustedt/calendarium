@@ -88,6 +88,9 @@
         <form action="{{ url_for('daily_quote_view') }}" method="get">
             <button type="submit">Get daily Quote</button>
         </form>
+        <form action="{{ url_for('random_quote_view') }}" method="get">
+            <button type="submit">Get random Quote</button>
+        </form>
         <form action="{{ url_for('export_data') }}" method="get">
             <button class="maintenance" type="submit">Export Data as ZIP</button>
         </form>
