@@ -136,6 +136,12 @@ The application includes full quote management functionality with both API endpo
   - Optional query parameter:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
 
+- **Random Quote**
+  - **GET** `/quotes/random`
+  - Returns a JSON response containing a randomly selected quote
+  - Optional query parameter:
+    - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+
 #### HTML View Endpoints
 - **Weekly Quote View**
   - **GET** `/quotes/weekly/view`
@@ -147,6 +153,13 @@ The application includes full quote management functionality with both API endpo
 - **Daily Quote View**
   - **GET** `/quotes/daily/view`
   - Returns a styled HTML page displaying the daily quote
+  - Uses same selection logic as the JSON endpoint
+  - Optional query parameter:
+    - `category`: Filter by category
+
+- **Random Quote View**
+  - **GET** `/quotes/random/view`
+  - Returns a styled HTML page displaying a random quote
   - Uses same selection logic as the JSON endpoint
   - Optional query parameter:
     - `category`: Filter by category
