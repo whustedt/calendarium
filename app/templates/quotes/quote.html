@@ -4,23 +4,28 @@
     <meta charset="UTF-8">
     <title>{{ period }} Quote</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='quotes/style.css') }}">
+    {% if background_color %}
+    <style>
+        body {
+            background: {{ background_color }};
+        }
+    </style>
+    {% endif %}
 </head>
 <body>
-    <div class="quote-container">
-        <div class="quote">
-            <blockquote>
-                {{ quote.text }}
-                <footer>
-                    — <cite>{{ quote.author }}</cite>
-                    {% if quote.url %}
-                    <a href="{{ quote.url }}" target="_blank" class="source-link">•</a>
-                    {% endif %}
-                    {% if quote.category %}
-                    <span class="category">{{ quote.category }}</span>
-                    {% endif %}
-                </footer>
-            </blockquote>
-        </div>
+    <div class="quote">
+        <blockquote>
+            {{ quote.text|markdown }}
+            <footer>
+                — <cite>{{ quote.author }}</cite>
+                {% if quote.url %}
+                <a href="{{ quote.url }}" target="_blank" class="source-link">•</a>
+                {% endif %}
+                {% if quote.category %}
+                <span class="category">{{ quote.category }}</span>
+                {% endif %}
+            </footer>
+        </blockquote>
     </div>
 </body>
 </html>

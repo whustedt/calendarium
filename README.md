@@ -126,43 +126,49 @@ The application includes full quote management functionality with both API endpo
   - **GET** `/quotes/weekly`
   - Returns a JSON response containing a randomly selected quote
   - Quote selection is consistent throughout the week using the calendar week as seed
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+    - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
 
 - **Current Day Quote**
   - **GET** `/quotes/daily`
   - Returns a JSON response containing a randomly selected quote
   - Quote selection is consistent throughout the day using the day as seed
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+    - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
 
 - **Random Quote**
   - **GET** `/quotes/random`
   - Returns a JSON response containing a randomly selected quote
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
+    - `color`: If present, generates a random background color (e.g., `?color=true`)
 
 #### HTML View Endpoints
 - **Weekly Quote View**
   - **GET** `/quotes/weekly/view`
   - Returns a styled HTML page displaying the weekly quote
   - Uses same selection logic as the JSON endpoint
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category
+    - `color`: If present, generates a consistent background color based on the seed
 
 - **Daily Quote View**
   - **GET** `/quotes/daily/view`
   - Returns a styled HTML page displaying the daily quote
   - Uses same selection logic as the JSON endpoint
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category
+    - `color`: If present, generates a consistent background color based on the seed
 
 - **Random Quote View**
   - **GET** `/quotes/random/view`
   - Returns a styled HTML page displaying a random quote
   - Uses same selection logic as the JSON endpoint
-  - Optional query parameter:
+  - Optional query parameters:
     - `category`: Filter by category
+    - `color`: If present, generates a random background color
 
 #### Management Endpoints
 - **View and Manage Quotes**
@@ -173,7 +179,7 @@ The application includes full quote management functionality with both API endpo
   - **POST** `/quotes/create`
   - Creates a new quote
   - Required fields:
-    - `text`: Quote content
+    - `text`: Quote content (supports Markdown syntax including lists, emphasis, code blocks, and links)
     - `author`: Quote author
   - Optional fields:
     - `category`: Quote category
@@ -197,16 +203,18 @@ The application includes full quote management functionality with both API endpo
     "text": "The quote text",
     "author": "Author Name",
     "category": "Inspiration",
-    "url": "https://example.com/source"
+    "url": "https://example.com/source",
+    "backgroundColor": "hsl(178, 70%, 30%)"
 }
 ```
 
 #### HTML View
 The HTML views provide a styled presentation including:
-- Formatted quote text
+- Markdown-formatted quote text (supports lists, emphasis, code blocks, and links)
 - Author attribution
 - Category tag (if present)
 - Source link (if URL provided)
+- Optional dynamic background color
 - Responsive layout
 - Consistent styling across different screen sizes
 

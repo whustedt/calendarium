@@ -1,11 +1,20 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
+from markdown import markdown
+from markupsafe import Markup
 from .models import Quote
 from datetime import date
 import random
 from app import db
- 
+
 def init_quote_routes(app):
- 
+    @app.template_filter('markdown')
+    def markdown_filter(text):
+        return Markup(markdown(text, extensions=['extra', 'nl2br']))
+
+    def generate_hsl_color(hue):
+        """Generates an HSL color string with fixed saturation and lightness"""
+        return f"hsl({hue}, 70%, 30%)" if hue is not None else None
+
     @app.route('/quotes/', methods=['GET'])
     def list_quotes():
         quotes = Quote.query.all()
@@ -73,14 +82,25 @@ def init_quote_routes(app):
         today = date.today()
         return int(f"{today.year}{today.isocalendar()[1]:02d}")
    
-    def format_quote(quote):
+    def generate_color_hue(seed=None):
+        """Generates a color hue (0-360) based on a seed or randomly"""
+        if seed is not None:
+            # Use the seed to generate a consistent hue
+            random.seed(seed)
+            hue = random.randint(0, 360)
+            random.seed()  # Reset the seed
+            return hue
+        return random.randint(0, 360)
+
+    def format_quote(quote, color_hue=None):
         """Formatiert den Quote als Dictionary"""
         return {
             "id": quote.id,
             "text": quote.text,
             "author": quote.author,
             "category": quote.category,
-            "url": quote.url
+            "url": quote.url,
+            "backgroundColor": generate_hsl_color(color_hue)
         }
    
     def get_quote_response(json_response=False, seed=None, category=None, period_label=None):
@@ -93,10 +113,16 @@ def init_quote_routes(app):
             if json_response:
                 return jsonify({"error": "No quotes found matching the criteria"}), 404
             return render_template('quotes/no_quote.html'), 404
-   
+        
+        # Only generate color if color parameter is present
+        color_hue = None
+        if request.args.get('color'):
+            color_hue = generate_color_hue(seed)
+        
         if json_response:
-            return jsonify(format_quote(quote))
-        return render_template('quotes/quote.html', quote=quote, period=period_label)
+            return jsonify(format_quote(quote, color_hue))
+        return render_template('quotes/quote.html', quote=quote, period=period_label, 
+                             background_color=generate_hsl_color(color_hue))
    
     @app.route('/quotes/random', methods=['GET'])
     def random_quote():
