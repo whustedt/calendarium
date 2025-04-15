@@ -6,8 +6,7 @@ body {
     align-items: center;
     justify-content: center;
     font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
-    color-scheme: light dark;
-    color: var(--text-color);
+    color: #fff;
     background: black;
 }
 
@@ -37,7 +36,7 @@ blockquote em {
 }
 
 blockquote code {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.15);
     padding: 0.1em 0.3em;
     border-radius: 3px;
     font-style: normal;
@@ -52,13 +51,13 @@ blockquote a {
 footer {
     margin-top: 0.5rem;
     font-size: 1rem;
-    color: var(--subtle-color);
+    color: rgba(255, 255, 255, 0.8);
     font-style: normal;
 }
 
 .category {
     font-size: 0.8em;
-    color: var(--subtle-color);
+    color: rgba(255, 255, 255, 0.7);
     margin-left: 1em;
     font-style: normal;
     opacity: 0.6;
@@ -66,20 +65,15 @@ footer {
 
 .source-link {
     display: inline-block;
-    color: var(--subtle-color);
+    color: rgba(255, 255, 255, 0.7);
     text-decoration: none;
     font-size: 1em;
     font-style: normal;
-    opacity: 0.5;
+    opacity: 0.7;
     transition: opacity 0.2s;
     margin-left: 0.3em;
 }
 
 .source-link:hover {
     opacity: 1;
-}
-
-:root {
-    --text-color: #fff;
-    --subtle-color: #999;
 }

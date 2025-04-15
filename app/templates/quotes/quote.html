@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <title>{{ period }} Quote</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='quotes/style.css') }}">
+    {% if background_color %}
+    <style>
+        body {
+            background: {{ background_color }};
+        }
+    </style>
+    {% endif %}
 </head>
 <body>
     <div class="quote">
