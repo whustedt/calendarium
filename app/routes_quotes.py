@@ -1,11 +1,16 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
+from markdown import markdown
+from markupsafe import Markup
 from .models import Quote
 from datetime import date
 import random
 from app import db
- 
+
 def init_quote_routes(app):
- 
+    @app.template_filter('markdown')
+    def markdown_filter(text):
+        return Markup(markdown(text, extensions=['extra', 'nl2br']))
+
     @app.route('/quotes/', methods=['GET'])
     def list_quotes():
         quotes = Quote.query.all()

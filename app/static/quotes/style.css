@@ -1,17 +1,14 @@
-body, html {
+body {
     margin: 0;
     padding: 0;
-    font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
-    color-scheme: light dark;
-    color: var(--text-color);
-    background: black;
-}
-
-.quote-container {
     height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
+    color-scheme: light dark;
+    color: var(--text-color);
+    background: black;
 }
 
 .quote {
@@ -27,8 +24,33 @@ blockquote {
     color: inherit;
 }
 
+/* Markdown elements */
+blockquote ul {
+    text-align: left;
+    list-style-type: disc;
+    padding-left: 2em;
+    margin: 1em 0;
+}
+
+blockquote em {
+    opacity: 0.7;
+}
+
+blockquote code {
+    background: rgba(255, 255, 255, 0.25);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-style: normal;
+}
+
+blockquote a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
 footer {
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     font-size: 1rem;
     color: var(--subtle-color);
     font-style: normal;
@@ -54,7 +76,6 @@ footer {
 }
 
 .source-link:hover {
-    text-decoration: none;
     opacity: 1;
 }
 
