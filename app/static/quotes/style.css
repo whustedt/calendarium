@@ -1,7 +1,8 @@
-body {
+html, body {
     margin: 0;
     padding: 0;
     height: 100vh;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13,7 +14,6 @@ body {
 .quote {
     max-width: 80%;
     text-align: center;
-    overflow: hidden;
 }
 
 blockquote {
@@ -22,14 +22,8 @@ blockquote {
     line-height: 1.5;
     font-style: italic;
     color: inherit;
-    display: inline-block;
-    animation: scrollText 20s linear infinite;
 }
 
-@keyframes scrollText {
-  0%   { transform: translateY(100%); }
-  100% { transform: translateY(-100%); }
-}
 
 /* Markdown elements */
 blockquote ul {

@@ -27,5 +27,46 @@
             </footer>
         </blockquote>
     </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const doc   = document.documentElement;
+  const maxY  = doc.scrollHeight - doc.clientHeight;
+  if (maxY <= 0) return;           // bei kurzen Zitaten: nichts tun
+
+  let pos       = 0;
+  let dir       = 1;               // 1 = runter, -1 = rauf
+  const speed   = 1;               // Pixel pro Frame
+  const pause   = 2000;            // Pause an den Enden in ms
+  let paused    = false;
+
+  function step() {
+    if (paused) return;
+
+    pos += dir * speed;
+    // Grenze erreicht?
+    if (pos >= maxY || pos <= 0) {
+      dir *= -1;                   // Richtungswechsel
+      pos = pos < 0 ? 0 : maxY;    // exakt einklinken
+      paused = true;
+      window.scrollTo(0, pos);
+
+      // Nach Pause weitermachen
+      setTimeout(() => {
+        paused = false;
+        requestAnimationFrame(step);
+      }, pause);
+
+    } else {
+      window.scrollTo(0, pos);
+      requestAnimationFrame(step);
+    }
+  }
+
+  // Starten
+  requestAnimationFrame(step);
+});
+</script>
+ 
 </body>
 </html>
