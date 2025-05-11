@@ -1,18 +1,25 @@
 body {
     margin: 0;
     padding: 0;
-    height: 100vh;
+    height: 100cqh;
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
     color: #fff;
     background: black;
+    overflow: hidden;
 }
 
 .quote {
     max-width: 80%;
     text-align: center;
+}
+
+@keyframes scroll {
+    0%, 5% { transform: translateY(0); }
+    45%, 55% { transform: translateY(calc(-100% + 70cqh)); }
+    95%, 100% { transform: translateY(0); }
 }
 
 blockquote {

@@ -27,5 +27,21 @@
             </footer>
         </blockquote>
     </div>
+    <script>
+        window.addEventListener('load', function() {
+            const quote = document.querySelector('blockquote');
+            const quoteHeight = quote.offsetHeight;
+            // Ermittle die verfügbare Höhe (Container oder Viewport)
+            const containerHeight = Math.min(
+                window.innerHeight || Infinity,
+                quote.parentElement.clientHeight || Infinity
+            );
+            
+            if (quoteHeight > containerHeight) {
+                quote.style.animation = 'scroll 20s ease-in-out infinite';
+                document.body.style.alignItems = 'flex-start';
+            }
+        });
+    </script>
 </body>
 </html>
