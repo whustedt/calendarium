@@ -32,8 +32,8 @@
     <div class="timeline_with_button">
         <a href="{{ url_for('index') }}" target="_blank" class="edit-button">✏️</a>
 
-        <!-- Timeline container with Flickity options -->
-        <div class="timeline" data-flickity='{"initialIndex": ".initial-focus", "cellAlign": "left", "pageDots": false, "contain": true, "resize": false}'>
+        <!-- Timeline container -->
+        <div class="timeline">
             {% for entry in entries %}
                 {% set date_class = "highlight" if entry.is_today else ("past" if entry.index < 0 else "") %}
                 {% set initial_focus = "initial-focus" if entry.index == -2 else "" %}
@@ -68,6 +68,76 @@
 
     <!-- Flickity script always included -->
     <script type="text/javascript" src="{{ url_for('static', filename='timeline/flickity.pkgd.min.js') }}"></script>
+
+    <!-- Improved Flickity initialization with resize handling -->
+    <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        var timelineElement = document.querySelector('.timeline');
+        var flkty;
+        
+        function initializeFlickity() {
+            if (flkty) {
+                flkty.destroy();
+            }
+            
+            flkty = new Flickity(timelineElement, {
+                initialIndex: '.initial-focus',
+                cellAlign: 'left',
+                pageDots: false,
+                contain: true,
+                resize: true
+            });
+            
+            // Force an initial resize
+            setTimeout(function() {
+                flkty.resize();
+            }, 100);
+        }
+        
+        // Initialize with a slight delay to ensure DOM is ready
+        setTimeout(initializeFlickity, 100);
+        
+        // Handle window resize events
+        var resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                if (flkty) {
+                    flkty.resize();
+                }
+            }, 100);
+        });
+        
+        // Use ResizeObserver for more reliable resize detection
+        if (window.ResizeObserver) {
+            var resizeObserver = new ResizeObserver(function(entries) {
+                if (flkty) {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        flkty.resize();
+                    }, 100);
+                }
+            });
+            
+            resizeObserver.observe(timelineElement);
+            resizeObserver.observe(document.body);
+        }
+        
+        // Additional iframe-specific handling
+        if (window.parent !== window) {
+            // We're in an iframe
+            var checkCount = 0;
+            var intervalId = setInterval(function() {
+                if (flkty && checkCount < 10) {
+                    flkty.resize();
+                    checkCount++;
+                } else {
+                    clearInterval(intervalId);
+                }
+            }, 500);
+        }
+    });
+    </script>
 
     <!-- Conditional inclusion of confetti script -->
     {% if display_celebration %}

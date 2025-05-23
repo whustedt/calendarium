@@ -3,13 +3,16 @@ html, body {
     height: 100%; /* Essential for percentage heights to work correctly */
     margin: 0;
     padding: 0;
+    overflow-x: hidden; /* Prevent horizontal scrolling issues */
 }
 
 .timeline_with_button {
     position: relative;
     height: 100%;
+    width: 100%; /* Ensure full width */
     margin: 0;
     padding: 0; 
+    box-sizing: border-box;
 }
 
 .edit-button {
@@ -48,7 +51,21 @@ html, body {
     line-height: normal; 
     text-align: center; 
     height: calc(50vh - 20px); /* fallback-value */
+    width: 100%; /* Ensure full width */
+    min-width: 100%; /* Prevent shrinking below container width */
+    box-sizing: border-box;
 }
+
+/* Flickity viewport and container fixes */
+.timeline .flickity-viewport {
+    width: 100% !important;
+    min-width: 100% !important;
+}
+
+.timeline .flickity-slider {
+    min-width: 100% !important;
+}
+
 .timeline-item {
     display: flex;
     flex-direction: column;
@@ -63,30 +80,38 @@ html, body {
     padding: 15px;
     box-sizing: border-box;
     position: relative;
+    min-width: 100px; /* Minimum width to prevent excessive squashing */
+    flex-shrink: 0; /* Prevent items from shrinking */
 }
+
 .timeline-item .title, .timeline-item .description {
     display: block;
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 1s ease-out forwards;
 }
+
 .timeline-item .date {
   font-size: 8cqh; /* fallback value */
   position: absolute;
   top: 10px;
   right: 15px;
 }
+
 .timeline-item .title {font-size: 12cqh; margin-top: 5px;} /* fallback value */
 .timeline-item .description {font-size: 10cqh;} /* fallback value */
+
 .timeline-item.highlight {
     animation: pulsateShadow 1s infinite ease-in-out;
 }
+
 .timeline-item.with-img {
     /* Styles background-image of timeline-items */
     background-size: cover !important;
     background-position: center !important;
     background-blend-mode: darken !important;
 }
+
 .timeline-item .symbol {
     content: "";
     position: absolute;
@@ -94,6 +119,7 @@ html, body {
     left: 15px;
     font-size: 10cqh;
 }
+
 .timeline-item .symbol.Cake { animation: pulse 2s infinite ease-in-out; }
 .timeline-item .symbol.Birthday { animation: shake-tilt 2s infinite ease-in-out; }
 .timeline-item .symbol.Release { animation: float 3s infinite ease-in-out; }
