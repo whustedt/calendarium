@@ -296,35 +296,47 @@ def test_purge_old_entries(test_client, init_database):
     WHEN the purge old entries endpoint is called
     THEN check that old non-repeating entries are removed while keeping protected ones
     """
+    # First, count existing entries
+    initial_count = db.session.query(Entry).count()
+
     # Add some old entries
     category_release = db.session.query(Category).filter_by(name="Release").first()
-    category_birthday = db.session.query(Category).filter_by(name="Birthday").first()        # Create entries from different years
-        old_entry = Entry(
-            date="2020-01-01",
-            category_id=category_release.id,
-            title="Old Release",
-            description="This should be purged"
-        )
-        protected_old_entry = Entry(
-            date="2020-02-01",
-            category_id=category_birthday.id,  # Birthday category is protected
-            title="Old Birthday",
-            description="This should not be purged"
-        )
+    category_birthday = db.session.query(Category).filter_by(name="Birthday").first()
 
-        db.session.add_all([old_entry, protected_old_entry])
-        db.session.commit()
+    # Create entries from different years
+    old_entry = Entry(
+        date="2020-01-01",
+        category_id=category_release.id,
+        title="Old Release",
+        description="This should be purged"
+    )
+    protected_old_entry = Entry(
+        date="2020-02-01",
+        category_id=category_birthday.id,  # Birthday category is protected
+        title="Old Birthday",
+        description="This should not be purged"
+    )
 
-        # Call the purge endpoint
-        response = test_client.post('/purge-old-entries')
-        assert response.status_code == 200
+    db.session.add_all([old_entry, protected_old_entry])
+    db.session.commit()
 
-        # Verify that only the old non-protected entry was purged
-        remaining_entries = db.session.query(Entry).all()
-        titles = [entry.title for entry in remaining_entries]
-        assert "Old Release" not in titles  # Should be purged
-        assert "Old Birthday" in titles  # Should be kept (protected category)
-    assert len(remaining_entries) == 3  # Including the entry from init_database
+    # Call the purge endpoint
+    response = test_client.post('/purge-old-entries')
+    assert response.status_code == 200
+
+    # Verify that only the old non-protected entry was purged
+    remaining_entries = db.session.query(Entry).all()
+    
+    # Check specific entries
+    assert not db.session.query(Entry).filter_by(title="Old Release").first()  # Should be purged
+    assert db.session.query(Entry).filter_by(title="Old Birthday").first()  # Should be kept
+
+    # Check final count (should be initial count + 1 for the protected entry)
+    assert db.session.query(Entry).count() == initial_count + 1
+
+    # Cleanup
+    db.session.query(Entry).filter_by(title="Old Birthday").delete()
+    db.session.commit()
 
 def test_entries_sorted_by_date(test_client, init_database):
     """
