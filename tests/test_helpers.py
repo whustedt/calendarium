@@ -86,12 +86,48 @@ def test_parse_date():
     assert parse_date('2021-05-20') == datetime(2021, 5, 20).date()
     assert parse_date('invalid-date') is None
 
+def test_parse_date_with_invalid_formats():
+    """
+    Test parse_date function with various invalid date formats
+    """
+    assert parse_date('20210520') is None  # Incorrect format
+    assert parse_date('2021/05/20') is None  # Wrong separator
+    assert parse_date('2021-13-01') is None  # Invalid month
+    assert parse_date('2021-04-31') is None  # Invalid day
+    assert parse_date('') is None  # Empty string  # Empty string is valid input case
+
 def test_allowed_file():
     # Given: Filename and allowed extensions
     # When: Checking if a file is allowed
     # Then: It should correctly determine if the file extension is allowed
     assert allowed_file('test.jpg', {'jpg', 'png'})
     assert not allowed_file('test.txt', {'jpg', 'png'})
+
+def test_allowed_file_with_various_extensions():
+    """
+    Test allowed_file function with various file extensions
+    """
+    allowed_extensions = {'jpg', 'png', 'gif'}
+    
+    # Test valid extensions
+    assert allowed_file('image.jpg', allowed_extensions)
+    assert allowed_file('my.photo.png', allowed_extensions)
+    assert allowed_file('animated.gif', allowed_extensions)
+    
+    # Test invalid extensions
+    assert not allowed_file('document.pdf', allowed_extensions)
+    assert allowed_file('image.JPG', allowed_extensions)  # Case insensitive
+    assert allowed_file('.jpg', allowed_extensions)  # Hidden files are allowed
+    assert not allowed_file('noextension', allowed_extensions)
+    assert not allowed_file('', allowed_extensions)
+
+
+def test_handle_image_upload_with_invalid_giphy_url(test_client):
+    """
+    Test handle_image_upload function with an invalid GIPHY URL
+    """
+    result = handle_image_upload(1, None, 'https://invalid-giphy.com/media/test.gif', 'uploads', {'gif'})
+    assert result is None
 
 def test_get_data(test_client: FlaskClient, init_database: None):
     # Given: An initialized database and test_client context
@@ -103,6 +139,22 @@ def test_get_data(test_client: FlaskClient, init_database: None):
         entry = formatted_entries['entries'][0]
         assert entry['title'] == "John's Birthday"
         assert entry['category']['name'] == "Birthday"
+
+def test_get_entry_data_with_empty_database(test_client):
+    """
+    Test get_entry_data function with an empty database
+    """
+    # Clear the database
+    db.session.query(Entry).delete()
+    db.session.query(Category).delete()
+    db.session.commit()
+    
+    data = get_entry_data(db)
+    assert isinstance(data, dict)
+    assert 'entries' in data
+    assert 'categories' in data
+    assert len(data['entries']) == 0
+    assert len(data['categories']) == 0
 
 def test_create_zip(test_client, init_database):
     data = {
@@ -135,4 +187,26 @@ def test_create_zip(test_client, init_database):
                 # Check if the image and database file were correctly written to the zip
                 zip_file_instance.write.assert_any_call(expected_image_path, arcname='test.jpg')
                 zip_file_instance.write.assert_any_call(expected_db_path, arcname='data.db')
+
+def test_create_zip_with_missing_files(test_client):
+    """
+    Test create_zip function with missing files
+    """
+    data = {
+        'categories': [{'color_hex': '#FF8A65', 'name': 'Test', 'symbol': '🔍'}],
+        'entries': [{
+            'category': {'color_hex': '#FF8A65', 'name': 'Test', 'symbol': '🔍'},
+            'date': '2024-06-01',
+            'image_url': '/uploads/nonexistent.jpg',
+            'title': 'Test',
+        }]
+    }
+    
+    # Test with non-existent files
+    with mock.patch('os.path.exists', return_value=False):
+        with mock.patch('zipfile.ZipFile') as mock_zip:
+            zip_file_instance = mock_zip.return_value.__enter__.return_value
+            create_zip(data, '/uploads', 'sqlite:////app/data/data.db')
+            # Should not attempt to write non-existent files
+            assert not zip_file_instance.write.called
 

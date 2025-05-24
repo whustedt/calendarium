@@ -29,6 +29,47 @@ def test_create_entry_with_valid_data(test_client, init_database):
     assert response.status_code == 200, f"Expected 200 OK, got {response.status_code}. Response: {response.data.decode('utf-8')}"
     assert db.session.query(Entry).count() == 2  # Assuming one entry was already in the database from setup
 
+def test_create_entry_with_empty_fields(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN an attempt is made to create an entry with empty required fields
+    THEN check that appropriate error messages are returned
+    """
+    data = {
+        'date': "",  # Empty date
+        'category': "Birthday",
+        'title': "",  # Empty title
+        'description': "Test description"
+    }
+    response = test_client.post('/create', data=data, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Date is required" in response.data
+    assert b"Title is required" in response.data
+
+def test_create_entry_with_future_date(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN an entry is created with a future date
+    THEN check that the entry is created successfully
+    """
+    category = db.session.query(Category).filter_by(name="Release").first()
+    future_date = (datetime.now() + timedelta(days=365)).strftime("%Y-%m-%d")
+    
+    data = {
+        'date': future_date,
+        'category': category.name,
+        'title': "Future Release",
+        'description': "This is a future event"
+    }
+    
+    response = test_client.post('/create', data=data, follow_redirects=True)
+    assert response.status_code == 200
+    
+    # Verify the entry was created
+    entry = db.session.query(Entry).filter_by(title="Future Release").first()
+    assert entry is not None
+    assert str(entry.date) == future_date
+
 def test_update_entry(test_client, init_database):
     """
     GIVEN a Flask application configured for testing
@@ -45,6 +86,55 @@ def test_update_entry(test_client, init_database):
     entry = db.session.get(Entry, 1)
     assert entry.title == "Updated Title"
 
+def test_update_nonexistent_entry(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN an attempt is made to update a non-existent entry
+    THEN check that a 404 error is returned
+    """
+    response = test_client.post('/update/999999', data={
+        'date': "2021-06-01",
+        'category': "Birthday",
+        'title': "Updated Title",
+        'description': "Updated description"
+    }, follow_redirects=True)
+    assert response.status_code == 404
+
+def test_concurrent_entry_updates(test_client, init_database):
+    """
+    GIVEN a Flask application with an existing entry
+    WHEN multiple updates are attempted concurrently
+    THEN check that the last update is preserved
+    """
+    # Get the first entry
+    entry = db.session.query(Entry).first()
+    entry_id = entry.id
+
+    # Simulate concurrent updates
+    update_data_1 = {
+        'date': "2021-06-01",
+        'category': "Birthday",
+        'title': "Update 1",
+        'description': "First update"
+    }
+    update_data_2 = {
+        'date': "2021-06-01",
+        'category': "Birthday",
+        'title': "Update 2",
+        'description': "Second update"
+    }
+
+    response1 = test_client.post(f'/update/{entry_id}', data=update_data_1)
+    response2 = test_client.post(f'/update/{entry_id}', data=update_data_2)
+
+    assert response1.status_code == 302  # Redirect after success
+    assert response2.status_code == 302
+
+    # Verify final state
+    updated_entry = db.session.get(Entry, entry_id)
+    assert updated_entry.title == "Update 2"
+    assert updated_entry.description == "Second update"
+
 def test_delete_entry(test_client, init_database):
     """
     GIVEN a Flask application configured for testing
@@ -55,6 +145,15 @@ def test_delete_entry(test_client, init_database):
     response = test_client.post('/delete/1', follow_redirects=True)
     assert response.status_code == 200
     assert db.session.query(Entry).count() == initial_count - 1
+
+def test_delete_nonexistent_entry(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN an attempt is made to delete a non-existent entry
+    THEN check that a 404 error is returned
+    """
+    response = test_client.post('/delete/999999', follow_redirects=True)
+    assert response.status_code == 404
 
 def test_timeline_view(test_client):
     """
@@ -193,45 +292,71 @@ def test_update_serial_entries(test_client, init_database):
 
 def test_purge_old_entries(test_client, init_database):
     """
-    GIVEN a Flask application
-    WHEN the '/purge-old-entries' endpoint is called (POST)
-    THEN check that old non-birthday entries are deleted from the database
+    GIVEN a Flask application with entries
+    WHEN the purge old entries endpoint is called
+    THEN check that old non-repeating entries are removed while keeping protected ones
     """
-    # Create an old non-birthday entry
-    category = db.session.query(Category).filter_by(name="Release").first()
-    old_date = date.today() - timedelta(days=365)  # One year ago
-    entry = Entry(date=str(old_date), category=category, title="Old Entry", description="This should be purged")
-    db.session.add(entry)
-    db.session.commit()
+    # Add some old entries
+    category_release = db.session.query(Category).filter_by(name="Release").first()
+    category_birthday = db.session.query(Category).filter_by(name="Birthday").first()        # Create entries from different years
+        old_entry = Entry(
+            date="2020-01-01",
+            category_id=category_release.id,
+            title="Old Release",
+            description="This should be purged"
+        )
+        protected_old_entry = Entry(
+            date="2020-02-01",
+            category_id=category_birthday.id,  # Birthday category is protected
+            title="Old Birthday",
+            description="This should not be purged"
+        )
 
-    response = test_client.post('/purge-old-entries', follow_redirects=True)
-    assert response.status_code == 200
+        db.session.add_all([old_entry, protected_old_entry])
+        db.session.commit()
 
-    old_entries = db.session.query(Entry).join(Entry.category).filter(
-        Entry.date < str(date.today()), 
-        not_(Category.is_protected)
-    ).all()
-    
-    assert len(old_entries) == 0
+        # Call the purge endpoint
+        response = test_client.post('/purge-old-entries')
+        assert response.status_code == 200
+
+        # Verify that only the old non-protected entry was purged
+        remaining_entries = db.session.query(Entry).all()
+        titles = [entry.title for entry in remaining_entries]
+        assert "Old Release" not in titles  # Should be purged
+        assert "Old Birthday" in titles  # Should be kept (protected category)
+    assert len(remaining_entries) == 3  # Including the entry from init_database
 
 def test_entries_sorted_by_date(test_client, init_database):
     """
-    GIVEN a Flask application
-    WHEN entries are retrieved from the database
-    THEN check that the entries are sorted by date in ascending order
+    GIVEN a Flask application with multiple entries
+    WHEN entries are retrieved
+    THEN check that they are properly sorted by date
     """
-    # Create some entries with different dates
-    category1 = db.session.query(Category).filter_by(name="Cake").first()
-    category2 = db.session.query(Category).filter_by(name="Release").first()
-    category3 = db.session.query(Category).filter_by(name="Birthday").first()
-    entry1 = Entry(date=str(date.today()), category=category1, title="Today's Entry")
-    entry2 = Entry(date=str(date.today() - timedelta(days=7)), category=category2, title="Last Week's Entry")
-    entry3 = Entry(date=str(date.today() + timedelta(days=3)), category=category3, title="Future Entry")
-    db.session.add_all([entry1, entry2, entry3])
+    # Add entries with different dates
+    category = db.session.query(Category).filter_by(name="Release").first()
+    dates = ["2023-03-15", "2024-01-01", "2023-12-25"]
+    
+    for i, date_str in enumerate(dates):
+        entry = Entry(
+            date=date_str,
+            category_id=category.id,
+            title=f"Entry {i+1}",
+            description=f"Test entry {i+1}"
+        )
+        db.session.add(entry)
     db.session.commit()
 
+    # Get entries through API
     response = test_client.get('/api/data')
     assert response.status_code == 200
     data = json.loads(response.data)
-    dates = [entry['date'] for entry in data['entries']]
-    assert dates == sorted(dates)
+    
+    # Extract dates from entries
+    entry_dates = [entry['date'] for entry in data['entries']]
+    
+    # Verify dates are in ascending order
+    sorted_dates = sorted(entry_dates)
+    assert entry_dates == sorted_dates
+
+    # Verify the order is correct
+    assert entry_dates[0] < entry_dates[-1]  # First date should be earlier than last date
