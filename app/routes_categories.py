@@ -10,9 +10,9 @@ def init_categories_routes(app):
             name = request.form.get('name')
             symbol = request.form.get('symbol')
             color_hex = request.form.get('color_hex')
-            repeat_annually = bool(request.form.get('repeat_annually'))
-            display_celebration = bool(request.form.get('display_celebration'))
-            is_protected = bool(request.form.get('is_protected'))
+            repeat_annually = request.form.get('repeat_annually') == 'true'
+            display_celebration = request.form.get('display_celebration') == 'true'
+            is_protected = request.form.get('is_protected') == 'true'
             last_updated_by = request.remote_addr
 
             new_category = Category(

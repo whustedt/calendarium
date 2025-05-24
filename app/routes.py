@@ -116,19 +116,33 @@ def init_app(app, scheduler):
     def create():
         """Create a new entry and handle associated image upload."""
         try:
-            category_name = request.form['category']
+            date_str = request.form.get('date', '').strip()
+            title = request.form.get('title', '').strip()
+            category_name = request.form.get('category', '').strip()
+            
+            errors = []
+            if not date_str:
+                errors.append("Date is required")
+            if not title:
+                errors.append("Title is required")
+            if not category_name:
+                errors.append("Category is required")
+            
+            if errors:
+                return jsonify({"errors": errors}), 400
+                
             category = db.session.query(Category).filter_by(name=category_name).first()
             if not category:
                 return jsonify({"error": "Invalid category"}), 400
-            if not parse_date(request.form['date']):
+            if not parse_date(date_str):
                 return jsonify({"error": "Invalid date format, must be YYYY-MM-DD"}), 400
             if request.form.get('url') and not validators.url(request.form.get('url')):
                 return jsonify({"error": "Invalid URL"}), 400
 
             new_entry = Entry(
-                date = request.form['date'],
+                date = date_str,
                 category_id = category.id,  # use the ID of the category
-                title = request.form['title'],
+                title = title,
                 description = request.form.get('description'),
                 url = request.form.get('url'),
                 last_updated_by = request.remote_addr
@@ -280,8 +294,14 @@ def init_app(app, scheduler):
             current_date = datetime.now().date()
             unprotected_categories = db.session.query(Category).filter_by(is_protected=False).all()
             category_ids = [category.id for category in unprotected_categories]
-        
-            old_entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids), Entry.date < str(current_date)).all()
+            
+            # Only purge entries that are both:
+            # 1. From unprotected categories
+            # 2. Have dates in the past
+            old_entries = db.session.query(Entry).filter(
+                Entry.category_id.in_(category_ids),
+                Entry.date < str(current_date)
+            ).all()
             for entry in old_entries:
                 if entry.image_filename:
                     image_path = os.path.join(app.config['UPLOAD_FOLDER'], entry.image_filename)
