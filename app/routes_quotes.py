@@ -2,7 +2,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from markdown import markdown
 from markupsafe import Markup
 from .models import Quote
-from datetime import date
+from datetime import date, timedelta
 import random
 from app import db
 
@@ -12,36 +12,119 @@ def init_quote_routes(app):
         return Markup(markdown(text, extensions=['extra', 'nl2br']))
 
     def generate_hsl_color(hue):
-        """Generates an HSL color string with fixed saturation and lightness"""
         return f"hsl({hue}, 70%, 30%)" if hue is not None else None
+
+    def get_random_quote(seed=None, category=None):
+        query = Quote.query
+        if category:
+            cats = [c.strip() for c in category.split(',')]
+            query = query.filter(Quote.category.in_(cats))
+        quotes = query.all()
+        if not quotes:
+            return None
+        return random.Random(seed).choice(quotes) if seed is not None else random.choice(quotes)
+
+    def generate_day_seed(offset=0):
+        """DDMMYYYY as int for today+offset days."""
+        target = date.today() + timedelta(days=offset)
+        return int(target.strftime("%d%m%Y"))
+
+    def generate_week_seed(offset=0):
+        """YYYYWW as int for current ISO week + offset weeks."""
+        target = date.today() + timedelta(weeks=offset)
+        year, week, _ = target.isocalendar()
+        return int(f"{year}{week:02d}")
+
+    def generate_color_hue(seed=None):
+        return random.Random(seed).randint(0, 360) if seed is not None else random.randint(0, 360)
+
+    def format_quote(quote, color_hue=None):
+        return {
+            "id": quote.id,
+            "text": quote.text,
+            "author": quote.author,
+            "category": quote.category,
+            "url": quote.url,
+            "backgroundColor": generate_hsl_color(color_hue)
+        }
+
+    # ─── deterministic "no-repeat" helpers ────────────────────────────────────
+
+    def get_last_n_seeds(generator, n):
+        """Generic: call generator(offset=-i) for i in 1..n."""
+        return [generator(offset=-i) for i in range(1, n + 1)]
+
+    def get_daily_quote_no_repeats(lookback_days=5, category=None):
+        # build set of IDs from the last N days
+        recent_ids = {
+            get_random_quote(seed=s, category=category).id
+            for s in get_last_n_seeds(generate_day_seed, lookback_days)
+            if get_random_quote(seed=s, category=category)
+        }
+        base_seed = generate_day_seed()
+        pool_count = Quote.query.filter(
+            Quote.category.in_([c.strip() for c in category.split(",")])
+        ).count() if category else Quote.query.count()
+        max_tries = pool_count if lookback_days < pool_count else 1
+
+        for i in range(max_tries):
+            seed = base_seed + i
+            q = get_random_quote(seed=seed, category=category)
+            if q and q.id not in recent_ids:
+                return q, seed
+
+        # fallback to true daily
+        return get_random_quote(seed=base_seed, category=category), base_seed
+
+    def get_weekly_quote_no_repeats(lookback_weeks=5, category=None):
+        # build set of IDs from the last N weeks
+        recent_ids = {
+            get_random_quote(seed=s, category=category).id
+            for s in get_last_n_seeds(generate_week_seed, lookback_weeks)
+            if get_random_quote(seed=s, category=category)
+        }
+        base_seed = generate_week_seed()
+        pool_count = Quote.query.filter(
+            Quote.category.in_([c.strip() for c in category.split(",")])
+        ).count() if category else Quote.query.count()
+        max_tries = pool_count if lookback_weeks < pool_count else 1
+
+        for i in range(max_tries):
+            seed = base_seed + i
+            q = get_random_quote(seed=seed, category=category)
+            if q and q.id not in recent_ids:
+                return q, seed
+
+        # fallback to true weekly
+        return get_random_quote(seed=base_seed, category=category), base_seed
+
+    # ────────────────────────────────────────────────────────────────────────────
 
     @app.route('/quotes/', methods=['GET'])
     def list_quotes():
         quotes = Quote.query.all()
         return render_template('admin/quotes.html', quotes=quotes)
- 
+
     @app.route('/quotes/create', methods=['POST'])
     def create_quote():
         text = request.form.get('text')
         author = request.form.get('author')
         category = request.form.get('category')
         url = request.form.get('url')
- 
         if not text or not author:
             flash("Please provide both quote and author.")
             return redirect(url_for('list_quotes'))
-       
         new_quote = Quote(
             text=text,
             author=author,
-            category=category if category else None,
-            url=url if url else None,
+            category=category or None,
+            url=url or None,
             last_updated_by=request.remote_addr
         )
         db.session.add(new_quote)
         db.session.commit()
         return redirect(url_for('list_quotes'))
- 
+
     @app.route('/quotes/edit/<int:id>', methods=['POST'])
     def edit_quote(id):
         quote = Quote.query.get_or_404(id)
@@ -52,112 +135,68 @@ def init_quote_routes(app):
         quote.last_updated_by = request.remote_addr
         db.session.commit()
         return redirect(url_for('list_quotes'))
- 
+
     @app.route('/quotes/delete/<int:id>', methods=['POST'])
     def delete_quote(id):
         quote = Quote.query.get_or_404(id)
         db.session.delete(quote)
         db.session.commit()
         return redirect(url_for('list_quotes'))
- 
-    def get_random_quote(seed=None, category=None):
-        query = Quote.query
-        if category:
-            categories = [cat.strip() for cat in category.split(',')]
-            query = query.filter(Quote.category.in_(categories))
-        quotes = query.all()
-        if not quotes:
-            return None
-        if seed is not None:
-            rand = random.Random(seed)
-            return rand.choice(quotes)
-        return random.choice(quotes)
-   
-    def generate_day_seed():
-        """Erstellt einen Seed basierend auf Tag, Monat und Jahr (z.B. '26032025')"""
-        return int(date.today().strftime("%d%m%Y"))
-   
-    def generate_week_seed():
-        """Erstellt einen Seed basierend auf Jahr und Kalenderwoche (z.B. '202512')"""
-        today = date.today()
-        return int(f"{today.year}{today.isocalendar()[1]:02d}")
-   
-    def generate_color_hue(seed=None):
-        """Generates a color hue (0-360) based on a seed or randomly"""
-        if seed is not None:
-            # Use a separate Random instance to avoid affecting global random state
-            color_rand = random.Random(seed)
-            return color_rand.randint(0, 360)
-        return random.randint(0, 360)
 
-    def format_quote(quote, color_hue=None):
-        """Formatiert den Quote als Dictionary"""
-        return {
-            "id": quote.id,
-            "text": quote.text,
-            "author": quote.author,
-            "category": quote.category,
-            "url": quote.url,
-            "backgroundColor": generate_hsl_color(color_hue)
-        }
-   
-    def get_quote_response(json_response=False, seed=None, category=None, period_label=None):
-        """
-        Hilfsfunktion, die den Quote basierend auf Seed und Kategorie abruft und
-        entweder als JSON oder HTML-Antwort zurückgibt.
-        """
-        quote = get_random_quote(seed=seed, category=category)
+    def get_quote_response(json_response, quote, seed, period_label):
         if not quote:
             if json_response:
-                return jsonify({"error": "No quotes found matching the criteria"}), 404
+                return jsonify({"error": "No quotes found"}), 404
             return render_template('quotes/no_quote.html'), 404
-        
-        # Only generate color if color parameter is present
-        color_hue = None
-        if request.args.get('color'):
-            color_hue = generate_color_hue(seed)
-        
+
+        hue = generate_color_hue(seed) if request.args.get('color') else None
         if json_response:
-            return jsonify(format_quote(quote, color_hue))
-        return render_template('quotes/quote.html', quote=quote, period=period_label, 
-                             background_color=generate_hsl_color(color_hue))
-   
+            data = format_quote(quote, hue)
+            data["period"] = period_label
+            return jsonify(data)
+        return render_template(
+            'quotes/quote.html',
+            quote=quote,
+            period=period_label,
+            background_color=generate_hsl_color(hue)
+        )
+
     @app.route('/quotes/random', methods=['GET'])
     def random_quote():
-        """JSON endpoint for completely random quote (kein deterministischer Seed)"""
-        category = request.args.get('category')
-        return get_quote_response(json_response=True, seed=None, category=category, period_label="Random")
-   
+        cat = request.args.get('category')
+        q = get_random_quote(category=cat)
+        return get_quote_response(True, q, None, "Random")
+
     @app.route('/quotes/random/view', methods=['GET'])
     def random_quote_view():
-        """HTML endpoint for random quote"""
-        category = request.args.get('category')
-        return get_quote_response(json_response=False, seed=None, category=category, period_label="Random")
-   
+        cat = request.args.get('category')
+        q = get_random_quote(category=cat)
+        return get_quote_response(False, q, None, "Random")
+
     @app.route('/quotes/weekly', methods=['GET'])
     def weekly_quote():
-        """JSON endpoint for weekly quote"""
-        category = request.args.get('category')
-        week_seed = generate_week_seed()
-        return get_quote_response(json_response=True, seed=week_seed, category=category, period_label="Weekly")
-   
+        """JSON: deterministic no-repeat weekly (last 5 weeks)"""
+        cat = request.args.get('category')
+        q, used_seed = get_weekly_quote_no_repeats(lookback_weeks=5, category=cat)
+        return get_quote_response(True, q, used_seed, "Weekly")
+
     @app.route('/quotes/weekly/view', methods=['GET'])
     def weekly_quote_view():
-        """HTML endpoint for weekly quote"""
-        category = request.args.get('category')
-        week_seed = generate_week_seed()
-        return get_quote_response(json_response=False, seed=week_seed, category=category, period_label="Weekly")
-   
+        """HTML: deterministic no-repeat weekly (last 5 weeks)"""
+        cat = request.args.get('category')
+        q, used_seed = get_weekly_quote_no_repeats(lookback_weeks=5, category=cat)
+        return get_quote_response(False, q, used_seed, "Weekly")
+
     @app.route('/quotes/daily', methods=['GET'])
     def daily_quote():
-        """JSON endpoint for daily quote"""
-        category = request.args.get('category')
-        day_seed = generate_day_seed()
-        return get_quote_response(json_response=True, seed=day_seed, category=category, period_label="Daily")
-   
+        """JSON: deterministic no-repeat daily (last 5 days)"""
+        cat = request.args.get('category')
+        q, used_seed = get_daily_quote_no_repeats(lookback_days=5, category=cat)
+        return get_quote_response(True, q, used_seed, "Daily")
+
     @app.route('/quotes/daily/view', methods=['GET'])
     def daily_quote_view():
-        """HTML endpoint for daily quote"""
-        category = request.args.get('category')
-        day_seed = generate_day_seed()
-        return get_quote_response(json_response=False, seed=day_seed, category=category, period_label="Daily")
+        """HTML: deterministic no-repeat daily (last 5 days)"""
+        cat = request.args.get('category')
+        q, used_seed = get_daily_quote_no_repeats(lookback_days=5, category=cat)
+        return get_quote_response(False, q, used_seed, "Daily")
