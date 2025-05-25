@@ -85,11 +85,9 @@ def init_quote_routes(app):
     def generate_color_hue(seed=None):
         """Generates a color hue (0-360) based on a seed or randomly"""
         if seed is not None:
-            # Use the seed to generate a consistent hue
-            random.seed(seed)
-            hue = random.randint(0, 360)
-            random.seed()  # Reset the seed
-            return hue
+            # Use a separate Random instance to avoid affecting global random state
+            color_rand = random.Random(seed)
+            return color_rand.randint(0, 360)
         return random.randint(0, 360)
 
     def format_quote(quote, color_hue=None):
