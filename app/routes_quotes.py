@@ -74,10 +74,8 @@ def init_quote_routes(app):
         return random.choice(quotes)
    
     def generate_day_seed():
-        """Generate a seed based on day, month and year that changes every day but stays consistent within a day"""
-        today = date.today()
-        # Combining day, month and year in a way that ensures different months get different patterns
-        return today.day + (today.month * 31) + (today.year * 372)
+        """Erstellt einen Seed basierend auf Tag, Monat und Jahr (z.B. '26032025')"""
+        return int(date.today().strftime("%d%m%Y"))
    
     def generate_week_seed():
         """Erstellt einen Seed basierend auf Jahr und Kalenderwoche (z.B. '202512')"""
