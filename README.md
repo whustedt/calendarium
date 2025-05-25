@@ -119,21 +119,43 @@ Below are the available API endpoints with their respective usage:
 
 The application includes full quote management functionality with both API endpoints and HTML views.
 
+### Quote Selection Logic
+
+The quote selection system implements intelligent randomization with the following features:
+
+1. **Deterministic Selection**: For daily and weekly quotes, selection is deterministic based on the current date or week, ensuring all users see the same quote on a given day/week.
+
+2. **No-Repeat Logic**: Both daily and weekly endpoints implement a "no-repeat" system:
+   - Daily quotes won't repeat within a 5-day period
+   - Weekly quotes won't repeat within a 5-week period
+   - If all quotes in the pool have been used recently, falls back to simple deterministic selection
+
+3. **Category Filtering**: All endpoints support filtering by one or more categories:
+   - Single category: `?category=inspiration`
+   - Multiple categories: `?category=inspiration,motivation`
+   - No-repeat logic considers only quotes within the selected categories
+
+4. **Pool Size Optimization**: The system automatically adjusts the lookback period based on the available quote pool size to ensure optimal quote distribution.
+
 ### Quote Endpoints
 
 #### JSON API Endpoints
 - **Current Week Quote**
   - **GET** `/quotes/weekly`
-  - Returns a JSON response containing a randomly selected quote
+  - Returns a JSON response containing a deterministically selected quote
   - Quote selection is consistent throughout the week using the calendar week as seed
+  - Implements "no-repeat" logic to avoid showing the same quote in the last 5 weeks
+  - Falls back to simple weekly deterministic selection if no unused quotes are available
   - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
     - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
 
 - **Current Day Quote**
   - **GET** `/quotes/daily`
-  - Returns a JSON response containing a randomly selected quote
+  - Returns a JSON response containing a deterministically selected quote
   - Quote selection is consistent throughout the day using the day as seed
+  - Implements "no-repeat" logic to avoid showing the same quote in the last 5 days
+  - Falls back to simple daily deterministic selection if no unused quotes are available
   - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
     - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
