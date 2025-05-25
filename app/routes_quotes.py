@@ -50,47 +50,71 @@ def get_last_n_seeds(generator, n):
     return [generator(offset=-i) for i in range(1, n + 1)]
 
 def get_daily_quote_no_repeats(lookback_days=5, category=None):
+    # Get all available quotes for this category first
+    query = Quote.query
+    if category:
+        cats = [c.strip() for c in category.split(",")]
+        query = query.filter(Quote.category.in_(cats))
+    available_quotes = query.all()
+    
+    if not available_quotes:
+        return None, generate_day_seed()
+        
     # build set of IDs from the last N days
     recent_ids = {
         get_random_quote(seed=s, category=category).id
         for s in get_last_n_seeds(generate_day_seed, lookback_days)
         if get_random_quote(seed=s, category=category)
     }
+    
     base_seed = generate_day_seed()
-    pool_count = Quote.query.filter(
-        Quote.category.in_([c.strip() for c in category.split(",")])
-    ).count() if category else Quote.query.count()
-    max_tries = pool_count if lookback_days < pool_count else 1
-
-    for i in range(max_tries):
-        seed = base_seed + i
-        q = get_random_quote(seed=seed, category=category)
-        if q and q.id not in recent_ids:
-            return q, seed
-
-    # fallback to true daily
+    available_ids = {q.id for q in available_quotes}
+    candidate_ids = available_ids - recent_ids
+    
+    # If we have candidates not recently used, try to use one of those
+    if candidate_ids:
+        for i in range(len(candidate_ids)):
+            seed = base_seed + i
+            q = get_random_quote(seed=seed, category=category)
+            if q and q.id in candidate_ids:
+                return q, seed
+    
+    # If all quotes were recently used or we couldn't find a good candidate,
+    # fall back to true daily random from all quotes
     return get_random_quote(seed=base_seed, category=category), base_seed
 
 def get_weekly_quote_no_repeats(lookback_weeks=5, category=None):
+    # Get all available quotes for this category first
+    query = Quote.query
+    if category:
+        cats = [c.strip() for c in category.split(",")]
+        query = query.filter(Quote.category.in_(cats))
+    available_quotes = query.all()
+    
+    if not available_quotes:
+        return None, generate_week_seed()
+        
     # build set of IDs from the last N weeks
     recent_ids = {
         get_random_quote(seed=s, category=category).id
         for s in get_last_n_seeds(generate_week_seed, lookback_weeks)
         if get_random_quote(seed=s, category=category)
     }
+    
     base_seed = generate_week_seed()
-    pool_count = Quote.query.filter(
-        Quote.category.in_([c.strip() for c in category.split(",")])
-    ).count() if category else Quote.query.count()
-    max_tries = pool_count if lookback_weeks < pool_count else 1
-
-    for i in range(max_tries):
-        seed = base_seed + i
-        q = get_random_quote(seed=seed, category=category)
-        if q and q.id not in recent_ids:
-            return q, seed
-
-    # fallback to true weekly
+    available_ids = {q.id for q in available_quotes}
+    candidate_ids = available_ids - recent_ids
+    
+    # If we have candidates not recently used, try to use one of those
+    if candidate_ids:
+        for i in range(len(candidate_ids)):
+            seed = base_seed + i
+            q = get_random_quote(seed=seed, category=category)
+            if q and q.id in candidate_ids:
+                return q, seed
+    
+    # If all quotes were recently used or we couldn't find a good candidate,
+    # fall back to true weekly random from all quotes
     return get_random_quote(seed=base_seed, category=category), base_seed
 
 def init_quote_routes(app):
