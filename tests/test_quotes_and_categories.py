@@ -1,6 +1,7 @@
 from app.models import Quote, Category
 from app import db
-from datetime import datetime
+from datetime import datetime, date, timedelta
+from unittest.mock import patch
 import json
 
 def test_create_quote_with_valid_data(test_client, init_database):
@@ -48,6 +49,115 @@ def test_get_random_quote(test_client, init_database):
     assert 'text' in data
     assert 'author' in data
     assert 'category' in data
+
+def test_seeded_random_quote_consistency(test_client, init_database):
+    """
+    GIVEN a Flask application with multiple quotes
+    WHEN getting a random quote with the same seed
+    THEN verify it returns the same quote consistently
+    """
+    # Create multiple test quotes
+    quotes = [
+        Quote(text=f"Quote {i}", author=f"Author {i}", category="Test", last_updated_by="127.0.0.1")
+        for i in range(3)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import get_random_quote
+    
+    # Same seed should return same quote
+    seed = 12345
+    first_quote = get_random_quote(seed=seed)
+    second_quote = get_random_quote(seed=seed)
+    assert first_quote.id == second_quote.id
+    
+    # Different seed should possibly return different quote
+    different_seed = 67890
+    different_quote = get_random_quote(seed=different_seed)
+    # Note: There's a small chance this could be the same quote due to randomness
+    # but with different seeds it's less likely
+
+def test_daily_quote_no_repeats(test_client, init_database):
+    """
+    GIVEN a Flask application with multiple quotes
+    WHEN getting daily quotes over several days
+    THEN verify it doesn't repeat quotes from recent days
+    """
+    # Create enough quotes for testing
+    quotes = [
+        Quote(text=f"Daily Quote {i}", author=f"Author {i}", category="Test", last_updated_by="127.0.0.1")
+        for i in range(10)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import get_daily_quote_no_repeats, generate_day_seed
+    
+    # Mock date.today() to return different dates
+    base_date = date(2025, 5, 25)  # Use a fixed base date
+    quote_ids = set()
+    
+    for i in range(5):  # Test 5 consecutive days
+        test_date = base_date + timedelta(days=i)
+        with patch('app.routes_quotes.date') as mock_date:
+            mock_date.today.return_value = test_date
+            quote, _ = get_daily_quote_no_repeats(lookback_days=5)
+            # Each quote should be unique in our set
+            assert quote.id not in quote_ids
+            quote_ids.add(quote.id)
+
+def test_category_filtered_random_quote(test_client, init_database):
+    """
+    GIVEN a Flask application with quotes in different categories
+    WHEN getting a random quote with category filter
+    THEN verify it only returns quotes from that category
+    """
+    # Create quotes in different categories
+    quotes = [
+        Quote(text="Tech Quote 1", author="Author 1", category="Technology", last_updated_by="127.0.0.1"),
+        Quote(text="Tech Quote 2", author="Author 2", category="Technology", last_updated_by="127.0.0.1"),
+        Quote(text="Inspiration Quote", author="Author 3", category="Inspiration", last_updated_by="127.0.0.1")
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    # Test category filter
+    response = test_client.get('/quotes/random?category=Technology')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['category'] == "Technology"
+
+    # Multiple categories
+    response = test_client.get('/quotes/random?category=Technology,Inspiration')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data['category'] in ["Technology", "Inspiration"]
+
+def test_no_repeats_edge_cases(test_client, init_database):
+    """
+    GIVEN a Flask application with limited quotes
+    WHEN getting daily quotes with no-repeat logic
+    THEN verify it handles edge cases appropriately
+    """
+    # Create just 2 quotes for testing edge cases
+    quotes = [
+        Quote(text=f"Edge Case Quote {i}", author=f"Author {i}", 
+              category="Test", last_updated_by="127.0.0.1")
+        for i in range(2)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import get_daily_quote_no_repeats
+    
+    # Try to get quotes with lookback greater than available quotes
+    quote1, seed1 = get_daily_quote_no_repeats(lookback_days=5)
+    assert quote1 is not None  # Should still return a quote
+    
+    # Verify it handles empty category gracefully
+    quote2, seed2 = get_daily_quote_no_repeats(category="NonexistentCategory")
+    assert quote2 is None  # Should return None for non-existent category
 
 def test_get_daily_quote(test_client, init_database):
     """
