@@ -128,14 +128,16 @@ The quote selection system implements intelligent randomization with the followi
 2. **No-Repeat Logic**: Both daily and weekly endpoints implement a "no-repeat" system:
    - Daily quotes won't repeat within a 5-day period
    - Weekly quotes won't repeat within a 5-week period
-   - If all quotes in the pool have been used recently, falls back to simple deterministic selection
+   - The system first identifies all available quotes for the given category
+   - Then removes any quotes used in the recent period
+   - Attempts to select from remaining unused quotes using deterministic seeds
+   - If all quotes have been recently used, falls back to simple deterministic selection
 
 3. **Category Filtering**: All endpoints support filtering by one or more categories:
    - Single category: `?category=inspiration`
    - Multiple categories: `?category=inspiration,motivation`
    - No-repeat logic considers only quotes within the selected categories
-
-4. **Pool Size Optimization**: The system automatically adjusts the lookback period based on the available quote pool size to ensure optimal quote distribution.
+   - Category filtering is applied consistently throughout the selection process
 
 ### Quote Endpoints
 
