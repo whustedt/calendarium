@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify
+from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
 from markdown import markdown
 from markupsafe import Markup
 from .models import Quote
@@ -62,9 +62,9 @@ def get_daily_quote_no_repeats(lookback_days=5, category=None):
         
     # build set of IDs from the last N days
     recent_ids = {
-        get_random_quote(seed=s, category=category).id
+        quote.id
         for s in get_last_n_seeds(generate_day_seed, lookback_days)
-        if get_random_quote(seed=s, category=category)
+        if (quote := get_random_quote(seed=s, category=category)) is not None
     }
     
     base_seed = generate_day_seed()
@@ -81,6 +81,8 @@ def get_daily_quote_no_repeats(lookback_days=5, category=None):
     
     # If all quotes were recently used or we couldn't find a good candidate,
     # fall back to true daily random from all quotes
+    # Debug: Logging fallback reason for traceability
+    current_app.logger.info("Fallback to true daily random: All quotes were recently used or no suitable candidate found.")
     return get_random_quote(seed=base_seed, category=category), base_seed
 
 def get_weekly_quote_no_repeats(lookback_weeks=5, category=None):
@@ -96,9 +98,9 @@ def get_weekly_quote_no_repeats(lookback_weeks=5, category=None):
         
     # build set of IDs from the last N weeks
     recent_ids = {
-        get_random_quote(seed=s, category=category).id
+        quote.id
         for s in get_last_n_seeds(generate_week_seed, lookback_weeks)
-        if get_random_quote(seed=s, category=category)
+        if (quote := get_random_quote(seed=s, category=category)) is not None
     }
     
     base_seed = generate_week_seed()
@@ -115,6 +117,8 @@ def get_weekly_quote_no_repeats(lookback_weeks=5, category=None):
     
     # If all quotes were recently used or we couldn't find a good candidate,
     # fall back to true weekly random from all quotes
+    # Debug: Logging fallback reason for traceability
+    current_app.logger.info("Fallback to true weekly random: All quotes were recently used or no suitable candidate found.")
     return get_random_quote(seed=base_seed, category=category), base_seed
 
 def init_quote_routes(app):
