@@ -1,4 +1,4 @@
-from app.models import Quote, Category
+from app.models import Quote, Category, QuoteConstants
 from app import db
 from datetime import datetime, date, timedelta
 from unittest.mock import patch
@@ -38,7 +38,7 @@ def test_create_quote_validation(test_client, init_database):
     assert b"Please provide both quote and author" in response.data
 
     # Test text too long
-    long_text = "x" * 1001
+    long_text = "x" * (QuoteConstants.MAX_TEXT_LENGTH + 1)
     response = test_client.post('/quotes/create', data={
         'text': long_text, 
         'author': 'Author'
@@ -47,13 +47,33 @@ def test_create_quote_validation(test_client, init_database):
     assert b"Quote text is too long" in response.data
 
     # Test author too long
-    long_author = "x" * 201
+    long_author = "x" * (QuoteConstants.MAX_AUTHOR_LENGTH + 1)
     response = test_client.post('/quotes/create', data={
         'text': 'Valid quote', 
         'author': long_author
     }, follow_redirects=True)
     assert response.status_code == 400
     assert b"Author name is too long" in response.data
+    
+    # Test category too long
+    long_category = "x" * (QuoteConstants.MAX_CATEGORY_LENGTH + 1)
+    response = test_client.post('/quotes/create', data={
+        'text': 'Valid quote', 
+        'author': 'Valid author',
+        'category': long_category
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Category is too long" in response.data
+    
+    # Test URL too long
+    long_url = "x" * (QuoteConstants.MAX_URL_LENGTH + 1)
+    response = test_client.post('/quotes/create', data={
+        'text': 'Valid quote', 
+        'author': 'Valid author',
+        'url': long_url
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"URL is too long" in response.data
 
 def test_get_random_quote(test_client, init_database):
     """
@@ -483,7 +503,7 @@ def test_quote_edit_validation(test_client, init_database):
     assert b"Please provide both quote and author" in response.data
 
     # Test text too long
-    long_text = "x" * 1001
+    long_text = "x" * (QuoteConstants.MAX_TEXT_LENGTH + 1)
     response = test_client.post(f'/quotes/edit/{quote.id}', data={
         'text': long_text,
         'author': 'Author'

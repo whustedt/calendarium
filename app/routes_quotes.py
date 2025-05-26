@@ -1,12 +1,12 @@
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from markdown import markdown
 from markupsafe import Markup
-from .models import Quote
+from .models import Quote, QuoteConstants
 from datetime import date
 import hashlib
 import random
 from app import db
-from sqlalchemy import func, asc
+from sqlalchemy import asc
 
 def generate_hsl_color(hue):
     return f"hsl({hue}, 70%, 30%)" if hue is not None else None
@@ -166,12 +166,20 @@ def init_quote_routes(app):
             return "Please provide both quote and author.", 400
         
         # Validate text length
-        if len(text) > 1000:
-            return "Quote text is too long (maximum 1000 characters).", 400
+        if len(text) > QuoteConstants.MAX_TEXT_LENGTH:
+            return f"Quote text is too long (maximum {QuoteConstants.MAX_TEXT_LENGTH} characters).", 400
             
         # Validate author length
-        if len(author) > 200:
-            return "Author name is too long (maximum 200 characters).", 400
+        if len(author) > QuoteConstants.MAX_AUTHOR_LENGTH:
+            return f"Author name is too long (maximum {QuoteConstants.MAX_AUTHOR_LENGTH} characters).", 400
+        
+        # Validate category length
+        if category and len(category) > QuoteConstants.MAX_CATEGORY_LENGTH:
+            return f"Category is too long (maximum {QuoteConstants.MAX_CATEGORY_LENGTH} characters).", 400
+            
+        # Validate URL length
+        if url and len(url) > QuoteConstants.MAX_URL_LENGTH:
+            return f"URL is too long (maximum {QuoteConstants.MAX_URL_LENGTH} characters).", 400
         
         try:
             new_quote = Quote(
@@ -202,12 +210,20 @@ def init_quote_routes(app):
             return "Please provide both quote and author.", 400
         
         # Validate text length
-        if len(text) > 1000:
-            return "Quote text is too long (maximum 1000 characters).", 400
+        if len(text) > QuoteConstants.MAX_TEXT_LENGTH:
+            return f"Quote text is too long (maximum {QuoteConstants.MAX_TEXT_LENGTH} characters).", 400
             
         # Validate author length
-        if len(author) > 200:
-            return "Author name is too long (maximum 200 characters).", 400
+        if len(author) > QuoteConstants.MAX_AUTHOR_LENGTH:
+            return f"Author name is too long (maximum {QuoteConstants.MAX_AUTHOR_LENGTH} characters).", 400
+            
+        # Validate category length
+        if category and len(category) > QuoteConstants.MAX_CATEGORY_LENGTH:
+            return f"Category is too long (maximum {QuoteConstants.MAX_CATEGORY_LENGTH} characters).", 400
+            
+        # Validate URL length
+        if url and len(url) > QuoteConstants.MAX_URL_LENGTH:
+            return f"URL is too long (maximum {QuoteConstants.MAX_URL_LENGTH} characters).", 400
         
         try:
             quote.text = text
