@@ -186,7 +186,8 @@ def init_quote_routes(app):
             return redirect(url_for('list_quotes'))
         except Exception as e:
             db.session.rollback()
-            return f"Error creating quote: {str(e)}", 500
+            app.logger.error("Error creating quote", exc_info=e)
+            return "An internal error occurred while creating the quote.", 500
 
     @app.route('/quotes/edit/<int:id>', methods=['POST'])
     def edit_quote(id):
@@ -218,7 +219,8 @@ def init_quote_routes(app):
             return redirect(url_for('list_quotes'))
         except Exception as e:
             db.session.rollback()
-            return f"Error updating quote: {str(e)}", 500
+            app.logger.error("Error updating quote", exc_info=e)
+            return "An internal error occurred while updating the quote.", 500
 
     @app.route('/quotes/delete/<int:id>', methods=['POST'])
     def delete_quote(id):
