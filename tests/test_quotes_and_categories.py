@@ -26,6 +26,35 @@ def test_create_quote_with_valid_data(test_client, init_database):
     assert quote.category == "Inspiration"
     assert quote.url == "https://example.com"
 
+def test_create_quote_validation(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN a new quote is created with invalid data
+    THEN check that appropriate validation errors are returned
+    """
+    # Test missing required fields
+    response = test_client.post('/quotes/create', data={'text': 'Quote without author'}, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Please provide both quote and author" in response.data
+
+    # Test text too long
+    long_text = "x" * 1001
+    response = test_client.post('/quotes/create', data={
+        'text': long_text, 
+        'author': 'Author'
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Quote text is too long" in response.data
+
+    # Test author too long
+    long_author = "x" * 201
+    response = test_client.post('/quotes/create', data={
+        'text': 'Valid quote', 
+        'author': long_author
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Author name is too long" in response.data
+
 def test_get_random_quote(test_client, init_database):
     """
     GIVEN a Flask application with quotes
@@ -78,34 +107,68 @@ def test_seeded_random_quote_consistency(test_client, init_database):
     # Note: There's a small chance this could be the same quote due to randomness
     # but with different seeds it's less likely
 
-def test_daily_quote_no_repeats(test_client, init_database):
+def test_daily_quote_fair_rotation(test_client, init_database):
     """
     GIVEN a Flask application with multiple quotes
-    WHEN getting daily quotes over several days
-    THEN verify it doesn't repeat quotes from recent days
+    WHEN getting daily quotes over a full rotation cycle
+    THEN verify it uses fair rotation without repetition until all quotes are used
     """
-    # Create enough quotes for testing
+    # Create exactly 5 quotes for testing
     quotes = [
-        Quote(text=f"Daily Quote {i}", author=f"Author {i}", category="Test", last_updated_by="127.0.0.1")
-        for i in range(10)
+        Quote(text=f"Rotation Quote {i}", author=f"Author {i}", category="Test", last_updated_by="127.0.0.1")
+        for i in range(5)
     ]
     db.session.add_all(quotes)
     db.session.commit()
 
     from app.routes_quotes import select_daily_quote
     
-    # Mock date.today() to return different dates
-    base_date = date(2025, 5, 25)  # Use a fixed base date
-    quote_ids = set()
+    # Track quotes selected over multiple cycles
+    selected_quotes = []
+    base_date = date(2025, 6, 1)
     
-    for i in range(9):  # Test 9 consecutive days
+    # Test two complete cycles (10 days)
+    for i in range(10):
         test_date = base_date + timedelta(days=i)
         with patch('app.routes_quotes.date') as mock_date:
             mock_date.today.return_value = test_date
             quote = select_daily_quote()
-            # Each quote should be unique in our set
-            assert quote.id not in quote_ids
-            quote_ids.add(quote.id)
+            selected_quotes.append(quote.id)
+    
+    # Verify first 5 selections are all different (fair rotation)
+    first_cycle = selected_quotes[:5]
+    assert len(set(first_cycle)) == 5, "First cycle should include all quotes"
+    
+    # Verify second cycle starts fresh rotation
+    second_cycle = selected_quotes[5:10]
+    assert len(set(second_cycle)) == 5, "Second cycle should include all quotes"
+
+def test_daily_quote_deterministic_selection(test_client, init_database):
+    """
+    GIVEN a Flask application with multiple quotes having the same last_shown date
+    WHEN getting daily quotes multiple times on the same day
+    THEN verify it returns the same quote consistently (deterministic tiebreaker)
+    """
+    # Create quotes with same last_shown date
+    yesterday = date.today() - timedelta(days=1)
+    quotes = [
+        Quote(text=f"Deterministic Quote {i}", author=f"Author {i}", 
+              category="Test", last_shown=yesterday, last_updated_by="127.0.0.1")
+        for i in range(3)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import select_daily_quote
+    
+    # Get quote multiple times on same day
+    selected_quotes = []
+    for _ in range(5):
+        quote = select_daily_quote()
+        selected_quotes.append(quote.id)
+    
+    # All selections should be the same
+    assert len(set(selected_quotes)) == 1, "Should return same quote consistently on same day"
 
 def test_category_filtered_random_quote(test_client, init_database):
     """
@@ -134,45 +197,48 @@ def test_category_filtered_random_quote(test_client, init_database):
     data = json.loads(response.data)
     assert data['category'] in ["Technology", "Inspiration"]
 
-def test_no_repeats_edge_cases(test_client, init_database):
+def test_empty_category_filter(test_client, init_database):
     """
-    GIVEN a Flask application with limited quotes
-    WHEN getting daily quotes with no-repeat logic
-    THEN verify it handles edge cases appropriately
+    GIVEN a Flask application with quotes
+    WHEN getting quotes with empty category filter
+    THEN verify it returns quotes normally (ignores empty filter)
     """
-    # Create just 2 quotes for testing edge cases
-    quotes = [
-        Quote(text=f"Edge Case Quote {i}", author=f"Author {i}", 
-              category="Test", last_updated_by="127.0.0.1")
-        for i in range(2)
-    ]
-    db.session.add_all(quotes)
+    quote = Quote(text="Test quote", author="Test Author", category="Test", last_updated_by="127.0.0.1")
+    db.session.add(quote)
     db.session.commit()
 
-    from app.routes_quotes import select_daily_quote
-    
-    test_date = date(2025, 5, 25) + timedelta(days=1)
-    with patch('app.routes_quotes.date') as mock_date:
-        mock_date.today.return_value = test_date
+    # Empty category should be ignored
+    response = test_client.get('/quotes/random?category=')
+    assert response.status_code == 200
 
-        quote1 = select_daily_quote()
-        assert quote1 is not None  # Should still return a quote
-        
-        quoteNa = select_daily_quote("NonExistentCategory")
-        assert quoteNa is None  # Should return None for non-existent category
+    # Whitespace-only category should be ignored
+    response = test_client.get('/quotes/random?category=   ')
+    assert response.status_code == 200    
 
-        test_date += timedelta(days=1)
-        mock_date.today.return_value = test_date
-        quote2 = select_daily_quote()
-        assert quote2 is not None
-        assert quote2.id != quote1.id  # Should return a different quote
+def test_no_quotes_available(test_client, init_database):
+    """
+    GIVEN a Flask application with no quotes
+    WHEN requesting quotes
+    THEN verify appropriate responses are returned
+    """
+    # Test daily quote with no quotes
+    response = test_client.get('/quotes/daily')
+    assert response.status_code == 404
+    data = json.loads(response.data)
+    assert "error" in data
+    assert "No quotes found" in data["error"]
 
-        test_date += timedelta(days=1)
-        mock_date.today.return_value = test_date
-        quote3 = select_daily_quote()
-        assert quote3 is not None
-        assert quote3.id != quote2.id  # Should return a different quote
-        assert quote3.id == quote1.id  # Should return to the first quote after exhausting options    
+    # Test random quote with no quotes
+    response = test_client.get('/quotes/random')
+    assert response.status_code == 404
+
+    # Test with non-existent category
+    quote = Quote(text="Test", author="Author", category="Existing", last_updated_by="127.0.0.1")
+    db.session.add(quote)
+    db.session.commit()
+
+    response = test_client.get('/quotes/daily?category=NonExistent')
+    assert response.status_code == 404
 
 def test_get_daily_quote(test_client, init_database):
     """
@@ -280,7 +346,7 @@ def test_update_category(test_client, init_database):
     response = test_client.post(f'/categories/update/{category.id}', data=update_data, follow_redirects=True)
     assert response.status_code == 200
 
-    updated_category = Category.query.get(category.id)
+    updated_category = db.session.get(Category, category.id)
     assert updated_category.name == 'UpdatedCategory'
     assert updated_category.symbol == '🎉'
     assert updated_category.color_hex == '#33FF57'
@@ -312,7 +378,7 @@ def test_delete_category_with_no_entries(test_client, init_database):
     assert response.status_code == 200
 
     # Verify category was deleted
-    deleted_category = Category.query.get(category_id)
+    deleted_category = db.session.get(Category, category_id)
     assert deleted_category is None
 
 def test_delete_category_with_entries(test_client, init_database):
@@ -350,5 +416,218 @@ def test_delete_category_with_entries(test_client, init_database):
     assert response.status_code == 400
 
     # Verify category still exists
-    category_exists = Category.query.get(category.id) is not None
+    category_exists = db.session.get(Category, category.id) is not None
     assert category_exists is True
+
+def test_quote_endpoints_with_color_parameter(test_client, init_database):
+    """
+    GIVEN a Flask application with quotes
+    WHEN requesting quotes with color parameter
+    THEN verify it returns background color in response
+    """
+    quote = Quote(text="Color test", author="Author", category="Test", last_updated_by="127.0.0.1")
+    db.session.add(quote)
+    db.session.commit()
+
+    # Test random quote with color
+    response = test_client.get('/quotes/random?color=true')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert 'backgroundColor' in data
+    assert data['backgroundColor'] is not None
+    assert data['backgroundColor'].startswith('hsl(')
+
+    # Test daily quote with color
+    response = test_client.get('/quotes/daily?color=true')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert 'backgroundColor' in data
+    assert data['backgroundColor'] is not None
+
+def test_quote_html_views(test_client, init_database):
+    """
+    GIVEN a Flask application with quotes
+    WHEN accessing HTML view endpoints
+    THEN verify they return proper HTML responses
+    """
+    quote = Quote(text="HTML test", author="Author", category="Test", last_updated_by="127.0.0.1")
+    db.session.add(quote)
+    db.session.commit()
+
+    # Test random quote view
+    response = test_client.get('/quotes/random/view')
+    assert response.status_code == 200
+    assert response.content_type.startswith('text/html')
+
+    # Test daily quote view
+    response = test_client.get('/quotes/daily/view')
+    assert response.status_code == 200
+    assert response.content_type.startswith('text/html')
+
+def test_quote_edit_validation(test_client, init_database):
+    """
+    GIVEN a Flask application with an existing quote
+    WHEN editing a quote with invalid data
+    THEN verify appropriate validation errors are returned
+    """
+    quote = Quote(text="Original text", author="Original Author", last_updated_by="127.0.0.1")
+    db.session.add(quote)
+    db.session.commit()
+
+    # Test empty text
+    response = test_client.post(f'/quotes/edit/{quote.id}', data={
+        'text': '',
+        'author': 'Author'
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Please provide both quote and author" in response.data
+
+    # Test text too long
+    long_text = "x" * 1001
+    response = test_client.post(f'/quotes/edit/{quote.id}', data={
+        'text': long_text,
+        'author': 'Author'
+    }, follow_redirects=True)
+    assert response.status_code == 400
+    assert b"Quote text is too long" in response.data
+
+def test_quote_last_shown_tracking(test_client, init_database):
+    """
+    GIVEN a Flask application with quotes
+    WHEN daily quotes are selected over time
+    THEN verify last_shown dates are properly tracked
+    """
+    quotes = [
+        Quote(text=f"Tracking Quote {i}", author=f"Author {i}", last_updated_by="127.0.0.1")
+        for i in range(3)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import select_daily_quote
+    
+    # Select quote on first day
+    first_date = date(2025, 7, 1)
+    with patch('app.routes_quotes.date') as mock_date:
+        mock_date.today.return_value = first_date
+        first_quote = select_daily_quote()
+        assert first_quote.last_shown == first_date
+    
+    # Select quote on second day
+    second_date = date(2025, 7, 2)
+    with patch('app.routes_quotes.date') as mock_date:
+        mock_date.today.return_value = second_date
+        second_quote = select_daily_quote()
+        assert second_quote.last_shown == second_date
+        assert second_quote.id != first_quote.id  # Should be different quote
+
+def test_quote_response_format(test_client, init_database):
+    """
+    GIVEN a Flask application with a quote
+    WHEN requesting quote via API
+    THEN verify response contains all expected fields
+    """
+    quote = Quote(
+        text="Test quote with **markdown**",
+        author="Test Author",
+        category="Test Category",
+        url="https://example.com",
+        last_updated_by="127.0.0.1"
+    )
+    db.session.add(quote)
+    db.session.commit()
+
+    response = test_client.get('/quotes/random')
+    assert response.status_code == 200
+    
+    data = json.loads(response.data)
+    expected_fields = ['id', 'text', 'author', 'category', 'url', 'lastUpdatedBy', 'period']
+    for field in expected_fields:
+        assert field in data
+    
+    assert data['text'] == "Test quote with **markdown**"
+    assert data['author'] == "Test Author"
+    assert data['category'] == "Test Category"
+    assert data['url'] == "https://example.com"
+
+def test_performance_large_quote_set(test_client, init_database):
+    """
+    GIVEN a Flask application with a large number of quotes
+    WHEN selecting daily quotes over time
+    THEN verify the system performs efficiently and maintains fair rotation
+    """
+    import time
+    
+    # Create a larger set of quotes for performance testing
+    quotes = [
+        Quote(text=f"Performance Quote {i}", author=f"Author {i}", 
+              category=f"Category {i % 5}", last_updated_by="127.0.0.1")
+        for i in range(100)
+    ]
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import select_daily_quote
+    
+    # Measure performance of quote selection
+    start_time = time.time()
+    selected_quotes = []
+    base_date = date(2025, 8, 1)
+    
+    # Test 50 days of selections
+    for i in range(50):
+        test_date = base_date + timedelta(days=i)
+        with patch('app.routes_quotes.date') as mock_date:
+            mock_date.today.return_value = test_date
+            quote = select_daily_quote()
+            selected_quotes.append(quote.id)
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # Performance should be reasonable (less than 1 second for 50 selections)
+    assert execution_time < 1.0, f"Performance test failed: {execution_time}s for 50 quote selections"
+    
+    # Verify fair rotation - first 50 should cover most quotes
+    unique_quotes = len(set(selected_quotes[:50]))
+    assert unique_quotes >= 45, f"Fair rotation failed: only {unique_quotes} unique quotes in first 50 selections"
+
+def test_category_performance(test_client, init_database):
+    """
+    GIVEN a Flask application with quotes in multiple categories
+    WHEN filtering by category repeatedly
+    THEN verify performance is acceptable
+    """
+    import time
+    
+    # Create quotes in different categories
+    categories = ["Tech", "Inspiration", "Humor", "Philosophy", "Science"]
+    quotes = []
+    for category in categories:
+        for i in range(20):  # 20 quotes per category
+            quotes.append(Quote(
+                text=f"{category} Quote {i}", 
+                author=f"Author {i}", 
+                category=category,
+                last_updated_by="127.0.0.1"
+            ))
+    
+    db.session.add_all(quotes)
+    db.session.commit()
+
+    from app.routes_quotes import get_random_quote, select_daily_quote
+    
+    start_time = time.time()
+    
+    # Test category filtering performance
+    for category in categories:
+        for _ in range(10):  # 10 selections per category
+            random_quote = get_random_quote(category=category)
+            assert random_quote is not None
+            assert random_quote.category == category
+    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    
+    # Should complete 50 category-filtered selections quickly
+    assert execution_time < 0.5, f"Category filtering performance: {execution_time}s for 50 selections"

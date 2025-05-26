@@ -12,17 +12,33 @@ def generate_hsl_color(hue):
     return f"hsl({hue}, 70%, 30%)" if hue is not None else None
 
 def get_random_quote(seed=None, category=None):
+    """
+    Get a random quote, optionally filtered by category.
+    
+    Args:
+        seed (int, optional): Random seed for deterministic selection
+        category (str, optional): Comma-separated list of categories to filter by
+        
+    Returns:
+        Quote: Selected quote or None if no quotes match criteria
+    """
     query = Quote.query
     if category:
-        cats = [c.strip() for c in category.split(',')]
-        query = query.filter(Quote.category.in_(cats))
+        category_list = [c.strip() for c in category.split(',') if c.strip()]
+        if category_list:
+            query = query.filter(Quote.category.in_(category_list))
+    
     quotes = query.all()
     if not quotes:
         return None
-    return random.Random(seed).choice(quotes) if seed is not None else random.choice(quotes)
+    
+    if seed is not None:
+        return random.Random(seed).choice(quotes)
+    else:
+        return random.choice(quotes)
 
 def generate_day_seed():
-    """Erstellt einen Seed basierend auf Tag, Monat und Jahr (z.B. '26032025')"""
+    """Creates a seed based on day, month and year (e.g. '26032025')"""
     return int(date.today().strftime("%d%m%Y"))
 
 def generate_color_hue(seed=None):
@@ -41,47 +57,75 @@ def format_quote(quote, color_hue=None):
     }
 
 def select_daily_quote(category=None):
-    """Wählt nach Tageszyklus ohne Wiederholung und schreibt last_shown."""
+    """
+    Selects a daily quote using fair rotation system.
+    
+    The algorithm ensures all quotes are shown before any repeats by:
+    1. Checking if a quote was already selected today
+    2. Finding quotes with the earliest last_shown date (prioritizing never-shown quotes)
+    3. Using deterministic tiebreaker for consistent daily selection
+    4. Updating the selected quote's last_shown date
+    
+    Args:
+        category (str, optional): Comma-separated list of categories to filter by
+        
+    Returns:
+        Quote: Selected quote or None if no quotes match criteria
+    """
     today = date.today()
-
-    # 1) Bereits heute gezogen?
-    base_q = Quote.query.filter(Quote.last_shown == today)
+    
+    # Parse categories if provided
+    category_list = None
     if category:
-        cats = [c.strip() for c in category.split(',')]
-        base_q = base_q.filter(Quote.category.in_(cats))
-    existing = base_q.first()
+        category_list = [c.strip() for c in category.split(',') if c.strip()]
+        if not category_list:
+            category_list = None
+
+    # Check if quote already selected today
+    existing_query = Quote.query.filter(Quote.last_shown == today)
+    if category_list:
+        existing_query = existing_query.filter(Quote.category.in_(category_list))
+    
+    existing = existing_query.first()
     if existing:
         return existing
 
-    # 2) Ermittle das "earliest" last_shown (NULLS FIRST)
-    sub = (
-        Quote.query
-             .order_by(asc(Quote.last_shown).nullsfirst())
-    )
-    if category:
-        sub = sub.filter(Quote.category.in_(cats))
-    earliest_date = sub.with_entities(Quote.last_shown).limit(1).scalar()
+    # Build base query with category filter
+    base_query = Quote.query
+    if category_list:
+        base_query = base_query.filter(Quote.category.in_(category_list))
 
-    # 3) Alle mit diesem Datum holen
-    candidates = Quote.query.filter(Quote.last_shown == earliest_date)
-    if category:
-        candidates = candidates.filter(Quote.category.in_(cats))
-    candidates = candidates.all()
+    # Find earliest last_shown date (NULL values first)
+    earliest_date = (base_query
+                    .order_by(asc(Quote.last_shown).nullsfirst())
+                    .with_entities(Quote.last_shown)
+                    .limit(1)
+                    .scalar())
+
+    # Get all candidates with earliest date
+    candidates = (base_query
+                 .filter(Quote.last_shown == earliest_date)
+                 .all())
+    
     if not candidates:
         return None
 
-    # 4) Deterministischer Tiebreaker per SHA-256-Hash von "YYYY-MM-DD-id"
-    def score(q):
-        key = f"{today.isoformat()}-{q.id}"
+    # Deterministic tiebreaker using SHA-256 hash
+    def deterministic_score(quote):
+        key = f"{today.isoformat()}-{quote.id}"
         return int(hashlib.sha256(key.encode()).hexdigest(), 16)
 
-    winner = min(candidates, key=score)
+    selected_quote = min(candidates, key=deterministic_score)
 
-    # 5) last_shown updaten
-    winner.last_shown = today
-    db.session.commit()
+    # Update last_shown date
+    selected_quote.last_shown = today
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
 
-    return winner
+    return selected_quote
 
 def init_quote_routes(app):
     @app.template_filter('markdown')
@@ -113,36 +157,68 @@ def init_quote_routes(app):
 
     @app.route('/quotes/create', methods=['POST'])
     def create_quote():
-        text = request.form.get('text')
-        author = request.form.get('author')
-        category = request.form.get('category')
-        url = request.form.get('url')
+        text = request.form.get('text', '').strip()
+        author = request.form.get('author', '').strip()
+        category = request.form.get('category', '').strip()
+        url = request.form.get('url', '').strip()
 
         if not text or not author:
-            flash("Please provide both quote and author.")
-            return redirect(url_for('list_quotes'))
+            return "Please provide both quote and author.", 400
         
-        new_quote = Quote(
-            text=text,
-            author=author,
-            category=category or None,
-            url=url or None,
-            last_updated_by=request.remote_addr
-        )
-        db.session.add(new_quote)
-        db.session.commit()
-        return redirect(url_for('list_quotes'))
+        # Validate text length
+        if len(text) > 1000:
+            return "Quote text is too long (maximum 1000 characters).", 400
+            
+        # Validate author length
+        if len(author) > 200:
+            return "Author name is too long (maximum 200 characters).", 400
+        
+        try:
+            new_quote = Quote(
+                text=text,
+                author=author,
+                category=category or None,
+                url=url or None,
+                last_updated_by=request.remote_addr
+            )
+            db.session.add(new_quote)
+            db.session.commit()
+            return redirect(url_for('list_quotes'))
+        except Exception as e:
+            db.session.rollback()
+            return f"Error creating quote: {str(e)}", 500
 
     @app.route('/quotes/edit/<int:id>', methods=['POST'])
     def edit_quote(id):
         quote = Quote.query.get_or_404(id)
-        quote.text = request.form.get('text')
-        quote.author = request.form.get('author')
-        quote.category = request.form.get('category')
-        quote.url = request.form.get('url')
-        quote.last_updated_by = request.remote_addr
-        db.session.commit()
-        return redirect(url_for('list_quotes'))
+        
+        text = request.form.get('text', '').strip()
+        author = request.form.get('author', '').strip()
+        category = request.form.get('category', '').strip()
+        url = request.form.get('url', '').strip()
+        
+        if not text or not author:
+            return "Please provide both quote and author.", 400
+        
+        # Validate text length
+        if len(text) > 1000:
+            return "Quote text is too long (maximum 1000 characters).", 400
+            
+        # Validate author length
+        if len(author) > 200:
+            return "Author name is too long (maximum 200 characters).", 400
+        
+        try:
+            quote.text = text
+            quote.author = author
+            quote.category = category or None
+            quote.url = url or None
+            quote.last_updated_by = request.remote_addr
+            db.session.commit()
+            return redirect(url_for('list_quotes'))
+        except Exception as e:
+            db.session.rollback()
+            return f"Error updating quote: {str(e)}", 500
 
     @app.route('/quotes/delete/<int:id>', methods=['POST'])
     def delete_quote(id):

@@ -121,43 +121,34 @@ The application includes full quote management functionality with both API endpo
 
 ### Quote Selection Logic
 
-The quote selection system implements intelligent randomization with the following features:
+The quote selection system implements intelligent rotation with the following features:
 
-1. **Deterministic Selection**: For daily and weekly quotes, selection is deterministic based on the current date or week, ensuring all users see the same quote on a given day/week.
+1. **Daily Quote Rotation**: Daily quotes use a fair rotation system that ensures all quotes are shown before any quote repeats:
+   - The system selects quotes based on their `last_shown` date, prioritizing those shown longest ago
+   - Quotes never shown before (null `last_shown`) are prioritized first
+   - When multiple quotes have the same earliest `last_shown` date, a deterministic tiebreaker using SHA-256 hash ensures consistent selection throughout the day
+   - Each selected quote has its `last_shown` date updated to today
+   - Database transactions are properly handled with rollback on errors
 
-2. **No-Repeat Logic**: Both daily and weekly endpoints implement a "no-repeat" system:
-   - Daily quotes won't repeat within a 5-day period
-   - Weekly quotes won't repeat within a 5-week period
-   - The system first identifies all available quotes for the given category
-   - Then removes any quotes used in the recent period
-   - Attempts to select from remaining unused quotes using deterministic seeds
-   - If all quotes have been recently used, falls back to simple deterministic selection
-
-3. **Category Filtering**: All endpoints support filtering by one or more categories:
+2. **Category Filtering**: All endpoints support filtering by one or more categories:
    - Single category: `?category=inspiration`
    - Multiple categories: `?category=inspiration,motivation`
-   - No-repeat logic considers only quotes within the selected categories
+   - Empty or whitespace-only categories are ignored
+   - The rotation system considers only quotes within the selected categories
    - Category filtering is applied consistently throughout the selection process
+
+3. **Deterministic Selection**: Daily quotes remain consistent throughout the day using a deterministic tiebreaker, ensuring all users see the same quote on a given day
+
+4. **Error Handling**: Robust error handling with proper database transaction management and graceful fallbacks
 
 ### Quote Endpoints
 
 #### JSON API Endpoints
-- **Current Week Quote**
-  - **GET** `/quotes/weekly`
-  - Returns a JSON response containing a deterministically selected quote
-  - Quote selection is consistent throughout the week using the calendar week as seed
-  - Implements "no-repeat" logic to avoid showing the same quote in the last 5 weeks
-  - Falls back to simple weekly deterministic selection if no unused quotes are available
-  - Optional query parameters:
-    - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
-    - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
-
 - **Current Day Quote**
   - **GET** `/quotes/daily`
   - Returns a JSON response containing a deterministically selected quote
   - Quote selection is consistent throughout the day using the day as seed
-  - Implements "no-repeat" logic to avoid showing the same quote in the last 5 days
-  - Falls back to simple daily deterministic selection if no unused quotes are available
+  - Uses fair rotation based on `last_shown` dates to ensure all quotes are cycled through
   - Optional query parameters:
     - `category`: Filter by category (e.g., `?category=inspiration,motivation`)
     - `color`: If present, generates a consistent background color based on the seed (e.g., `?color=true`)
@@ -170,14 +161,6 @@ The quote selection system implements intelligent randomization with the followi
     - `color`: If present, generates a random background color (e.g., `?color=true`)
 
 #### HTML View Endpoints
-- **Weekly Quote View**
-  - **GET** `/quotes/weekly/view`
-  - Returns a styled HTML page displaying the weekly quote
-  - Uses same selection logic as the JSON endpoint
-  - Optional query parameters:
-    - `category`: Filter by category
-    - `color`: If present, generates a consistent background color based on the seed
-
 - **Daily Quote View**
   - **GET** `/quotes/daily/view`
   - Returns a styled HTML page displaying the daily quote
@@ -203,16 +186,18 @@ The quote selection system implements intelligent randomization with the followi
   - **POST** `/quotes/create`
   - Creates a new quote
   - Required fields:
-    - `text`: Quote content (supports Markdown syntax including lists, emphasis, code blocks, and links)
-    - `author`: Quote author
+    - `text`: Quote content (supports Markdown syntax including lists, emphasis, code blocks, and links) - max 1000 characters
+    - `author`: Quote author - max 200 characters
   - Optional fields:
     - `category`: Quote category
     - `url`: Reference URL
+  - Validation: Returns appropriate error messages for missing required fields or content that exceeds length limits
 
 - **Update Quote**
   - **POST** `/quotes/edit/<int:id>`
   - Updates existing quote
   - Accepts same fields as create
+  - Validation: Returns appropriate error messages for missing required fields or content that exceeds length limits
 
 - **Delete Quote**
   - **POST** `/quotes/delete/<int:id>`
@@ -293,6 +278,7 @@ classDiagram
         +string category : nullable
         +string url : nullable
         +string last_updated_by : nullable [IP of last editor]
+        +date last_shown : nullable [Date when quote was last shown as daily quote]
     }
 
     Category "1" o-- "*" Entry
