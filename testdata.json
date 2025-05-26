@@ -6,7 +6,8 @@
         "color_hex": "#607D8B",
         "repeat_annually": true,
         "display_celebration": false,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "192.168.1.100"
       },
       {
         "name": "Team Meeting",
@@ -14,7 +15,8 @@
         "color_hex": "#9E9E9E",
         "repeat_annually": false,
         "display_celebration": false,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "10.0.0.101"
       },
       {
         "name": "Workshop",
@@ -22,7 +24,8 @@
         "color_hex": "#FF9800",
         "repeat_annually": false,
         "display_celebration": false,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "172.16.0.102"
       },
       {
         "name": "Public Holiday",
@@ -30,7 +33,8 @@
         "color_hex": "#4CAF50",
         "repeat_annually": true,
         "display_celebration": true,
-        "is_protected": true
+        "is_protected": true,
+        "last_updated_by": "192.168.1.1"
       },
       {
         "name": "Product Launch",
@@ -38,7 +42,8 @@
         "color_hex": "#3F51B5",
         "repeat_annually": false,
         "display_celebration": true,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "10.0.0.103"
       },
       {
         "name": "Cake",
@@ -46,7 +51,8 @@
         "color_hex": "#FF8A65",
         "repeat_annually": false,
         "display_celebration": false,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "172.16.0.104"
       },
       {
         "name": "Birthday",
@@ -54,7 +60,8 @@
         "color_hex": "#E91E63",
         "repeat_annually": true,
         "display_celebration": true,
-        "is_protected": true
+        "is_protected": true,
+        "last_updated_by": "192.168.1.105"
       },
       {
         "name": "Release",
@@ -62,73 +69,620 @@
         "color_hex": "#2196F3",
         "repeat_annually": false,
         "display_celebration": false,
-        "is_protected": false
+        "is_protected": false,
+        "last_updated_by": "10.0.0.106"
+      },
+      {
+        "name": "Training",
+        "symbol": "\ud83c\udf93",
+        "color_hex": "#9C27B0",
+        "repeat_annually": false,
+        "display_celebration": false,
+        "is_protected": false,
+        "last_updated_by": "172.16.0.107"
+      },
+      {
+        "name": "Company Event",
+        "symbol": "\ud83c\udfe2",
+        "color_hex": "#795548",
+        "repeat_annually": false,
+        "display_celebration": true,
+        "is_protected": false,
+        "last_updated_by": "192.168.1.108"
+      },
+      {
+        "name": "Maintenance",
+        "symbol": "\u2699\ufe0f",
+        "color_hex": "#607D8B",
+        "repeat_annually": false,
+        "display_celebration": false,
+        "is_protected": false,
+        "last_updated_by": "10.0.0.109"
+      },
+      {
+        "name": "Sprint Planning",
+        "symbol": "\ud83d\udcca",
+        "color_hex": "#FF5722",
+        "repeat_annually": false,
+        "display_celebration": false,
+        "is_protected": false,
+        "last_updated_by": "172.16.0.110"
+      },
+      {
+        "name": "Anniversary",
+        "symbol": "\ud83c\udf89",
+        "color_hex": "#CDDC39",
+        "repeat_annually": true,
+        "display_celebration": true,
+        "is_protected": true,
+        "last_updated_by": "192.168.1.111"
+      },
+      {
+        "name": "Deadline",
+        "symbol": "\u23f0",
+        "color_hex": "#F44336",
+        "repeat_annually": false,
+        "display_celebration": false,
+        "is_protected": false,
+        "last_updated_by": "10.0.0.112"
+      },
+      {
+        "name": "Hackathon",
+        "symbol": "\ud83d\udcbb",
+        "color_hex": "#00BCD4",
+        "repeat_annually": false,
+        "display_celebration": true,
+        "is_protected": false,
+        "last_updated_by": "172.16.0.113"
       }
     ],
     "entries": [
       {
-        "date": "2024-06-15",
-        "title": "Mid-Year Review Conference",
-        "description": "Annual industry conference to discuss market trends.",
-        "category": {"name": "Conference"},
-        "url": "http://example.com/conference",
-        "last_updated_by": "192.168.1.1",
-        "cancelled": false
-      },
-      {
-        "date": "2024-07-04",
-        "title": "Independence Day Celebration",
-        "description": "Office closed for public holiday.",
+        "date": "2025-01-01",
+        "title": "New Year's Day",
+        "description": "Start of the new year - office closed.",
         "category": {"name": "Public Holiday"},
         "url": "",
-        "last_updated_by": "192.168.1.2",
+        "last_updated_by": "192.168.1.1",
         "cancelled": false
       },
       {
-        "date": "2024-07-12",
-        "title": "Team Building Cake Day",
-        "description": "Enjoy cakes and team building activities.",
-        "category": {"name": "Cake"},
-        "url": "http://example.com/cake-day",
+        "date": "2026-01-15",
+        "title": "Q1 Sprint Planning Session",
+        "description": "Planning session for the first quarter sprint goals.",
+        "category": {"name": "Sprint Planning"},
+        "url": "https://company.atlassian.net/sprint-1",
+        "last_updated_by": "10.0.0.5",
+        "cancelled": false
+      },
+      {
+        "date": "2027-02-14",
+        "title": "Valentine's Day Office Celebration",
+        "description": "Special treats and decorations for Valentine's Day.",
+        "category": {"name": "Company Event"},
+        "url": "",
+        "last_updated_by": "172.16.0.3",
+        "cancelled": false
+      },
+      {
+        "date": "2028-03-20",
+        "title": "AI/ML Workshop Series Kickoff",
+        "description": "Introduction to machine learning concepts and tools.",
+        "category": {"name": "Training"},
+        "url": "https://learning.company.com/ai-ml",
+        "last_updated_by": "192.168.2.10",
+        "cancelled": false
+      },
+      {
+        "date": "2029-03-08",
+        "title": "International Women's Day",
+        "description": "Celebrating women in technology with special presentations.",
+        "category": {"name": "Company Event"},
+        "url": "https://company.com/diversity",
+        "last_updated_by": "10.0.1.7",
+        "cancelled": false
+      },
+      {
+        "date": "2030-03-15",
+        "title": "Sarah Johnson's Birthday",
+        "description": "Celebrating our lead developer's birthday.",
+        "category": {"name": "Birthday"},
+        "url": "",
+        "last_updated_by": "172.16.1.4",
+        "cancelled": false
+      },
+      {
+        "date": "2031-03-31",
+        "title": "Q1 Project Deadline",
+        "description": "Final deadline for Q1 deliverables.",
+        "category": {"name": "Deadline"},
+        "url": "https://project.company.com/q1",
+        "last_updated_by": "192.168.3.8",
+        "cancelled": false
+      },
+      {
+        "date": "2032-04-01",
+        "title": "April Fools' Day Fun",
+        "description": "Light-hearted office pranks and activities.",
+        "category": {"name": "Company Event"},
+        "url": "",
+        "last_updated_by": "10.0.2.12",
+        "cancelled": false
+      },
+      {
+        "date": "2033-04-15",
+        "title": "Major Platform Release v5.0",
+        "description": "Launch of our completely redesigned platform.",
+        "category": {"name": "Product Launch"},
+        "url": "https://company.com/release-v5",
+        "last_updated_by": "172.16.2.6",
+        "cancelled": false
+      },
+      {
+        "date": "2034-05-01",
+        "title": "International Workers' Day",
+        "description": "Public holiday - office closed.",
+        "category": {"name": "Public Holiday"},
+        "url": "",
         "last_updated_by": "192.168.1.1",
+        "cancelled": false
+      },
+      {
+        "date": "2035-05-10",
+        "title": "Spring Hackathon 2035",
+        "description": "48-hour innovation hackathon with quantum computing focus.",
+        "category": {"name": "Hackathon"},
+        "url": "https://hackathon.company.com/spring2035",
+        "last_updated_by": "10.0.3.15",
+        "cancelled": false
+      },
+      {
+        "date": "2036-05-26",
+        "title": "Global Tech Summit",
+        "description": "International technology and innovation summit.",
+        "category": {"name": "Conference"},
+        "url": "https://globaltech2036.com",
+        "last_updated_by": "172.16.3.9",
+        "cancelled": false
+      },
+      {
+        "date": "2037-06-01",
+        "title": "Summer Cake Festival",
+        "description": "Annual cake tasting event with local bakeries.",
+        "category": {"name": "Cake"},
+        "url": "https://company.com/cake-festival",
+        "last_updated_by": "192.168.4.11",
+        "cancelled": false
+      },
+      {
+        "date": "2038-06-15",
+        "title": "Tech Conference 2038",
+        "description": "Annual technology conference and networking event.",
+        "category": {"name": "Conference"},
+        "url": "https://techconf2038.com",
+        "last_updated_by": "10.0.4.2",
+        "cancelled": false
+      },
+      {
+        "date": "2039-07-04",
+        "title": "Independence Day",
+        "description": "National holiday - office closed.",
+        "category": {"name": "Public Holiday"},
+        "url": "",
+        "last_updated_by": "192.168.1.1",
+        "cancelled": false
+      },
+      {
+        "date": "2040-07-20",
+        "title": "Company 25th Anniversary",
+        "description": "Celebrating a quarter century of innovation and growth.",
+        "category": {"name": "Anniversary"},
+        "url": "https://company.com/25years",
+        "last_updated_by": "172.16.4.13",
+        "cancelled": false
+      },
+      {
+        "date": "2041-08-01",
+        "title": "System Maintenance Window",
+        "description": "Scheduled downtime for quantum infrastructure upgrades.",
+        "category": {"name": "Maintenance"},
+        "url": "https://status.company.com",
+        "last_updated_by": "10.0.5.18",
+        "cancelled": false
+      },
+      {
+        "date": "2042-08-15",
+        "title": "Mobile App Release v8.1",
+        "description": "Major update with neural interface capabilities.",
+        "category": {"name": "Release"},
+        "url": "https://company.com/mobile-v8.1",
+        "last_updated_by": "192.168.5.14",
+        "cancelled": false
+      },
+      {
+        "date": "2043-09-01",
+        "title": "Future Tech Workshop",
+        "description": "Advanced workshop on emerging technologies.",
+        "category": {"name": "Workshop"},
+        "url": "https://learning.company.com/future-tech",
+        "last_updated_by": "172.16.5.7",
+        "cancelled": false
+      },
+      {
+        "date": "2044-09-22",
+        "title": "Autumn Leadership Summit",
+        "description": "Strategic planning and leadership development session.",
+        "category": {"name": "Team Meeting"},
+        "url": "https://meet.company.com/autumn2044",
+        "last_updated_by": "10.0.6.21",
+        "cancelled": false
+      },
+      {
+        "date": "2045-10-31",
+        "title": "Halloween Innovation Party",
+        "description": "Costume contest with tech innovation showcase.",
+        "category": {"name": "Company Event"},
+        "url": "",
+        "last_updated_by": "192.168.6.16",
+        "cancelled": false
+      },
+      {
+        "date": "2046-11-15",
+        "title": "Alex Rivera's Birthday",
+        "description": "Celebrating our quantum computing lead's birthday.",
+        "category": {"name": "Birthday"},
+        "url": "",
+        "last_updated_by": "172.16.6.8",
+        "cancelled": false
+      },
+      {
+        "date": "2047-11-28",
+        "title": "Thanksgiving Holiday",
+        "description": "Thanksgiving Day - office closed.",
+        "category": {"name": "Public Holiday"},
+        "url": "",
+        "last_updated_by": "192.168.1.1",
+        "cancelled": false
+      },
+      {
+        "date": "2048-12-15",
+        "title": "Winter VR Conference",
+        "description": "Virtual reality conference on spatial computing.",
+        "category": {"name": "Conference"},
+        "url": "https://vrconf2048.metaverse.com",
+        "last_updated_by": "10.0.7.24",
+        "cancelled": false
+      },
+      {
+        "date": "2049-12-25",
+        "title": "Christmas Day",
+        "description": "Christmas holiday - office closed.",
+        "category": {"name": "Public Holiday"},
+        "url": "",
+        "last_updated_by": "192.168.1.1",
+        "cancelled": false
+      },
+      {
+        "date": "2050-12-31",
+        "title": "New Year's Eve Gala 2050",
+        "description": "Celebrating the end of an incredible quarter-century.",
+        "category": {"name": "Company Event"},
+        "url": "https://company.com/nye2050",
+        "last_updated_by": "172.16.7.19",
+        "cancelled": false
+      },
+      {
+        "date": "2030-06-12",
+        "title": "Cloud Migration Training",
+        "description": "Comprehensive training on cloud architecture patterns.",
+        "category": {"name": "Training"},
+        "url": "https://training.company.com/cloud",
+        "last_updated_by": "192.168.7.20",
+        "cancelled": false
+      },
+      {
+        "date": "2032-09-18",
+        "title": "DevOps Automation Workshop",
+        "description": "Hands-on workshop for CI/CD pipeline optimization.",
+        "category": {"name": "Workshop"},
+        "url": "https://devops.company.com/workshop",
+        "last_updated_by": "10.0.8.25",
+        "cancelled": false
+      },
+      {
+        "date": "2035-04-22",
+        "title": "Earth Day Sustainability Initiative",
+        "description": "Company-wide environmental awareness program.",
+        "category": {"name": "Company Event"},
+        "url": "https://green.company.com/earthday",
+        "last_updated_by": "172.16.8.11",
+        "cancelled": false
+      },
+      {
+        "date": "2037-08-30",
+        "title": "Q3 Sprint Retrospective",
+        "description": "Quarterly sprint review and planning session.",
+        "category": {"name": "Sprint Planning"},
+        "url": "https://agile.company.com/q3-retro",
+        "last_updated_by": "192.168.8.22",
+        "cancelled": false
+      },
+      {
+        "date": "2040-02-29",
+        "title": "Leap Year Celebration",
+        "description": "Special event celebrating the rare leap year date.",
+        "category": {"name": "Company Event"},
+        "url": "",
+        "last_updated_by": "10.0.9.27",
+        "cancelled": false
+      },
+      {
+        "date": "2042-01-20",
+        "title": "AI Ethics Workshop",
+        "description": "Workshop on responsible AI development practices.",
+        "category": {"name": "Training"},
+        "url": "https://ethics.company.com/ai-workshop",
+        "last_updated_by": "172.16.9.12",
+        "cancelled": false
+      },
+      {
+        "date": "2044-07-15",
+        "title": "Innovation Day Hackathon",
+        "description": "24-hour hackathon for breakthrough innovations.",
+        "category": {"name": "Hackathon"},
+        "url": "https://innovation.company.com/hackathon",
+        "last_updated_by": "192.168.9.23",
+        "cancelled": false
+      },
+      {
+        "date": "2046-05-18",
+        "title": "Database Migration Deadline",
+        "description": "Final deadline for legacy system migration.",
+        "category": {"name": "Deadline"},
+        "url": "https://migration.company.com/db",
+        "last_updated_by": "10.0.10.28",
+        "cancelled": false
+      },
+      {
+        "date": "2048-03-12",
+        "title": "Quantum Computing Release v1.0",
+        "description": "First stable release of quantum computing platform.",
+        "category": {"name": "Product Launch"},
+        "url": "https://quantum.company.com/v1",
+        "last_updated_by": "172.16.10.13",
+        "cancelled": false
+      },
+      {
+        "date": "2050-10-08",
+        "title": "AI Assistant Release v12.0",
+        "description": "Major AI assistant update with consciousness simulation.",
+        "category": {"name": "Release"},
+        "url": "https://ai.company.com/v12",
+        "last_updated_by": "192.168.10.24",
+        "cancelled": false
+      },
+      {
+        "date": "2029-12-01",
+        "title": "Legacy System Decommission",
+        "description": "Final shutdown of old mainframe systems - cancelled due to dependencies.",
+        "category": {"name": "Maintenance"},
+        "url": "https://legacy.company.com/shutdown",
+        "last_updated_by": "10.0.11.29",
         "cancelled": true
       },
       {
-        "date": "2024-07-25",
-        "title": "Sandra's Birthday",
-        "description": "Celebrating Sandra's birthday with a surprise party.",
-        "category": {"name": "Birthday"},
+        "date": "2033-11-11",
+        "title": "Veterans Day Appreciation",
+        "description": "Honoring military veterans in our organization.",
+        "category": {"name": "Company Event"},
         "url": "",
-        "last_updated_by": "192.168.1.3",
+        "last_updated_by": "172.16.11.14",
         "cancelled": false
       },
       {
-        "date": "2024-08-01",
-        "title": "Major Release 2.4",
-        "description": "Launching the new version of our main software.",
-        "category": {"name": "Release"},
-        "url": "http://example.com/new-release",
-        "last_updated_by": "192.168.1.4",
+        "date": "2036-02-14",
+        "title": "Company Love & Tech Day",
+        "description": "Valentine's themed tech showcase and team bonding.",
+        "category": {"name": "Company Event"},
+        "url": "https://lovetech.company.com",
+        "last_updated_by": "192.168.11.25",
         "cancelled": false
       },
       {
-        "date": "2024-08-22",
-        "title": "Product Launch - NextGen Software",
-        "description": "Launching the latest version of our flagship product.",
-        "category": {"name": "Product Launch"},
-        "url": "http://example.com/new-product",
-        "last_updated_by": "192.168.1.3",
+        "date": "2038-09-05",
+        "title": "Labor Day Innovation Rest",
+        "description": "Day off to recharge and reflect on innovations.",
+        "category": {"name": "Public Holiday"},
+        "url": "",
+        "last_updated_by": "192.168.1.1",
         "cancelled": false
       },
       {
-        "date": "2024-09-05",
-        "title": "Web Dev Workshop",
-        "description": "A hands-on workshop for the latest web development techniques.",
-        "category": {"name": "Workshop"},
-        "url": "http://example.com/web-dev",
-        "last_updated_by": "192.168.1.5",
+        "date": "2041-04-30",
+        "title": "Mid-Career Development Workshop",
+        "description": "Professional development for senior staff members.",
+        "category": {"name": "Training"},
+        "url": "https://career.company.com/mid-level",
+        "last_updated_by": "10.0.12.30",
         "cancelled": false
+      },
+      {
+        "date": "2043-06-21",
+        "title": "Summer Solstice Team Building",
+        "description": "Outdoor team building activities and BBQ.",
+        "category": {"name": "Company Event"},
+        "url": "",
+        "last_updated_by": "172.16.12.15",
+        "cancelled": false
+      },
+      {
+        "date": "2045-01-07",
+        "title": "New Year Code Review",
+        "description": "Annual comprehensive code review and cleanup.",
+        "category": {"name": "Team Meeting"},
+        "url": "https://review.company.com/annual",
+        "last_updated_by": "192.168.12.26",
+        "cancelled": false
+      },
+      {
+        "date": "2047-12-12",
+        "title": "End of Year Cake Celebration",
+        "description": "Traditional year-end cake fest with prize competitions.",
+        "category": {"name": "Cake"},
+        "url": "https://cakes.company.com/yearend",
+        "last_updated_by": "10.0.13.31",
+        "cancelled": false
+      },
+      {
+        "date": "2049-08-08",
+        "title": "Company 40th Anniversary Milestone",
+        "description": "Celebrating four decades of technological advancement.",
+        "category": {"name": "Anniversary"},
+        "url": "https://company.com/40years",
+        "last_updated_by": "172.16.13.16",
+        "cancelled": false
+      }
+    ],
+    "quotes": [
+      {
+        "text": "The only way to do great work is to love what you do.",
+        "author": "Steve Jobs",
+        "category": "Motivation",
+        "url": "https://en.wikipedia.org/wiki/Steve_Jobs",
+        "last_updated_by": "192.168.2.1"
+      },
+      {
+        "text": "Innovation distinguishes between a leader and a follower.",
+        "author": "Steve Jobs",
+        "category": "Innovation",
+        "url": "",
+        "last_updated_by": "10.0.1.2"
+      },
+      {
+        "text": "Code is like humor. When you have to explain it, it's bad.",
+        "author": "Cory House",
+        "category": "Programming",
+        "url": "https://twitter.com/housecor",
+        "last_updated_by": "172.16.1.3"
+      },
+      {
+        "text": "First, solve the problem. Then, write the code.",
+        "author": "John Johnson",
+        "category": "Programming",
+        "url": "",
+        "last_updated_by": "192.168.2.4"
+      },
+      {
+        "text": "The best time to plant a tree was 20 years ago. The second best time is now.",
+        "author": "Chinese Proverb",
+        "category": "Wisdom",
+        "url": "",
+        "last_updated_by": "10.0.1.5"
+      },
+      {
+        "text": "Programs must be written for people to read, and only incidentally for machines to execute.",
+        "author": "Harold Abelson",
+        "category": "Programming",
+        "url": "https://mitpress.mit.edu/sites/default/files/sicp/index.html",
+        "last_updated_by": "172.16.1.6"
+      },
+      {
+        "text": "The way to get started is to quit talking and begin doing.",
+        "author": "Walt Disney",
+        "category": "Action",
+        "url": "",
+        "last_updated_by": "192.168.2.7"
+      },
+      {
+        "text": "It is during our darkest moments that we must focus to see the light.",
+        "author": "Aristotle",
+        "category": "Wisdom",
+        "url": "",
+        "last_updated_by": "10.0.1.8"
+      },
+      {
+        "text": "Simplicity is the ultimate sophistication.",
+        "author": "Leonardo da Vinci",
+        "category": "Design",
+        "url": "",
+        "last_updated_by": "172.16.1.9"
+      },
+      {
+        "text": "Talk is cheap. Show me the code.",
+        "author": "Linus Torvalds",
+        "category": "Programming",
+        "url": "https://lkml.org/lkml/2000/8/25/132",
+        "last_updated_by": "192.168.2.10"
+      },
+      {
+        "text": "Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+        "author": "Martin Fowler",
+        "category": "Programming",
+        "url": "https://martinfowler.com/",
+        "last_updated_by": "10.0.1.11"
+      },
+      {
+        "text": "The future belongs to those who believe in the beauty of their dreams.",
+        "author": "Eleanor Roosevelt",
+        "category": "Dreams",
+        "url": "",
+        "last_updated_by": "172.16.1.12"
+      },
+      {
+        "text": "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+        "author": "Winston Churchill",
+        "category": "Perseverance",
+        "url": "",
+        "last_updated_by": "192.168.2.13"
+      },
+      {
+        "text": "The only impossible journey is the one you never begin.",
+        "author": "Tony Robbins",
+        "category": "Motivation",
+        "url": "https://www.tonyrobbins.com/",
+        "last_updated_by": "10.0.1.14"
+      },
+      {
+        "text": "In the middle of difficulty lies opportunity.",
+        "author": "Albert Einstein",
+        "category": "Opportunity",
+        "url": "",
+        "last_updated_by": "172.16.1.15"
+      },
+      {
+        "text": "The best way to predict the future is to create it.",
+        "author": "Peter Drucker",
+        "category": "Future",
+        "url": "",
+        "last_updated_by": "192.168.2.16"
+      },
+      {
+        "text": "Quality is not an act, it is a habit.",
+        "author": "Aristotle",
+        "category": "Quality",
+        "url": "",
+        "last_updated_by": "10.0.1.17"
+      },
+      {
+        "text": "The greatest glory in living lies not in never falling, but in rising every time we fall.",
+        "author": "Nelson Mandela",
+        "category": "Resilience",
+        "url": "",
+        "last_updated_by": "172.16.1.18"
+      },
+      {
+        "text": "Teamwork makes the dream work.",
+        "author": "John C. Maxwell",
+        "category": "Teamwork",
+        "url": "",
+        "last_updated_by": "192.168.2.19"
+      },
+      {
+        "text": "The only source of knowledge is experience.",
+        "author": "Albert Einstein",
+        "category": "Learning",
+        "url": "",
+        "last_updated_by": "10.0.1.20"
       }
     ]
   }
-  
