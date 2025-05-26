@@ -83,7 +83,7 @@ def init_maintenance_routes(app):
             "category": quote.category,
             "url": quote.url,
             "last_updated_by": quote.last_updated_by,
-            "last_shown": quote.last_shown
+            "last_shown": quote.last_shown.isoformat() if quote.last_shown else None
         } for quote in Quote.query.all()]
         data["quotes"] = quotes
 
