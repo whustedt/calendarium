@@ -82,7 +82,8 @@ def init_maintenance_routes(app):
             "author": quote.author,
             "category": quote.category,
             "url": quote.url,
-            "last_updated_by": quote.last_updated_by
+            "last_updated_by": quote.last_updated_by,
+            "last_shown": quote.last_shown
         } for quote in Quote.query.all()]
         data["quotes"] = quotes
 

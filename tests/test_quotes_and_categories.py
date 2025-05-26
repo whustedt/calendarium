@@ -92,17 +92,17 @@ def test_daily_quote_no_repeats(test_client, init_database):
     db.session.add_all(quotes)
     db.session.commit()
 
-    from app.routes_quotes import get_daily_quote_no_repeats, generate_day_seed
+    from app.routes_quotes import select_daily_quote
     
     # Mock date.today() to return different dates
     base_date = date(2025, 5, 25)  # Use a fixed base date
     quote_ids = set()
     
-    for i in range(5):  # Test 5 consecutive days
+    for i in range(9):  # Test 9 consecutive days
         test_date = base_date + timedelta(days=i)
         with patch('app.routes_quotes.date') as mock_date:
             mock_date.today.return_value = test_date
-            quote, _ = get_daily_quote_no_repeats(lookback_days=5)
+            quote = select_daily_quote()
             # Each quote should be unique in our set
             assert quote.id not in quote_ids
             quote_ids.add(quote.id)
@@ -149,15 +149,30 @@ def test_no_repeats_edge_cases(test_client, init_database):
     db.session.add_all(quotes)
     db.session.commit()
 
-    from app.routes_quotes import get_daily_quote_no_repeats
+    from app.routes_quotes import select_daily_quote
     
-    # Try to get quotes with lookback greater than available quotes
-    quote1, seed1 = get_daily_quote_no_repeats(lookback_days=5)
-    assert quote1 is not None  # Should still return a quote
-    
-    # Verify it handles empty category gracefully
-    quote2, seed2 = get_daily_quote_no_repeats(category="NonexistentCategory")
-    assert quote2 is None  # Should return None for non-existent category
+    test_date = date(2025, 5, 25) + timedelta(days=1)
+    with patch('app.routes_quotes.date') as mock_date:
+        mock_date.today.return_value = test_date
+
+        quote1 = select_daily_quote()
+        assert quote1 is not None  # Should still return a quote
+        
+        quoteNa = select_daily_quote("NonExistentCategory")
+        assert quoteNa is None  # Should return None for non-existent category
+
+        test_date += timedelta(days=1)
+        mock_date.today.return_value = test_date
+        quote2 = select_daily_quote()
+        assert quote2 is not None
+        assert quote2.id != quote1.id  # Should return a different quote
+
+        test_date += timedelta(days=1)
+        mock_date.today.return_value = test_date
+        quote3 = select_daily_quote()
+        assert quote3 is not None
+        assert quote3.id != quote2.id  # Should return a different quote
+        assert quote3.id == quote1.id  # Should return to the first quote after exhausting options    
 
 def test_get_daily_quote(test_client, init_database):
     """
