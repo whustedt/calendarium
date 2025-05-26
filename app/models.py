@@ -29,3 +29,4 @@ class Quote(db.Model):
     category = db.Column(db.String(100), nullable=True)
     url = db.Column(db.String(1000), nullable=True)
     last_updated_by = db.Column(db.String(130), nullable=True)
+    last_shown = db.Column(db.Date, nullable=True, index=True)
