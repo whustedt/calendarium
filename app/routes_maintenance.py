@@ -1,7 +1,6 @@
 from flask import current_app, request, jsonify, send_file, make_response
 from .models import Entry, Category, Quote
 from .helpers import get_entry_data, create_zip, get_entry_data
-from urllib.parse import unquote_plus
 from os import path
 from app import db 
 

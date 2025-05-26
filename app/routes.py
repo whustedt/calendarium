@@ -1,4 +1,4 @@
-from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, send_file, abort
+from flask import request, jsonify, render_template, redirect, url_for, make_response, send_from_directory, current_app, abort
 import requests
 from .models import Entry, Category
 from app import db
@@ -223,7 +223,7 @@ def init_app(app, scheduler):
     def toggle_cancelled(id):
         """Toggle the cancelled state of an entry."""
         try:
-            entry = db.session.query(Entry).get(id)
+            entry = db.session.get(Entry, id)
             if entry is None:
                 return jsonify({"error": "Entry not found"}), 404
     
