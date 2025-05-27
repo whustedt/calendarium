@@ -24,11 +24,5 @@
 			]
 		}
 	},
-	"postCreateCommand": [
-		"sudo ln -s $(pwd) /app",
-		"sudo mkdir -p /app/data",
-		"pip3 install --user -r requirements.txt",
-		"pip3 install --user pytest",
-		"echo 'Ready to go! Navigate to your project directory and run `flask run` to start your application.'"
-	]
+	"postCreateCommand": "./.devcontainer/setup.sh"
 }
