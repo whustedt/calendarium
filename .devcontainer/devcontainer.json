@@ -19,9 +19,37 @@
 				"locale": "en"
 			},
 			"extensions": [
-				"ms-python.python",
-				"ms-python.pylint"
-			]
+				"ms-python.python"
+			],
+			"launch": {
+				"version": "0.2.0",
+				"configurations": [
+					{
+						"name": "Calendarium Flask App",
+						"type": "debugpy",
+						"request": "launch",
+						"program": "${workspaceFolder}/app/__init__.py",
+						"module": "flask",
+						"env": {
+							"FLASK_APP": "app/__init__.py",
+							"FLASK_ENV": "development",
+							"FLASK_DEBUG": "1"
+						},
+						"args": [
+							"run",
+							"--host=0.0.0.0",
+							"--port=5000",
+							"--debug"
+						],
+						"jinja": true,
+						"autoReload": {
+							"enable": true
+						},
+						"console": "integratedTerminal",
+						"cwd": "${workspaceFolder}"
+					}
+				]
+			}
 		}
 	},
 	"postCreateCommand": "./.devcontainer/setup.sh"
