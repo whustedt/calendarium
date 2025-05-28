@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendarium API Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
+        h2 { color: #007acc; margin-top: 30px; }
+        .endpoint { background: #f8f9fa; padding: 15px; margin: 10px 0; border-radius: 5px; border-left: 4px solid #007acc; }
+        .method { font-weight: bold; color: white; padding: 4px 8px; border-radius: 3px; margin-right: 10px; }
+        .get { background: #61affe; }
+        .post { background: #49cc90; }
+        .put { background: #fca130; }
+        .delete { background: #f93e3e; }
+        .url { font-family: monospace; background: #e9ecef; padding: 2px 6px; border-radius: 3px; }
+        .description { margin-top: 8px; color: #666; }
+        .test-button { background: #007acc; color: white; border: none; padding: 8px 15px; border-radius: 3px; cursor: pointer; margin-top: 10px; }
+        .test-button:hover { background: #005a9e; }
+        .response { background: #e8f5e8; border: 1px solid #d4edda; padding: 10px; margin-top: 10px; border-radius: 3px; display: none; }
+        .base-url { background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗓️ Calendarium API Documentation</h1>
+        
+        <div class="base-url">
+            <strong>Base URL:</strong> <span class="url">http://localhost:5001/api/v1</span>
+        </div>
+
+        <h2>📊 Maintenance API</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/maintenance/health</span>
+            <div class="description">Check application health status and database connectivity</div>
+            <button class="test-button" onclick="testEndpoint('/api/v1/maintenance/health', 'GET', 'health-response')">Test</button>
+            <div id="health-response" class="response"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/maintenance/stats</span>
+            <div class="description">Get detailed application statistics including entry counts and category breakdown</div>
+            <button class="test-button" onclick="testEndpoint('/api/v1/maintenance/stats', 'GET', 'stats-response')">Test</button>
+            <div id="stats-response" class="response"></div>
+        </div>
+
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/maintenance/export</span>
+            <div class="description">Export all data (entries, categories, quotes) as a ZIP file</div>
+            <button class="test-button" onclick="window.open('/api/v1/maintenance/export', '_blank')">Download Export</button>
+        </div>
+
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <span class="url">/maintenance/import</span>
+            <div class="description">Import batch data (categories, entries, quotes) from JSON</div>
+            <div style="margin-top: 10px;">
+                <textarea id="import-data" placeholder='{"categories": [{"name": "Test", "symbol": "🧪", "color_hex": "#FF5722"}]}' style="width: 100%; height: 100px; font-family: monospace;"></textarea>
+                <button class="test-button" onclick="testImport()">Test Import</button>
+            </div>
+            <div id="import-response" class="response"></div>
+        </div>
+
+        <h2>📂 Categories API</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/categories/</span>
+            <div class="description">Get all categories</div>
+            <button class="test-button" onclick="testEndpoint('/api/v1/categories/', 'GET', 'categories-response')">Test</button>
+            <div id="categories-response" class="response"></div>
+        </div>
+
+        <h2>📅 Entries API</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/entries/</span>
+            <div class="description">Get all entries with their associated categories</div>
+            <button class="test-button" onclick="testEndpoint('/api/v1/entries/', 'GET', 'entries-response')">Test</button>
+            <div id="entries-response" class="response"></div>
+        </div>
+
+        <h2>💬 Quotes API</h2>
+        
+        <div class="endpoint">
+            <span class="method get">GET</span>
+            <span class="url">/quotes/</span>
+            <div class="description">Get all quotes</div>
+            <button class="test-button" onclick="testEndpoint('/api/v1/quotes/', 'GET', 'quotes-response')">Test</button>
+            <div id="quotes-response" class="response"></div>
+        </div>
+
+        <h2>📊 Additional Resources</h2>
+        <p>
+            <strong>Swagger/OpenAPI Specification:</strong> 
+            <a href="/api/v1/swagger.json" target="_blank" class="url">/api/v1/swagger.json</a>
+        </p>
+        <p>
+            <strong>Official Swagger UI:</strong> 
+            <a href="/api/docs/" target="_blank" class="url">/api/docs/</a> (may require external browser)
+        </p>
+    </div>
+
+    <script>
+        async function testEndpoint(url, method, responseId) {
+            const responseDiv = document.getElementById(responseId);
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch(url, { method: method });
+                const data = await response.json();
+                responseDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                responseDiv.style.background = response.ok ? '#e8f5e8' : '#f8d7da';
+            } catch (error) {
+                responseDiv.innerHTML = 'Error: ' + error.message;
+                responseDiv.style.background = '#f8d7da';
+            }
+        }
+
+        async function testImport() {
+            const data = document.getElementById('import-data').value;
+            const responseDiv = document.getElementById('import-response');
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = 'Loading...';
+            
+            try {
+                const response = await fetch('/api/v1/maintenance/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: data
+                });
+                const result = await response.text();
+                responseDiv.innerHTML = '<pre>' + result + '</pre>';
+                responseDiv.style.background = response.ok ? '#e8f5e8' : '#f8d7da';
+            } catch (error) {
+                responseDiv.innerHTML = 'Error: ' + error.message;
+                responseDiv.style.background = '#f8d7da';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -25,6 +25,11 @@ def init_app(app, scheduler):
     def favicon():
         """Send the favicon."""
         return send_from_directory(os.path.join(app.root_path, 'static/favicon'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+    
+    @app.route('/api-docs')
+    def api_docs_alternative():
+        """Alternative API documentation page with working JavaScript."""
+        return render_template('api_docs.html')
 
     @app.route('/search_gifs', methods=['GET'])
     def search_gifs():
