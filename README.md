@@ -53,7 +53,7 @@ curl -X POST http://127.0.0.1:5000/batch-import -H "Content-Type: application/js
 - **Purge Old Entries**
   - Set to automatically execute at the start of each month.
 - **Update Serial Entries**
-  - Scheduled to run at the start of every new year.
+  - Runs on the first day of every month to roll past serial items into the future.
 
 These tasks use the APScheduler, with the scheduler API enabled for enhanced interaction through HTTP endpoints. More details and the API can be accessed here: [APScheduler API Documentation](https://viniciuschiele.github.io/flask-apscheduler/rst/api.html).
 
@@ -109,7 +109,7 @@ Below are the available API endpoints with their respective usage:
 
 - **Update Serial Entries**
   - **POST** `/update-serial-entries`
-  - Updates all entries linked to categories that are set to repeat annually, adjusting their dates to the current year.
+  - Rolls entries in annually repeating categories forward when their date has passed, keeping upcoming occurrences in the future.
 
 - **Purge Old Entries**
   - **POST** `/purge-old-entries`
