@@ -88,29 +88,26 @@ def calculate_display_date(entry_date, is_recurring, today):
     if not is_recurring:
         return entry_date
     
-    # Handle leap year edge case (Feb 29) separately
+    # For recurring events, calculate the next occurrence
+    current_year_date = entry_date.replace(year=today.year)
+    
+    # Handle leap year edge case (Feb 29)
     if entry_date.month == 2 and entry_date.day == 29:
         try:
             current_year_date = date(today.year, 2, 29)
         except ValueError:
             # Not a leap year, use Feb 28
             current_year_date = date(today.year, 2, 28)
-        
-        # If the date has already passed this year, use next year
-        if current_year_date < today:
-            next_year = today.year + 1
+    
+    # If the date has already passed this year, use next year
+    if current_year_date < today:
+        next_year = today.year + 1
+        if entry_date.month == 2 and entry_date.day == 29:
             try:
                 return date(next_year, 2, 29)
             except ValueError:
                 return date(next_year, 2, 28)
-        return current_year_date
-    
-    # For regular recurring events, calculate the next occurrence
-    current_year_date = entry_date.replace(year=today.year)
-    
-    # If the date has already passed this year, use next year
-    if current_year_date < today:
-        return entry_date.replace(year=today.year + 1)
+        return entry_date.replace(year=next_year)
     
     return current_year_date
 
@@ -166,67 +163,44 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
     entries = query.all()
     categories = db.session.query(Category).all()
 
-    today = date.today()
-    today_str = str(today)
-    
-    # Calculate display dates for all entries and sort by display date
-    entries_with_display = []
-    for entry in entries:
-        entry_date = parse_date(entry.date)
-        if entry_date:
-            display_date_obj = calculate_display_date(entry_date, entry.category.repeat_annually, today)
-            milestone_info = calculate_milestone_info(entry_date, display_date_obj, entry.category.repeat_annually)
-            entries_with_display.append((entry, entry_date, display_date_obj, milestone_info))
-    
-    # Sort by display date
-    entries_with_display.sort(key=lambda x: x[2])
-    
-    # Determine the pivot: the first upcoming or current entry (based on display date)
-    pivot = next((i for i, (entry, entry_date, display_date_obj, milestone_info) in enumerate(entries_with_display) 
-                  if str(display_date_obj) >= today_str), len(entries_with_display))
+    # Determine the pivot: the first upcoming or current entry (based on today’s date)
+    today_str = str(date.today())
+    pivot = next((i for i, entry in enumerate(entries) if entry.date >= today_str), len(entries))
     
     # Split past and upcoming entries. Limit past entries if max_past_entries is provided.
-    past_entries = entries_with_display[:pivot]
-    future_entries = entries_with_display[pivot:]
+    past_entries = entries[:pivot]
+    future_entries = entries[pivot:]
     if max_past_entries is not None:
         past_entries = past_entries[-max_past_entries:]
     filtered_entries = past_entries + future_entries
     # The pivot for the filtered list is now the count of past entries kept
     filtered_pivot = len(past_entries)
     
-    formatted_entries = []
-    for i, (entry, entry_date, display_date_obj, milestone_info) in enumerate(filtered_entries):
-        formatted_entry = {
-            "id": entry.id,
-            "date": entry.date,
-            "display_date": str(display_date_obj),
-            "display_date_formatted": format_date(display_date_obj, 'd. MMMM', locale='de_DE'),
-            "date_formatted": format_date(entry_date, 'd. MMMM', locale='de_DE'),
-            "title": entry.title,
-            "description": entry.description,
-            "category": {
-                "id": entry.category.id,
-                "name": entry.category.name,
-                "symbol": entry.category.symbol,
-                "color_hex": entry.category.color_hex,
-                "color_hex_variation": adjust_lightness(entry.category.color_hex),
-                "repeat_annually": entry.category.repeat_annually,
-                "display_celebration": entry.category.display_celebration,
-                "is_protected": entry.category.is_protected,
-                "last_updated_by": entry.category.last_updated_by
-            },
-            "url": entry.url,
-            "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
-            "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-            "index": i - filtered_pivot,
-            "is_today": str(display_date_obj) == today_str,
-            "cancelled": entry.cancelled,
-            "last_updated_by": entry.last_updated_by,
-            "years_since": milestone_info['years_since'],
-            "milestone_year": milestone_info['milestone_year'],
-            "is_milestone": milestone_info['is_milestone']
-        }
-        formatted_entries.append(formatted_entry)
+    formatted_entries = [{
+        "id": entry.id,
+        "date": entry.date,
+        "date_formatted": format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
+        "title": entry.title,
+        "description": entry.description,
+        "category": {
+            "id": entry.category.id,
+            "name": entry.category.name,
+            "symbol": entry.category.symbol,
+            "color_hex": entry.category.color_hex,
+            "color_hex_variation": adjust_lightness(entry.category.color_hex),
+            "repeat_annually": entry.category.repeat_annually,
+            "display_celebration": entry.category.display_celebration,
+            "is_protected": entry.category.is_protected,
+            "last_updated_by": entry.category.last_updated_by
+        },
+        "url": entry.url,
+        "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
+        "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
+        "index": i - filtered_pivot,
+        "is_today": entry.date == today_str,
+        "cancelled": entry.cancelled,
+        "last_updated_by": entry.last_updated_by
+    } for i, entry in enumerate(filtered_entries)]
     
     formatted_categories = [{
         "id": category.id,
