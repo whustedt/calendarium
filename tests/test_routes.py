@@ -270,55 +270,6 @@ def test_batch_import(test_client, init_database):
     assert db.session.query(Entry).count() == 2  # Assuming one existing entry
     assert db.session.query(Category).count() == 5 # Including existing categories
 
-def test_update_serial_entries(test_client, init_database):
-    """
-    GIVEN a Flask application
-    WHEN the '/update-serial-entries' endpoint is called (POST)
-    THEN only past serial entries are rolled forward to future dates
-    """
-    category = db.session.query(Category).filter_by(name="Birthday").first()
-
-    today = datetime.now().date()
-    current_month_start = today.replace(day=1)
-
-    past_date = current_month_start - timedelta(days=10)
-    future_date = current_month_start + timedelta(days=40)
-
-    past_entry = Entry(
-        date=past_date.strftime("%Y-%m-%d"),
-        category=category,
-        title="Past repeating entry",
-        description="Expired and should move"
-    )
-    future_entry = Entry(
-        date=future_date.strftime("%Y-%m-%d"),
-        category=category,
-        title="Future repeating entry",
-        description="Upcoming and should stay"
-    )
-    db.session.add_all([past_entry, future_entry])
-    db.session.commit()
-
-    response = test_client.post('/update-serial-entries', follow_redirects=True)
-    assert response.status_code == 200
-    payload = json.loads(response.data)
-    assert "updated_entries" in payload
-    assert payload["updated_entries"] >= 1
-
-    def expected_roll_forward(start_date):
-        rolled_date = start_date
-        while rolled_date < current_month_start:
-            next_year = rolled_date.year + 1
-            max_day = calendar.monthrange(next_year, rolled_date.month)[1]
-            rolled_date = rolled_date.replace(year=next_year, day=min(rolled_date.day, max_day))
-        return rolled_date
-
-    updated_past_entry = db.session.get(Entry, past_entry.id)
-    updated_future_entry = db.session.get(Entry, future_entry.id)
-
-    assert updated_past_entry.date == expected_roll_forward(past_date).isoformat()
-    assert updated_future_entry.date == future_date.strftime("%Y-%m-%d")
-
 def test_purge_old_entries(test_client, init_database):
     """
     GIVEN a Flask application with entries

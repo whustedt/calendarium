@@ -52,10 +52,6 @@ curl -X POST http://127.0.0.1:5000/batch-import -H "Content-Type: application/js
 
 - **Purge Old Entries**
   - Set to automatically execute at the start of each month.
-- **Update Serial Entries** (DEPRECATED)
-  - This task is deprecated as of the display_date feature implementation.
-  - Previously ran on the first day of every month to roll past serial items into the future.
-  - No longer necessary since recurring events now dynamically calculate their next occurrence.
 
 These tasks use the APScheduler, with the scheduler API enabled for enhanced interaction through HTTP endpoints. More details and the API can be accessed here: [APScheduler API Documentation](https://viniciuschiele.github.io/flask-apscheduler/rst/api.html).
 
@@ -74,9 +70,8 @@ Calendarium handles recurring events (like birthdays and anniversaries) intellig
    - Example: A birthday on "2020-05-15" would show as "2025-05-15" when viewed in 2025
 
 3. **Milestone Detection**: The system automatically detects milestone anniversaries:
-   - Milestone years: 1st, 5th, 10th, 15th, 20th, 25th, 30th, 40th, 50th, 60th, 75th, 100th
    - Milestones are calculated as: `current_year - original_year`
-   - Milestone events receive special visual highlighting (golden border and glow effect)
+   - Milestone events receive special visual highlighting
 
 4. **Unknown Year Convention**: For events where the original year is unknown (like birthdays without birth years):
    - Use year `0001` in the date (e.g., "0001-05-15")
@@ -174,12 +169,6 @@ Below are the available API endpoints with their respective usage:
 - **Batch Import**
   - **POST** `/batch-import`
   - Imports a batch of entries from a JSON file. *Note: This endpoint now also processes quotes.*
-
-- **Update Serial Entries** (DEPRECATED)
-  - **POST** `/update-serial-entries`
-  - **DEPRECATED**: This endpoint is no longer necessary with the display_date feature.
-  - Previously rolled entries in annually repeating categories forward when their date had passed.
-  - Kept for backwards compatibility but no longer scheduled to run automatically.
 
 - **Purge Old Entries**
   - **POST** `/purge-old-entries`

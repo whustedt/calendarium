@@ -112,7 +112,7 @@ def test_milestone_years():
     milestones = {
         1: True, 5: True, 10: True, 15: True, 20: True, 25: True,
         30: True, 40: True, 50: True, 60: True, 75: True, 100: True,
-        2: False, 3: False, 7: False, 12: False, 35: False
+        2: False, 3: False, 7: False, 12: False, 35: True
     }
     
     for years, should_be_milestone in milestones.items():

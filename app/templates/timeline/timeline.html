@@ -51,13 +51,12 @@
                     {% set img_style = "" %}
                 {% endif %}
                 {% set filter_style = "filter: grayscale(100%);" if date_class == "past" else "" %}
-                {% set milestone_class = "milestone" if entry.is_milestone else "" %}
-                <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }} {{ milestone_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
+                <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
                     <span class="symbol {{ entry.category.name }}">{{ entry.category.symbol }}</span>
                     <span class="date">{{ entry.display_date_formatted }}</span>
                     <span class="title">{{ entry.title }}</span>
                     {% if entry.is_milestone %}
-                        <span class="milestone-badge">{{ entry.milestone_year }}{% if entry.milestone_year == 1 %}st{% elif entry.milestone_year == 2 %}nd{% elif entry.milestone_year == 3 %}rd{% else %}th{% endif %} 🎉</span>
+                        <span class="milestone-badge">{{ entry.milestone_year }}<sup>{% if entry.milestone_year == 1 %}st{% elif entry.milestone_year == 2 %}nd{% elif entry.milestone_year == 3 %}rd{% else %}th{% endif %}</sup> 🎉</span>
                     {% endif %}
                     {% if entry.description %}
                         <span class="description">{{ entry.description }}</span>

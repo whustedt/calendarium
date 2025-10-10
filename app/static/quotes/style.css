@@ -7,7 +7,7 @@ body {
     justify-content: center;
     font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
     color: #fff;
-    background: black;
+    background: transparent;
     overflow: hidden;
 }
 
@@ -28,6 +28,10 @@ blockquote {
     line-height: 1.5;
     font-style: italic;
     color: inherit;
+}
+
+blockquote p {
+    margin: 0;
 }
 
 /* Markdown elements */
