@@ -371,7 +371,7 @@ def test_entries_sorted_by_date(test_client, init_database):
     """
     GIVEN a Flask application with multiple entries
     WHEN entries are retrieved
-    THEN check that they are properly sorted by date
+    THEN check that they are properly sorted by display_date
     """
     # Add entries with different dates
     category = db.session.query(Category).filter_by(name="Release").first()
@@ -392,12 +392,12 @@ def test_entries_sorted_by_date(test_client, init_database):
     assert response.status_code == 200
     data = json.loads(response.data)
     
-    # Extract dates from entries
-    entry_dates = [entry['date'] for entry in data['entries']]
+    # Extract display_dates from entries (use display_date for recurring events, date otherwise)
+    entry_display_dates = [entry.get('display_date', entry['date']) for entry in data['entries']]
     
-    # Verify dates are in ascending order
-    sorted_dates = sorted(entry_dates)
-    assert entry_dates == sorted_dates
+    # Verify display dates are in ascending order
+    sorted_dates = sorted(entry_display_dates)
+    assert entry_display_dates == sorted_dates
 
     # Verify the order is correct
-    assert entry_dates[0] < entry_dates[-1]  # First date should be earlier than last date
+    assert entry_display_dates[0] < entry_display_dates[-1]  # First date should be earlier than last date
