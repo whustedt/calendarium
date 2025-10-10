@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, jsonify, abort
+from flask import render_template, request, redirect, url_for, flash, jsonify
 from markdown import markdown
 from markupsafe import Markup
 from .models import Quote, QuoteConstants
@@ -199,9 +199,7 @@ def init_quote_routes(app):
 
     @app.route('/quotes/edit/<int:id>', methods=['POST'])
     def edit_quote(id):
-        quote = db.session.get(Quote, id)
-        if quote is None:
-            return "Quote not found", 404
+        quote = Quote.query.get_or_404(id)
         
         text = request.form.get('text', '').strip()
         author = request.form.get('author', '').strip()
@@ -242,9 +240,7 @@ def init_quote_routes(app):
 
     @app.route('/quotes/delete/<int:id>', methods=['POST'])
     def delete_quote(id):
-        quote = db.session.get(Quote, id)
-        if quote is None:
-            abort(404)
+        quote = Quote.query.get_or_404(id)
         db.session.delete(quote)
         db.session.commit()
         return redirect(url_for('list_quotes'))

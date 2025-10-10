@@ -133,10 +133,7 @@ def calculate_milestone_info(entry_date, display_date_obj, is_recurring):
     if is_recurring and entry_date.year > 1:  # Year 0001 means "year unknown"
         years_since = display_date_obj.year - entry_date.year
         
-        # Define milestone years
-        milestone_years = [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100]
-        
-        if years_since in milestone_years:
+        if years_since % 5 == 0 or years_since == 1:
             is_milestone = True
             milestone_year = years_since
     

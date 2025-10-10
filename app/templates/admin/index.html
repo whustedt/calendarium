@@ -131,9 +131,6 @@
         <form action="{{ url_for('purge_old_entries') }}" method="post">
             <button class="maintenance" type="submit">Remove Old Entries</button>
         </form>
-        <form action="{{ url_for('update_serial_entries') }}" method="post">
-            <button class="maintenance" type="submit">Update Serial Entries</button>
-        </form>
     </div>
 
     <script src="{{ url_for('static', filename='admin/search_gifs_proxied.js') }}"></script>
