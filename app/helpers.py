@@ -102,31 +102,47 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
     # The pivot for the filtered list is now the count of past entries kept
     filtered_pivot = len(past_entries)
     
-    formatted_entries = [{
-        "id": entry.id,
-        "date": entry.date,
-        "date_formatted": format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
-        "title": entry.title,
-        "description": entry.description,
-        "category": {
-            "id": entry.category.id,
-            "name": entry.category.name,
-            "symbol": entry.category.symbol,
-            "color_hex": entry.category.color_hex,
-            "color_hex_variation": adjust_lightness(entry.category.color_hex),
-            "repeat_annually": entry.category.repeat_annually,
-            "display_celebration": entry.category.display_celebration,
-            "is_protected": entry.category.is_protected,
-            "last_updated_by": entry.category.last_updated_by
-        },
-        "url": entry.url,
-        "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
-        "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-        "index": i - filtered_pivot,
-        "is_today": entry.date == today_str,
-        "cancelled": entry.cancelled,
-        "last_updated_by": entry.last_updated_by
-    } for i, entry in enumerate(filtered_entries)]
+    formatted_entries = []
+    for i, entry in enumerate(filtered_entries):
+        entry_date = parse_date(entry.date)
+        current_year = entry_date.year if entry_date else None
+        
+        # Calculate milestone information for recurring events
+        is_milestone, years_since_start, milestone_type = calculate_milestone(
+            entry.original_start_year, 
+            current_year
+        ) if entry.original_start_year and current_year else (False, None, None)
+        
+        formatted_entry = {
+            "id": entry.id,
+            "date": entry.date,
+            "date_formatted": format_date(entry_date, 'd. MMMM', locale='de_DE'),
+            "title": entry.title,
+            "description": entry.description,
+            "category": {
+                "id": entry.category.id,
+                "name": entry.category.name,
+                "symbol": entry.category.symbol,
+                "color_hex": entry.category.color_hex,
+                "color_hex_variation": adjust_lightness(entry.category.color_hex),
+                "repeat_annually": entry.category.repeat_annually,
+                "display_celebration": entry.category.display_celebration,
+                "is_protected": entry.category.is_protected,
+                "last_updated_by": entry.category.last_updated_by
+            },
+            "url": entry.url,
+            "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
+            "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
+            "index": i - filtered_pivot,
+            "is_today": entry.date == today_str,
+            "cancelled": entry.cancelled,
+            "last_updated_by": entry.last_updated_by,
+            "original_start_year": entry.original_start_year,
+            "is_milestone": is_milestone,
+            "years_since_start": years_since_start,
+            "milestone_type": milestone_type
+        }
+        formatted_entries.append(formatted_entry)
     
     formatted_categories = [{
         "id": category.id,
@@ -184,3 +200,38 @@ def adjust_lightness(color, adjustment_factor=0.9):
     l = max(0, min(1, l * adjustment_factor))  # Ensure lightness stays within 0 to 1
     r, g, b = hls_to_rgb(h, l, s)
     return rgb_to_hex((int(r * 255), int(g * 255), int(b * 255)))
+
+def calculate_milestone(original_start_year, current_year):
+    """Calculate if the current year represents a milestone anniversary.
+    
+    Returns a tuple (is_milestone, years_since_start, milestone_type) where:
+    - is_milestone: True if this is a significant anniversary
+    - years_since_start: Number of years since the original start year
+    - milestone_type: Type of milestone (1st, 5th, 10th, 25th, 50th, etc.)
+    
+    Milestone criteria:
+    - 1st anniversary
+    - Every 5th year up to 25th (5th, 10th, 15th, 20th, 25th)
+    - Every 25th year after 25th (50th, 75th, 100th, etc.)
+    """
+    if original_start_year is None:
+        return (False, None, None)
+    
+    years_since_start = current_year - original_start_year
+    
+    if years_since_start <= 0:
+        return (False, years_since_start, None)
+    
+    # First anniversary is always a milestone
+    if years_since_start == 1:
+        return (True, years_since_start, "1st")
+    
+    # Every 5th year up to 25
+    if years_since_start <= 25 and years_since_start % 5 == 0:
+        return (True, years_since_start, f"{years_since_start}th")
+    
+    # Every 25th year after 25
+    if years_since_start > 25 and years_since_start % 25 == 0:
+        return (True, years_since_start, f"{years_since_start}th")
+    
+    return (False, years_since_start, None)

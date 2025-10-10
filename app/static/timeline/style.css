@@ -105,6 +105,31 @@ html, body {
     animation: pulsateShadow 1s infinite ease-in-out;
 }
 
+.timeline-item.milestone {
+    box-shadow: 0 0 20px 3px gold;
+    border: 3px solid gold;
+}
+
+.timeline-item.milestone.past {
+    box-shadow: 0 0 15px 2px rgba(255, 215, 0, 0.5);
+    border: 2px solid rgba(255, 215, 0, 0.5);
+}
+
+.timeline-item .milestone-badge {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, gold, #FFD700);
+    color: #333;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 8cqh;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
 .timeline-item.with-img {
     /* Styles background-image of timeline-items */
     background-size: cover !important;

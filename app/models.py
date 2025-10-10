@@ -42,6 +42,7 @@ class Entry(db.Model):
     image_filename = db.Column(db.String(EntryConstants.MAX_IMAGE_FILENAME_LENGTH), nullable=True)
     url = db.Column(db.String(EntryConstants.MAX_URL_LENGTH), nullable=True)
     cancelled = db.Column(db.Boolean, nullable=False, default=False)
+    original_start_year = db.Column(db.Integer, nullable=True)
     last_updated_by = db.Column(db.String(MAX_LAST_UPDATED_BY_LENGTH), nullable=True)
 
 class Quote(db.Model):

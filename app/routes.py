@@ -140,12 +140,20 @@ def init_app(app, scheduler):
             if request.form.get('url') and not validators.url(request.form.get('url')):
                 return jsonify({"error": "Invalid URL"}), 400
 
+            # Extract year from date for tracking milestones on recurring events
+            start_year = None
+            if category.repeat_annually:
+                parsed_date = parse_date(date_str)
+                if parsed_date:
+                    start_year = parsed_date.year
+
             new_entry = Entry(
                 date = date_str,
                 category_id = category.id,  # use the ID of the category
                 title = title,
                 description = request.form.get('description'),
                 url = request.form.get('url'),
+                original_start_year = start_year,
                 last_updated_by = request.remote_addr
             )
             db.session.add(new_entry)
@@ -299,6 +307,10 @@ def init_app(app, scheduler):
                     )
                     continue
 
+                # Set original_start_year if not already set
+                if entry.original_start_year is None:
+                    entry.original_start_year = entry_date.year
+
                 original_date = entry_date
                 while entry_date < current_month_start:
                     entry_date = move_to_next_year(entry_date)
@@ -307,6 +319,7 @@ def init_app(app, scheduler):
                     entry.date = entry_date.isoformat()
                     updated_entries += 1
 
+            # Commit all changes including original_start_year updates
             db.session.commit()
             scheduler.app.logger.info("Rolled %s serial entries forward", updated_entries)
             return jsonify({
