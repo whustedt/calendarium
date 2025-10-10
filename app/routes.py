@@ -271,10 +271,19 @@ def init_app(app, scheduler):
         """Return a JSON response with data for all data, including image URLs.""" 
         return jsonify(get_entry_data(db))
     
-    @scheduler.task('cron', id='update_serial_entries', month='*', day=1, hour=3, minute=0)
+    # DEPRECATED: Scheduler task disabled - display_date feature makes this unnecessary
+    # @scheduler.task('cron', id='update_serial_entries', month='*', day=1, hour=3, minute=0)
     @app.route('/update-serial-entries', methods=['POST'])
     def update_serial_entries():
-        """Roll expired serial entries forward so they reappear next year."""
+        """DEPRECATED: Roll expired serial entries forward so they reappear next year.
+        
+        This function is deprecated as of the display_date feature implementation.
+        Recurring events now dynamically calculate their next occurrence via display_date
+        in get_entry_data(), so manual rollover is no longer necessary.
+        
+        The function is kept for backwards compatibility and can be safely removed
+        in a future version once all existing data has been verified.
+        """
         with scheduler.app.app_context():
             today = datetime.now().date()
             current_month_start = today.replace(day=1)

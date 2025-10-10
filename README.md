@@ -52,10 +52,72 @@ curl -X POST http://127.0.0.1:5000/batch-import -H "Content-Type: application/js
 
 - **Purge Old Entries**
   - Set to automatically execute at the start of each month.
-- **Update Serial Entries**
-  - Runs on the first day of every month to roll past serial items into the future.
+- **Update Serial Entries** (DEPRECATED)
+  - This task is deprecated as of the display_date feature implementation.
+  - Previously ran on the first day of every month to roll past serial items into the future.
+  - No longer necessary since recurring events now dynamically calculate their next occurrence.
 
 These tasks use the APScheduler, with the scheduler API enabled for enhanced interaction through HTTP endpoints. More details and the API can be accessed here: [APScheduler API Documentation](https://viniciuschiele.github.io/flask-apscheduler/rst/api.html).
+
+## Recurring Events and Display Dates
+
+Calendarium handles recurring events (like birthdays and anniversaries) intelligently by storing the original historical date while dynamically calculating when to display the event.
+
+### How It Works
+
+1. **Original Date Storage**: Events are stored with their original date (e.g., "2020-05-15" for a birthday that first occurred on May 15, 2020).
+
+2. **Dynamic Display Date**: For recurring events (categories with `repeat_annually=True`):
+   - The system calculates the next occurrence based on the current date
+   - If the date hasn't occurred yet this year, it shows this year's date
+   - If the date has already passed this year, it shows next year's date
+   - Example: A birthday on "2020-05-15" would show as "2025-05-15" when viewed in 2025
+
+3. **Milestone Detection**: The system automatically detects milestone anniversaries:
+   - Milestone years: 1st, 5th, 10th, 15th, 20th, 25th, 30th, 40th, 50th, 60th, 75th, 100th
+   - Milestones are calculated as: `current_year - original_year`
+   - Milestone events receive special visual highlighting (golden border and glow effect)
+
+4. **Unknown Year Convention**: For events where the original year is unknown (like birthdays without birth years):
+   - Use year `0001` in the date (e.g., "0001-05-15")
+   - The system will display the recurring date but won't calculate or show milestone information
+   - This is useful for birthdays where you don't know the person's birth year
+
+### API Response Fields
+
+For recurring events, the API now includes additional fields:
+
+- `display_date`: The calculated next occurrence date (ISO format)
+- `display_date_formatted`: Formatted version of the display date
+- `years_since`: Number of years since the original event (null if year unknown)
+- `milestone_year`: The milestone year if this is a milestone (e.g., 5, 10, 25)
+- `is_milestone`: Boolean indicating if this is a milestone anniversary
+
+### Example
+
+```json
+{
+  "id": 1,
+  "date": "2020-05-15",
+  "display_date": "2025-05-15",
+  "display_date_formatted": "15. Mai",
+  "title": "John's Birthday",
+  "category": {
+    "name": "Birthday",
+    "repeat_annually": true
+  },
+  "years_since": 5,
+  "milestone_year": 5,
+  "is_milestone": true
+}
+```
+
+### Leap Year Handling
+
+The system correctly handles February 29th birthdays:
+- In leap years, the date is shown as February 29
+- In non-leap years, it's shown as February 28
+- This ensures recurring events always have a valid display date
 
 ## API Endpoints
 
@@ -97,7 +159,13 @@ Below are the available API endpoints with their respective usage:
 
 - **API Data Access**
   - **GET** `/api/data`
-  - Returns all entries in JSON format, including additional attributes such as `date_formatted` and `index` which help in sorting and formatting entries relative to the current date.
+  - Returns all entries in JSON format. For recurring events, includes:
+    - `display_date`: Next occurrence of the event
+    - `display_date_formatted`: Formatted display date
+    - `years_since`: Years since the original event (null if year unknown)
+    - `milestone_year`: Milestone year if applicable (e.g., 5, 10, 25)
+    - `is_milestone`: Boolean indicating milestone anniversary
+  - Entries are sorted by `display_date` for proper timeline ordering.
 
 - **Export Data**
   - **GET** `/export-data`
@@ -107,9 +175,11 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/batch-import`
   - Imports a batch of entries from a JSON file. *Note: This endpoint now also processes quotes.*
 
-- **Update Serial Entries**
+- **Update Serial Entries** (DEPRECATED)
   - **POST** `/update-serial-entries`
-  - Rolls entries in annually repeating categories forward when their date has passed, keeping upcoming occurrences in the future.
+  - **DEPRECATED**: This endpoint is no longer necessary with the display_date feature.
+  - Previously rolled entries in annually repeating categories forward when their date had passed.
+  - Kept for backwards compatibility but no longer scheduled to run automatically.
 
 - **Purge Old Entries**
   - **POST** `/purge-old-entries`
