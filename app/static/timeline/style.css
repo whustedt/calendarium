@@ -105,6 +105,24 @@ html, body {
     animation: pulsateShadow 1s infinite ease-in-out;
 }
 
+.timeline-item.milestone {
+    border: 3px solid gold;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+.timeline-item.milestone:not(.past) {
+    animation: milestonePulse 2s infinite ease-in-out;
+}
+
+.timeline-item .anniversary {
+    display: block;
+    font-size: 9cqh;
+    font-weight: bold;
+    color: gold;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    margin-top: 3px;
+}
+
 .timeline-item.with-img {
     /* Styles background-image of timeline-items */
     background-size: cover !important;
@@ -154,6 +172,7 @@ html, body {
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); }}
 @keyframes pulsateShadow { 0%, 100% { box-shadow: 0 0 8px 0 orangered } 50% { box-shadow: 0 0 11px 3px orangered }}
 @keyframes pulsate {0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); }}
+@keyframes milestonePulse { 0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.6); } 50% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.9); }}
 
 .timeline-item.cancelled .title {
     text-decoration: line-through; /* Strikethrough for the title */

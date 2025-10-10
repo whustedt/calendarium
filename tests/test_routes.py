@@ -274,50 +274,14 @@ def test_update_serial_entries(test_client, init_database):
     """
     GIVEN a Flask application
     WHEN the '/update-serial-entries' endpoint is called (POST)
-    THEN only past serial entries are rolled forward to future dates
+    THEN it returns a success message (endpoint is now deprecated but kept for compatibility)
     """
-    category = db.session.query(Category).filter_by(name="Birthday").first()
-
-    today = datetime.now().date()
-    current_month_start = today.replace(day=1)
-
-    past_date = current_month_start - timedelta(days=10)
-    future_date = current_month_start + timedelta(days=40)
-
-    past_entry = Entry(
-        date=past_date.strftime("%Y-%m-%d"),
-        category=category,
-        title="Past repeating entry",
-        description="Expired and should move"
-    )
-    future_entry = Entry(
-        date=future_date.strftime("%Y-%m-%d"),
-        category=category,
-        title="Future repeating entry",
-        description="Upcoming and should stay"
-    )
-    db.session.add_all([past_entry, future_entry])
-    db.session.commit()
-
     response = test_client.post('/update-serial-entries', follow_redirects=True)
     assert response.status_code == 200
     payload = json.loads(response.data)
     assert "updated_entries" in payload
-    assert payload["updated_entries"] >= 1
-
-    def expected_roll_forward(start_date):
-        rolled_date = start_date
-        while rolled_date < current_month_start:
-            next_year = rolled_date.year + 1
-            max_day = calendar.monthrange(next_year, rolled_date.month)[1]
-            rolled_date = rolled_date.replace(year=next_year, day=min(rolled_date.day, max_day))
-        return rolled_date
-
-    updated_past_entry = db.session.get(Entry, past_entry.id)
-    updated_future_entry = db.session.get(Entry, future_entry.id)
-
-    assert updated_past_entry.date == expected_roll_forward(past_date).isoformat()
-    assert updated_future_entry.date == future_date.strftime("%Y-%m-%d")
+    # Since the function is deprecated, it should return 0 updates
+    assert payload["updated_entries"] == 0
 
 def test_purge_old_entries(test_client, init_database):
     """
@@ -371,7 +335,7 @@ def test_entries_sorted_by_date(test_client, init_database):
     """
     GIVEN a Flask application with multiple entries
     WHEN entries are retrieved
-    THEN check that they are properly sorted by date
+    THEN check that they are properly sorted by display_date
     """
     # Add entries with different dates
     category = db.session.query(Category).filter_by(name="Release").first()
@@ -392,12 +356,12 @@ def test_entries_sorted_by_date(test_client, init_database):
     assert response.status_code == 200
     data = json.loads(response.data)
     
-    # Extract dates from entries
-    entry_dates = [entry['date'] for entry in data['entries']]
+    # Extract display_dates from entries (this is how entries are now sorted)
+    entry_display_dates = [entry['display_date'] for entry in data['entries']]
     
-    # Verify dates are in ascending order
-    sorted_dates = sorted(entry_dates)
-    assert entry_dates == sorted_dates
+    # Verify display_dates are in ascending order
+    sorted_dates = sorted(entry_display_dates)
+    assert entry_display_dates == sorted_dates
 
     # Verify the order is correct
-    assert entry_dates[0] < entry_dates[-1]  # First date should be earlier than last date
+    assert entry_display_dates[0] < entry_display_dates[-1]  # First date should be earlier than last date

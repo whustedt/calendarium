@@ -75,13 +75,12 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
     """Returns formatted entries and categories data with complete category details for each entry.
     
     If max_past_entries is provided, only the most recent past entries up to that count will be included.
-    For entries with repeat_annually=True, calculates display_date and anniversary information.
     """
     # Parse the category_filter if provided
     filter_categories = category_filter.split(',') if category_filter else None
 
     # Preload categories to avoid N+1 query issues
-    query = db.session.query(Entry).options(joinedload(Entry.category))
+    query = db.session.query(Entry).options(joinedload(Entry.category)).order_by(Entry.date)
     
     if filter_categories:
         # Filter entries based on the category names
@@ -89,94 +88,45 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
     
     entries = query.all()
     categories = db.session.query(Category).all()
-    
-    today = date.today()
-    today_str = str(today)
-    
-    # Process entries to calculate display dates for recurring events
-    processed_entries = []
-    for entry in entries:
-        entry_date = parse_date(entry.date)
-        if not entry_date:
-            continue
-            
-        # For recurring entries, calculate the display date
-        if entry.category.repeat_annually:
-            # Keep the original date, but calculate display date for current/next year
-            display_date = entry_date.replace(year=today.year)
-            # If the date has passed this year, show it for next year
-            if display_date < today:
-                display_date = entry_date.replace(year=today.year + 1)
-            display_date_str = display_date.isoformat()
-        else:
-            # For non-recurring entries, display date is the same as the stored date
-            display_date_str = entry.date
-        
-        processed_entries.append({
-            'entry': entry,
-            'display_date': display_date_str,
-            'original_date': entry.date
-        })
-    
-    # Sort by display date
-    processed_entries.sort(key=lambda x: x['display_date'])
-    
-    # Determine the pivot: the first upcoming or current entry (based on display date)
-    pivot = next((i for i, item in enumerate(processed_entries) if item['display_date'] >= today_str), len(processed_entries))
+
+    # Determine the pivot: the first upcoming or current entry (based on today’s date)
+    today_str = str(date.today())
+    pivot = next((i for i, entry in enumerate(entries) if entry.date >= today_str), len(entries))
     
     # Split past and upcoming entries. Limit past entries if max_past_entries is provided.
-    past_items = processed_entries[:pivot]
-    future_items = processed_entries[pivot:]
+    past_entries = entries[:pivot]
+    future_entries = entries[pivot:]
     if max_past_entries is not None:
-        past_items = past_items[-max_past_entries:]
-    filtered_items = past_items + future_items
+        past_entries = past_entries[-max_past_entries:]
+    filtered_entries = past_entries + future_entries
     # The pivot for the filtered list is now the count of past entries kept
-    filtered_pivot = len(past_items)
+    filtered_pivot = len(past_entries)
     
-    formatted_entries = []
-    for i, item in enumerate(filtered_items):
-        entry = item['entry']
-        display_date_str = item['display_date']
-        original_date_str = item['original_date']
-        
-        # Calculate anniversary years for recurring entries
-        anniversary_years = None
-        is_milestone = False
-        if entry.category.repeat_annually:
-            original_date = parse_date(original_date_str)
-            display_date = parse_date(display_date_str)
-            anniversary_years = display_date.year - original_date.year
-            # Milestones: 1st, 5th, 10th, 15th, 20th, 25th, 30th, 40th, 50th, 60th, 75th, 100th, etc.
-            is_milestone = anniversary_years in [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100] or (anniversary_years > 0 and anniversary_years % 100 == 0)
-        
-        formatted_entries.append({
-            "id": entry.id,
-            "date": original_date_str,
-            "display_date": display_date_str,
-            "date_formatted": format_date(parse_date(display_date_str), 'd. MMMM', locale='de_DE'),
-            "title": entry.title,
-            "description": entry.description,
-            "category": {
-                "id": entry.category.id,
-                "name": entry.category.name,
-                "symbol": entry.category.symbol,
-                "color_hex": entry.category.color_hex,
-                "color_hex_variation": adjust_lightness(entry.category.color_hex),
-                "repeat_annually": entry.category.repeat_annually,
-                "display_celebration": entry.category.display_celebration,
-                "is_protected": entry.category.is_protected,
-                "last_updated_by": entry.category.last_updated_by
-            },
-            "url": entry.url,
-            "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
-            "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
-            "index": i - filtered_pivot,
-            "is_today": display_date_str == today_str,
-            "anniversary_years": anniversary_years,
-            "is_milestone": is_milestone,
-            "cancelled": entry.cancelled,
-            "last_updated_by": entry.last_updated_by
-        })
+    formatted_entries = [{
+        "id": entry.id,
+        "date": entry.date,
+        "date_formatted": format_date(parse_date(entry.date), 'd. MMMM', locale='de_DE'),
+        "title": entry.title,
+        "description": entry.description,
+        "category": {
+            "id": entry.category.id,
+            "name": entry.category.name,
+            "symbol": entry.category.symbol,
+            "color_hex": entry.category.color_hex,
+            "color_hex_variation": adjust_lightness(entry.category.color_hex),
+            "repeat_annually": entry.category.repeat_annually,
+            "display_celebration": entry.category.display_celebration,
+            "is_protected": entry.category.is_protected,
+            "last_updated_by": entry.category.last_updated_by
+        },
+        "url": entry.url,
+        "image_url": url_for('uploaded_file', filename=entry.image_filename) if entry.image_filename else None,
+        "image_url_external": url_for('uploaded_file', filename=entry.image_filename, _external=True) if entry.image_filename else None,
+        "index": i - filtered_pivot,
+        "is_today": entry.date == today_str,
+        "cancelled": entry.cancelled,
+        "last_updated_by": entry.last_updated_by
+    } for i, entry in enumerate(filtered_entries)]
     
     formatted_categories = [{
         "id": category.id,
@@ -191,7 +141,6 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
     } for category in categories]
 
     return {"entries": formatted_entries, "categories": formatted_categories}
-
     
 def create_zip(data, upload_folder, db_uri):
     """Creates a zip file containing entries data, associated images, and the database file."""

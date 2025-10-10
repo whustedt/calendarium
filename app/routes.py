@@ -271,48 +271,16 @@ def init_app(app, scheduler):
         """Return a JSON response with data for all data, including image URLs.""" 
         return jsonify(get_entry_data(db))
     
-    @scheduler.task('cron', id='update_serial_entries', month='*', day=1, hour=3, minute=0)
+    # NOTE: This function is deprecated. Recurring events now store their original
+    # historical date, and display_date is calculated dynamically in get_entry_data().
+    # Keeping this endpoint for backward compatibility but it does nothing.
     @app.route('/update-serial-entries', methods=['POST'])
     def update_serial_entries():
-        """Roll expired serial entries forward so they reappear next year."""
-        with scheduler.app.app_context():
-            today = datetime.now().date()
-            current_month_start = today.replace(day=1)
-
-            serial_categories = db.session.query(Category).filter_by(repeat_annually=True).all()
-            category_ids = [category.id for category in serial_categories]
-
-            serial_entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids)).all()
-            updated_entries = 0
-
-            def move_to_next_year(entry_date):
-                next_year = entry_date.year + 1
-                max_day = calendar.monthrange(next_year, entry_date.month)[1]
-                return entry_date.replace(year=next_year, day=min(entry_date.day, max_day))
-
-            for entry in serial_entries:
-                try:
-                    entry_date = datetime.strptime(entry.date, "%Y-%m-%d").date()
-                except ValueError:
-                    scheduler.app.logger.warning(
-                        "Skipping serial entry %s due to invalid date format: %s", entry.id, entry.date
-                    )
-                    continue
-
-                original_date = entry_date
-                while entry_date < current_month_start:
-                    entry_date = move_to_next_year(entry_date)
-
-                if entry_date != original_date:
-                    entry.date = entry_date.isoformat()
-                    updated_entries += 1
-
-            db.session.commit()
-            scheduler.app.logger.info("Rolled %s serial entries forward", updated_entries)
-            return jsonify({
-                "message": "Serial entries rolled forward",
-                "updated_entries": updated_entries
-            }), 200
+        """Deprecated: Recurring events are now handled dynamically."""
+        return jsonify({
+            "message": "This endpoint is deprecated. Recurring events are now handled dynamically.",
+            "updated_entries": 0
+        }), 200
 
     @scheduler.task('cron', id='purge_old_entries', month='*', day=1, hour=5, minute=0)
     @app.route('/purge-old-entries', methods=['POST'])

@@ -38,6 +38,7 @@
                 {% set date_class = "highlight" if entry.is_today else ("past" if entry.index < 0 else "") %}
                 {% set initial_focus = "initial-focus" if entry.index == -2 else "" %}
                 {% set cancelled_class = "cancelled" if entry.cancelled else "" %}
+                {% set milestone_class = "milestone" if entry.is_milestone else "" %}
                 {% if date_class == "past" %}
                     {% set background_style = "background: linear-gradient(135deg, #5c6370, #434A54); background-color: #5c6370;" %}
                 {% else %}
@@ -51,10 +52,13 @@
                     {% set img_style = "" %}
                 {% endif %}
                 {% set filter_style = "filter: grayscale(100%);" if date_class == "past" else "" %}
-                <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
+                <div class="timeline-item {{ date_class }} {{ initial_focus }} {{ img_class }} {{ cancelled_class }} {{ milestone_class }}" style="{{ background_style }} {{ img_style }} {{ filter_style }}">
                     <span class="symbol {{ entry.category.name }}">{{ entry.category.symbol }}</span>
                     <span class="date">{{ entry.date_formatted }}</span>
                     <span class="title">{{ entry.title }}</span>
+                    {% if entry.anniversary_years %}
+                        <span class="anniversary">{{ entry.anniversary_years }}. Anniversary</span>
+                    {% endif %}
                     {% if entry.description %}
                         <span class="description">{{ entry.description }}</span>
                     {% endif %}
