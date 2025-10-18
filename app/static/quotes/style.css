@@ -6,6 +6,7 @@ body {
     align-items: center;
     justify-content: center;
     font-family: Cambria, "Palatino Linotype", "Book Antiqua", serif;
+    font-synthesis: none; /* to avoid italic emoji rendering */
     color: #fff;
     background: transparent;
     overflow: hidden;
