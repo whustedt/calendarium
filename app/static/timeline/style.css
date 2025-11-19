@@ -89,6 +89,16 @@ html, body {
     opacity: 0;
     transform: translateY(20px);
     animation: fadeInUp 1s ease-out forwards;
+
+    /* Automatische Silbentrennung */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+
+    /* Optional, aber sinnvoll zur Sicherheit */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: normal; /* Kein break-all, sonst keine Silbentrennung! */
 }
 
 .timeline-item .date {
