@@ -2,6 +2,13 @@ from flask import request, jsonify, render_template, redirect, url_for
 from .models import Category, Entry
 from app import db
 
+
+def _parse_checkbox_value(form, field_name):
+    value = form.get(field_name)
+    if value is None:
+        return False
+    return value.lower() in {'true', '1', 'on', 'yes'}
+
 def init_categories_routes(app):
     @app.route('/categories', methods=['GET', 'POST'])
     def categories():
@@ -10,9 +17,9 @@ def init_categories_routes(app):
             name = request.form.get('name')
             symbol = request.form.get('symbol')
             color_hex = request.form.get('color_hex')
-            repeat_annually = request.form.get('repeat_annually') == 'true'
-            display_celebration = request.form.get('display_celebration') == 'true'
-            is_protected = request.form.get('is_protected') == 'true'
+            repeat_annually = _parse_checkbox_value(request.form, 'repeat_annually')
+            display_celebration = _parse_checkbox_value(request.form, 'display_celebration')
+            is_protected = _parse_checkbox_value(request.form, 'is_protected')
             last_updated_by = request.remote_addr
 
             new_category = Category(
@@ -34,9 +41,9 @@ def init_categories_routes(app):
             category.name = request.form.get('name', category.name)
             category.symbol = request.form.get('symbol', category.symbol)
             category.color_hex = request.form.get('color_hex', category.color_hex)
-            category.repeat_annually = bool(request.form.get('repeat_annually'))
-            category.display_celebration = bool(request.form.get('display_celebration'))
-            category.is_protected = bool(request.form.get('is_protected'))
+            category.repeat_annually = _parse_checkbox_value(request.form, 'repeat_annually')
+            category.display_celebration = _parse_checkbox_value(request.form, 'display_celebration')
+            category.is_protected = _parse_checkbox_value(request.form, 'is_protected')
             category.last_updated_by = request.remote_addr
             db.session.commit()
             return redirect(url_for('categories'))

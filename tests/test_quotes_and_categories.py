@@ -335,6 +335,32 @@ def test_create_category(test_client, init_database):
     assert category.display_celebration is True
     assert category.is_protected is False
 
+
+
+def test_create_category_with_checkbox_on_values(test_client, init_database):
+    """
+    GIVEN a Flask application
+    WHEN a new category is created from standard HTML checkbox values
+    THEN checked options are persisted correctly
+    """
+    data = {
+        'name': 'HtmlCheckboxCategory',
+        'symbol': '✅',
+        'color_hex': '#123456',
+        'repeat_annually': 'on',
+        'display_celebration': 'on',
+        'is_protected': 'on'
+    }
+
+    response = test_client.post('/categories', data=data, follow_redirects=True)
+    assert response.status_code == 200
+
+    category = Category.query.filter_by(name='HtmlCheckboxCategory').first()
+    assert category is not None
+    assert category.repeat_annually is True
+    assert category.display_celebration is True
+    assert category.is_protected is True
+
 def test_update_category(test_client, init_database):
     """
     GIVEN a Flask application with an existing category
