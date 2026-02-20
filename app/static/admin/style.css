@@ -218,3 +218,13 @@ thead .table-filters select {
     box-sizing: border-box;
     padding: 4px 6px;
 }
+
+thead .table-filters .date-range-filter {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+thead .table-filters .date-range-separator {
+    color: #666;
+}

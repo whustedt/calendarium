@@ -123,6 +123,28 @@ function normalizeLegacyFilters() {
 
         if (filterState && typeof filterState === 'object' && typeof filterState.value === 'string') {
             normalized[columnIndex] = filterState;
+            return;
+        }
+
+        if (
+            filterState &&
+            typeof filterState === 'object' &&
+            filterState.type === 'date' &&
+            filterState.value &&
+            typeof filterState.value === 'object'
+        ) {
+            const fromValue = typeof filterState.value.from === 'string' ? filterState.value.from : '';
+            const toValue = typeof filterState.value.to === 'string' ? filterState.value.to : '';
+
+            if (fromValue || toValue) {
+                normalized[columnIndex] = {
+                    type: 'date',
+                    value: {
+                        from: fromValue,
+                        to: toValue
+                    }
+                };
+            }
         }
     });
 
@@ -163,7 +185,27 @@ function rowMatchesFilter(cell, filterState) {
     }
 
     if (filterState.type === 'date') {
-        return getDateComparableValue(cell) === filterState.value;
+        const filterValue = filterState.value;
+        const cellDate = getDateComparableValue(cell);
+        if (!cellDate) {
+            return false;
+        }
+
+        if (typeof filterValue === 'string') {
+            return cellDate === filterValue;
+        }
+
+        const fromValue = filterValue && typeof filterValue.from === 'string' ? filterValue.from : '';
+        const toValue = filterValue && typeof filterValue.to === 'string' ? filterValue.to : '';
+
+        if (fromValue && cellDate < fromValue) {
+            return false;
+        }
+        if (toValue && cellDate > toValue) {
+            return false;
+        }
+
+        return Boolean(fromValue || toValue);
     }
 
     if (filterState.type === 'presence') {
@@ -189,6 +231,13 @@ function applyFilters() {
         Object.entries(activeFilters).forEach(([columnIndex, filterState]) => {
             if (!isVisible || !filterState || !filterState.value) {
                 return;
+            }
+
+            if (filterState.type === 'date' && typeof filterState.value === 'object') {
+                const hasRangeValue = Boolean(filterState.value.from || filterState.value.to);
+                if (!hasRangeValue) {
+                    return;
+                }
             }
 
             const cell = row.cells[Number(columnIndex)];
@@ -274,24 +323,58 @@ function createCategoryFilter(columnIndex) {
 }
 
 function createDateFilter(columnIndex) {
-    const input = document.createElement('input');
-    input.type = 'date';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'date-range-filter';
+    const fromInput = document.createElement('input');
+    fromInput.type = 'date';
+    fromInput.title = 'Von';
+    const toInput = document.createElement('input');
+    toInput.type = 'date';
+    toInput.title = 'Bis';
+
+    const separator = document.createElement('span');
+    separator.className = 'date-range-separator';
+    separator.textContent = '–';
+
+    wrapper.appendChild(fromInput);
+    wrapper.appendChild(separator);
+    wrapper.appendChild(toInput);
 
     const savedFilter = activeFilters[columnIndex];
-    input.value = savedFilter ? savedFilter.value : '';
+    if (savedFilter && savedFilter.type === 'date') {
+        if (typeof savedFilter.value === 'string') {
+            fromInput.value = savedFilter.value;
+            toInput.value = savedFilter.value;
+        } else {
+            fromInput.value = savedFilter.value && savedFilter.value.from ? savedFilter.value.from : '';
+            toInput.value = savedFilter.value && savedFilter.value.to ? savedFilter.value.to : '';
+        }
+    }
 
-    input.addEventListener('change', (event) => {
-        const value = event.target.value;
-        if (value) {
-            activeFilters[columnIndex] = { type: 'date', value };
+    const updateRangeFilter = () => {
+        const fromValue = fromInput.value;
+        const toValue = toInput.value;
+
+        if (fromValue || toValue) {
+            activeFilters[columnIndex] = {
+                type: 'date',
+                value: {
+                    from: fromValue,
+                    to: toValue
+                }
+            };
         } else {
             delete activeFilters[columnIndex];
         }
+
         applyFilters();
         persistTableState();
-    });
+    };
 
-    return input;
+    fromInput.addEventListener('change', updateRangeFilter);
+    toInput.addEventListener('change', updateRangeFilter);
+
+    return wrapper;
 }
 
 function createPresenceFilter(columnIndex) {
