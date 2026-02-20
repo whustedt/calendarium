@@ -206,3 +206,14 @@ button.delete {
 .maintenance-panel .maintenance {
     background-color: #af9c4c;
 }
+
+
+thead .table-filters th {
+    background-color: #fafafa;
+}
+
+thead .table-filters input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 4px 6px;
+}
