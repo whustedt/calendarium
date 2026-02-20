@@ -27,6 +27,108 @@ function getCellText(cell) {
     return (cell.innerText || '').trim().toLowerCase();
 }
 
+function getCellDisplayText(cell) {
+    if (!cell) {
+        return '';
+    }
+
+    const titledElement = cell.querySelector('[title]');
+    if (titledElement) {
+        return titledElement.getAttribute('title').trim();
+    }
+
+    const formField = cell.querySelector('input, textarea, select');
+    if (formField) {
+        if (formField.type === 'checkbox') {
+            return formField.checked ? 'true' : 'false';
+        }
+        return (formField.value || '').trim();
+    }
+
+    return (cell.innerText || '').trim();
+}
+
+function cellHasValue(cell) {
+    if (!cell) {
+        return false;
+    }
+
+    const formField = cell.querySelector('input, textarea, select');
+    if (formField) {
+        if (formField.type === 'checkbox') {
+            return formField.checked;
+        }
+        return Boolean((formField.value || '').trim());
+    }
+
+    if (cell.querySelector('img, a')) {
+        return true;
+    }
+
+    const text = (cell.innerText || '').trim().toLowerCase();
+    if (!text || text === 'no image' || text === 'kein bild') {
+        return false;
+    }
+
+    return true;
+}
+
+function getDateComparableValue(cell) {
+    const value = getCellDisplayText(cell);
+    if (!value) {
+        return '';
+    }
+
+    const isoDateMatch = value.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (isoDateMatch) {
+        return isoDateMatch[0];
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return '';
+    }
+
+    return parsed.toISOString().slice(0, 10);
+}
+
+function getFilterConfig(label) {
+    if (label.includes('actions')) {
+        return { type: 'none' };
+    }
+
+    if (label.includes('category')) {
+        return { type: 'category' };
+    }
+
+    if (label.includes('date')) {
+        return { type: 'date' };
+    }
+
+    if (label.includes('url') || label.includes('image')) {
+        return { type: 'presence' };
+    }
+
+    return { type: 'text' };
+}
+
+function normalizeLegacyFilters() {
+    const normalized = {};
+
+    Object.entries(activeFilters).forEach(([columnIndex, filterState]) => {
+        if (typeof filterState === 'string') {
+            normalized[columnIndex] = { type: 'text', value: filterState };
+            return;
+        }
+
+        if (filterState && typeof filterState === 'object' && typeof filterState.value === 'string') {
+            normalized[columnIndex] = filterState;
+        }
+    });
+
+    activeFilters = normalized;
+}
+
 function persistTableState() {
     const state = {
         sortColumn: activeSortColumn,
@@ -55,6 +157,24 @@ function applySortIndicators() {
     });
 }
 
+function rowMatchesFilter(cell, filterState) {
+    if (!filterState || !filterState.value) {
+        return true;
+    }
+
+    if (filterState.type === 'date') {
+        return getDateComparableValue(cell) === filterState.value;
+    }
+
+    if (filterState.type === 'presence') {
+        const hasValue = cellHasValue(cell);
+        return filterState.value === 'present' ? hasValue : !hasValue;
+    }
+
+    const cellText = getCellText(cell);
+    return cellText.includes(filterState.value.toLowerCase());
+}
+
 function applyFilters() {
     const table = getTable();
     if (!table) {
@@ -66,14 +186,13 @@ function applyFilters() {
     rows.forEach((row) => {
         let isVisible = true;
 
-        Object.entries(activeFilters).forEach(([columnIndex, filterValue]) => {
-            if (!filterValue || !isVisible) {
+        Object.entries(activeFilters).forEach(([columnIndex, filterState]) => {
+            if (!isVisible || !filterState || !filterState.value) {
                 return;
             }
 
             const cell = row.cells[Number(columnIndex)];
-            const cellText = getCellText(cell);
-            if (!cellText.includes(filterValue)) {
+            if (!rowMatchesFilter(cell, filterState)) {
                 isVisible = false;
             }
         });
@@ -119,6 +238,107 @@ function applyState() {
     persistTableState();
 }
 
+function createCategoryFilter(columnIndex) {
+    const table = getTable();
+    const select = document.createElement('select');
+    const options = new Set();
+    const rows = Array.from(table.tBodies[0].rows);
+
+    rows.forEach((row) => {
+        const value = getCellDisplayText(row.cells[columnIndex]);
+        if (value) {
+            options.add(value);
+        }
+    });
+
+    select.appendChild(new Option('Alle', ''));
+    Array.from(options).sort((a, b) => a.localeCompare(b)).forEach((value) => {
+        select.appendChild(new Option(value, value.toLowerCase()));
+    });
+
+    const savedFilter = activeFilters[columnIndex];
+    select.value = savedFilter ? savedFilter.value : '';
+
+    select.addEventListener('change', (event) => {
+        const value = event.target.value;
+        if (value) {
+            activeFilters[columnIndex] = { type: 'category', value };
+        } else {
+            delete activeFilters[columnIndex];
+        }
+        applyFilters();
+        persistTableState();
+    });
+
+    return select;
+}
+
+function createDateFilter(columnIndex) {
+    const input = document.createElement('input');
+    input.type = 'date';
+
+    const savedFilter = activeFilters[columnIndex];
+    input.value = savedFilter ? savedFilter.value : '';
+
+    input.addEventListener('change', (event) => {
+        const value = event.target.value;
+        if (value) {
+            activeFilters[columnIndex] = { type: 'date', value };
+        } else {
+            delete activeFilters[columnIndex];
+        }
+        applyFilters();
+        persistTableState();
+    });
+
+    return input;
+}
+
+function createPresenceFilter(columnIndex) {
+    const select = document.createElement('select');
+    select.appendChild(new Option('Alle', ''));
+    select.appendChild(new Option('Vorhanden', 'present'));
+    select.appendChild(new Option('Nicht vorhanden', 'missing'));
+
+    const savedFilter = activeFilters[columnIndex];
+    select.value = savedFilter ? savedFilter.value : '';
+
+    select.addEventListener('change', (event) => {
+        const value = event.target.value;
+        if (value) {
+            activeFilters[columnIndex] = { type: 'presence', value };
+        } else {
+            delete activeFilters[columnIndex];
+        }
+        applyFilters();
+        persistTableState();
+    });
+
+    return select;
+}
+
+function createTextFilter(columnIndex) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Filter...';
+
+    const savedFilter = activeFilters[columnIndex];
+    input.value = savedFilter ? savedFilter.value : '';
+
+    input.addEventListener('input', (event) => {
+        const value = event.target.value.trim().toLowerCase();
+        if (value) {
+            activeFilters[columnIndex] = { type: 'text', value };
+        } else {
+            delete activeFilters[columnIndex];
+        }
+        applyFilters();
+        persistTableState();
+    });
+
+    return input;
+}
+
 function initializeFilterRow() {
     const table = getTable();
     if (!table || !table.tHead || table.tHead.rows.length === 0) {
@@ -136,25 +356,18 @@ function initializeFilterRow() {
     Array.from(headerRow.cells).forEach((headerCell, columnIndex) => {
         const filterCell = document.createElement('th');
         const label = headerCell.textContent.trim().toLowerCase();
+        const config = getFilterConfig(label);
 
-        if (label.includes('actions')) {
+        if (config.type === 'none') {
             filterCell.textContent = '—';
+        } else if (config.type === 'category') {
+            filterCell.appendChild(createCategoryFilter(columnIndex));
+        } else if (config.type === 'date') {
+            filterCell.appendChild(createDateFilter(columnIndex));
+        } else if (config.type === 'presence') {
+            filterCell.appendChild(createPresenceFilter(columnIndex));
         } else {
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.placeholder = 'Filter...';
-            input.value = activeFilters[columnIndex] || '';
-            input.addEventListener('input', (event) => {
-                const value = event.target.value.trim().toLowerCase();
-                if (value) {
-                    activeFilters[columnIndex] = value;
-                } else {
-                    delete activeFilters[columnIndex];
-                }
-                applyFilters();
-                persistTableState();
-            });
-            filterCell.appendChild(input);
+            filterCell.appendChild(createTextFilter(columnIndex));
         }
 
         filterRow.appendChild(filterCell);
@@ -179,6 +392,7 @@ function loadTableState() {
         }
         if (state.filters && typeof state.filters === 'object') {
             activeFilters = state.filters;
+            normalizeLegacyFilters();
         }
     } catch (error) {
         localStorage.removeItem(getStorageKey());

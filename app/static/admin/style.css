@@ -212,7 +212,8 @@ thead .table-filters th {
     background-color: #fafafa;
 }
 
-thead .table-filters input {
+thead .table-filters input,
+thead .table-filters select {
     width: 100%;
     box-sizing: border-box;
     padding: 4px 6px;
