@@ -34,9 +34,9 @@ def init_categories_routes(app):
             category.name = request.form.get('name', category.name)
             category.symbol = request.form.get('symbol', category.symbol)
             category.color_hex = request.form.get('color_hex', category.color_hex)
-            category.repeat_annually = bool(request.form.get('repeat_annually'))
-            category.display_celebration = bool(request.form.get('display_celebration'))
-            category.is_protected = bool(request.form.get('is_protected'))
+            category.repeat_annually = request.form.get('repeat_annually') == 'true'
+            category.display_celebration = request.form.get('display_celebration') == 'true'
+            category.is_protected = request.form.get('is_protected') == 'true'
             category.last_updated_by = request.remote_addr
             db.session.commit()
             return redirect(url_for('categories'))
