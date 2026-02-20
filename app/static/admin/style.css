@@ -221,10 +221,11 @@ thead .table-filters select {
 
 thead .table-filters .date-range-filter {
     display: flex;
-    align-items: center;
-    gap: 4px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
 }
 
 thead .table-filters .date-range-separator {
-    color: #666;
+    display: none;
 }
