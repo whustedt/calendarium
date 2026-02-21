@@ -152,7 +152,7 @@ def init_quote_routes(app):
 
     @app.route('/quotes/', methods=['GET'])
     def list_quotes():
-        quotes = Quote.query.all()
+        quotes = Quote.query.order_by(Quote.id.desc()).all()
         return render_template('admin/quotes.html', quotes=quotes)
 
     @app.route('/quotes/create', methods=['POST'])

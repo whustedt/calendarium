@@ -283,9 +283,25 @@ function sortRows(column, direction) {
     rows.forEach((row) => tbody.appendChild(row));
 }
 
+function restoreOriginalRowOrder() {
+    const table = getTable();
+    if (!table) {
+        return;
+    }
+
+    const tbody = table.tBodies[0];
+    const rows = Array.from(tbody.rows);
+
+    rows
+        .sort((rowA, rowB) => Number(rowA.dataset.initialOrder) - Number(rowB.dataset.initialOrder))
+        .forEach((row) => tbody.appendChild(row));
+}
+
 function applyState() {
     if (activeSortColumn !== null) {
         sortRows(activeSortColumn, activeSortDirection);
+    } else {
+        restoreOriginalRowOrder();
     }
 
     applySortIndicators();
@@ -457,7 +473,12 @@ function initializeFilterRow() {
         const config = getFilterConfig(label);
 
         if (config.type === 'none') {
-            filterCell.textContent = '—';
+            const resetButton = document.createElement('button');
+            resetButton.type = 'button';
+            resetButton.className = 'table-reset-button';
+            resetButton.textContent = 'Zurücksetzen';
+            resetButton.addEventListener('click', resetTableState);
+            filterCell.appendChild(resetButton);
         } else if (config.type === 'category') {
             filterCell.appendChild(createCategoryFilter(columnIndex));
         } else if (config.type === 'date') {
@@ -472,6 +493,40 @@ function initializeFilterRow() {
     });
 
     table.tHead.appendChild(filterRow);
+}
+
+function captureInitialRowOrder() {
+    const table = getTable();
+    if (!table) {
+        return;
+    }
+
+    Array.from(table.tBodies[0].rows).forEach((row, index) => {
+        if (!row.dataset.initialOrder) {
+            row.dataset.initialOrder = String(index);
+        }
+    });
+}
+
+function resetTableState(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    activeSortColumn = null;
+    activeSortDirection = 'asc';
+    activeFilters = {};
+    localStorage.removeItem(getStorageKey());
+
+    const table = getTable();
+    const existingFilterRow = table && table.querySelector('thead tr.table-filters');
+    if (existingFilterRow) {
+        existingFilterRow.remove();
+    }
+
+    initializeFilterRow();
+    applyState();
 }
 
 function loadTableState() {
@@ -514,6 +569,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    captureInitialRowOrder();
     loadTableState();
     initializeFilterRow();
     applyState();

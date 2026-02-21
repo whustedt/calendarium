@@ -110,7 +110,7 @@ def init_app(app, scheduler):
     @app.route('/', methods=['GET'])
     def index():
         """Display the main admin page."""
-        data = get_entry_data(db)
+        data = get_entry_data(db, sort_order='created_desc')
         return render_template('admin/index.html', entries=data['entries'], categories=data['categories'])
 
     @app.route('/create', methods=['POST'])

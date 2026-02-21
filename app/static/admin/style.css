@@ -224,3 +224,15 @@ thead .table-filters .date-range-filter {
     grid-template-columns: 1fr;
     gap: 4px;
 }
+
+
+.table-reset-button {
+    width: 100%;
+    padding: 4px 6px;
+    font-size: 0.85rem;
+    background-color: #6c757d;
+}
+
+.table-reset-button:hover {
+    background-color: #5a6268;
+}

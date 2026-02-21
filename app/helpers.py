@@ -144,17 +144,26 @@ def calculate_milestone_info(entry_date, display_date_obj, is_recurring):
     }
 
 
-def get_entry_data(db, category_filter=None, max_past_entries=None):
+def get_entry_data(db, category_filter=None, max_past_entries=None, sort_order='display_date'):
     """Returns formatted entries and categories data with complete category details for each entry.
     
     If max_past_entries is provided, only the most recent past entries up to that count will be included.
     For recurring events, calculates display_date based on current/next year occurrence.
+
+    sort_order values:
+      - 'display_date' (default): timeline-oriented display date sorting with past/future pivot
+      - 'created_desc': preserve DB order by newest created entry first
     """
     # Parse the category_filter if provided
     filter_categories = category_filter.split(',') if category_filter else None
 
     # Preload categories to avoid N+1 query issues
-    query = db.session.query(Entry).options(joinedload(Entry.category)).order_by(Entry.date)
+    query = db.session.query(Entry).options(joinedload(Entry.category))
+
+    if sort_order == 'created_desc':
+        query = query.order_by(Entry.id.desc())
+    else:
+        query = query.order_by(Entry.date)
     
     if filter_categories:
         # Filter entries based on the category names
@@ -175,21 +184,25 @@ def get_entry_data(db, category_filter=None, max_past_entries=None):
             milestone_info = calculate_milestone_info(entry_date, display_date_obj, entry.category.repeat_annually)
             entries_with_display.append((entry, entry_date, display_date_obj, milestone_info))
     
-    # Sort by display date
-    entries_with_display.sort(key=lambda x: x[2])
-    
-    # Determine the pivot: the first upcoming or current entry (based on display date)
-    pivot = next((i for i, (entry, entry_date, display_date_obj, milestone_info) in enumerate(entries_with_display) 
-                  if str(display_date_obj) >= today_str), len(entries_with_display))
-    
-    # Split past and upcoming entries. Limit past entries if max_past_entries is provided.
-    past_entries = entries_with_display[:pivot]
-    future_entries = entries_with_display[pivot:]
-    if max_past_entries is not None:
-        past_entries = past_entries[-max_past_entries:]
-    filtered_entries = past_entries + future_entries
-    # The pivot for the filtered list is now the count of past entries kept
-    filtered_pivot = len(past_entries)
+    if sort_order == 'created_desc':
+        filtered_entries = entries_with_display
+        filtered_pivot = 0
+    else:
+        # Sort by display date
+        entries_with_display.sort(key=lambda x: x[2])
+
+        # Determine the pivot: the first upcoming or current entry (based on display date)
+        pivot = next((i for i, (entry, entry_date, display_date_obj, milestone_info) in enumerate(entries_with_display)
+                    if str(display_date_obj) >= today_str), len(entries_with_display))
+
+        # Split past and upcoming entries. Limit past entries if max_past_entries is provided.
+        past_entries = entries_with_display[:pivot]
+        future_entries = entries_with_display[pivot:]
+        if max_past_entries is not None:
+            past_entries = past_entries[-max_past_entries:]
+        filtered_entries = past_entries + future_entries
+        # The pivot for the filtered list is now the count of past entries kept
+        filtered_pivot = len(past_entries)
     
     formatted_entries = []
     for i, (entry, entry_date, display_date_obj, milestone_info) in enumerate(filtered_entries):
