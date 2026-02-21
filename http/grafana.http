@@ -1,0 +1,60 @@
+@baseUrl = http://127.0.0.1:5000
+
+### Connection test
+GET {{baseUrl}}/grafana/
+
+### Search targets
+POST {{baseUrl}}/grafana/search
+Content-Type: application/json
+
+{}
+
+### Query timeseries for one or more categories
+POST {{baseUrl}}/grafana/query
+Content-Type: application/json
+
+{
+  "targets": [
+    {
+      "target": "Birthday",
+      "type": "timeserie"
+    },
+    {
+      "target": "Holiday",
+      "type": "timeserie"
+    }
+  ]
+}
+
+### Fetch annotations (query supports comma-separated categories)
+POST {{baseUrl}}/grafana/annotations
+Content-Type: application/json
+
+{
+  "annotation": {
+    "name": "Events",
+    "query": "Birthday,Holiday"
+  }
+}
+
+### Tag keys
+POST {{baseUrl}}/grafana/tag-keys
+Content-Type: application/json
+
+{}
+
+### Tag values by key = category
+POST {{baseUrl}}/grafana/tag-values
+Content-Type: application/json
+
+{
+  "key": "category"
+}
+
+### Tag values by key = date
+POST {{baseUrl}}/grafana/tag-values
+Content-Type: application/json
+
+{
+  "key": "date"
+}

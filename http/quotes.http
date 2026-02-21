@@ -1,0 +1,38 @@
+@baseUrl = http://127.0.0.1:5000
+@quoteId = 1
+
+### List quotes (HTML)
+GET {{baseUrl}}/quotes/
+
+### Create quote
+POST {{baseUrl}}/quotes/create
+Content-Type: application/x-www-form-urlencoded
+
+text=Stay%20hungry%2C%20stay%20foolish.&author=Steve%20Jobs&category=inspiration&url=https%3A%2F%2Fexample.com
+
+### Update quote
+POST {{baseUrl}}/quotes/edit/{{quoteId}}
+Content-Type: application/x-www-form-urlencoded
+
+text=The%20best%20way%20to%20predict%20the%20future%20is%20to%20invent%20it.&author=Alan%20Kay&category=inspiration
+
+### Delete quote
+POST {{baseUrl}}/quotes/delete/{{quoteId}}
+
+### Random quote (JSON)
+GET {{baseUrl}}/quotes/random
+
+### Random quote filtered by categories + random color
+GET {{baseUrl}}/quotes/random?category=inspiration,motivation&color=true
+
+### Daily quote (JSON)
+GET {{baseUrl}}/quotes/daily
+
+### Daily quote filtered by categories + deterministic color
+GET {{baseUrl}}/quotes/daily?category=inspiration,motivation&color=true
+
+### Random quote view (HTML)
+GET {{baseUrl}}/quotes/random/view?category=inspiration&color=true
+
+### Daily quote view (HTML)
+GET {{baseUrl}}/quotes/daily/view?category=inspiration&color=true
