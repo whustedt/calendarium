@@ -1,133 +1,131 @@
-from flask import request, jsonify, current_app
 from datetime import datetime
-from .models import Entry, Category
+
+from flask import current_app, jsonify, request
+
 from app import db
+from .models import Category, Entry
+
+
+DATE_FMT = "%Y-%m-%d"
+
+
+def _parse_iso_date(iso_date):
+    """Parse an ISO timestamp into a YYYY-MM-DD date string."""
+    if not iso_date:
+        return None
+
+    try:
+        return datetime.fromisoformat(iso_date.replace("Z", "+00:00")).date().isoformat()
+    except ValueError:
+        return None
+
+
+def _to_timestamp_ms(date_str):
+    return int(datetime.strptime(date_str, DATE_FMT).timestamp() * 1000)
+
 
 def init_grafana_routes(app):
-    """
-    Initialize Grafana routes for the Flask application.
-
-    :param app: Flask application instance
-    """
+    """Initialize Grafana routes for the Flask application."""
 
     @app.route('/grafana/')
     def grafana_test_connection():
-        """
-        Endpoint to test connection with Grafana.
-
-        :return: A message confirming connection establishment
-        """
+        """Health endpoint for Grafana connectivity checks."""
         return "Connection established", 200
 
-    @app.route('/grafana/search', methods=['POST'])
-    def grafana_search():
+    @app.route('/grafana/infinity/categories', methods=['GET'])
+    def grafana_infinity_categories():
+        """Return category rows for Grafana Infinity variable queries."""
+        try:
+            categories = db.session.query(Category.name).order_by(Category.name.asc()).all()
+            return jsonify([{"category": category.name} for category in categories])
+        except Exception as exc:
+            current_app.logger.error(f"Infinity categories failed: {exc}")
+            return jsonify({"error": "Failed to fetch categories"}), 500
+
+    @app.route('/grafana/infinity/timeseries', methods=['GET'])
+    def grafana_infinity_timeseries():
         """
-        Endpoint for Grafana to search available targets based on dynamic categories.
+        Return time-series rows for Grafana Infinity.
+
+        Query params:
+        - category: optional category name filter
+        - from: optional ISO datetime lower bound
+        - to: optional ISO datetime upper bound
         """
         try:
-            categories = db.session.query(Category.name).all()
-            targets = [category.name for category in categories]
-            return jsonify(targets)
-        except Exception as e:
-            current_app.logger.error(f"Search failed: {e}")
-            return jsonify({"error": "Search failed"}), 500
+            category_name = request.args.get('category')
+            start_date = _parse_iso_date(request.args.get('from'))
+            end_date = _parse_iso_date(request.args.get('to'))
 
-    @app.route('/grafana/query', methods=['POST'])
-    def grafana_query():
+            query = db.session.query(
+                Category.name.label('category'),
+                Entry.date.label('date'),
+                db.func.count(Entry.id).label('count'),
+            ).join(Category, Category.id == Entry.category_id)
+
+            if category_name:
+                query = query.filter(Category.name == category_name)
+            if start_date:
+                query = query.filter(Entry.date >= start_date)
+            if end_date:
+                query = query.filter(Entry.date <= end_date)
+
+            rows = query.group_by(Category.name, Entry.date).order_by(Entry.date.asc()).all()
+
+            return jsonify([
+                {
+                    "category": row.category,
+                    "date": row.date,
+                    "timestamp": _to_timestamp_ms(row.date),
+                    "count": row.count,
+                }
+                for row in rows
+            ])
+        except Exception as exc:
+            current_app.logger.error(f"Infinity timeseries failed: {exc}")
+            return jsonify({"error": "Failed to fetch timeseries"}), 500
+
+    @app.route('/grafana/infinity/annotations', methods=['GET'])
+    def grafana_infinity_annotations():
         """
-        Endpoint for Grafana to query data dynamically based on category names.
+        Return annotation rows for Grafana Infinity.
+
+        Query params:
+        - categories: optional comma-separated list of category names
+        - from: optional ISO datetime lower bound
+        - to: optional ISO datetime upper bound
         """
-        req = request.get_json()
         try:
-            response = []
-            for target in req['targets']:
-                category = db.session.query(Category).filter_by(name=target['target']).first()
-                if category and target['type'] == 'timeserie':
-                    data_points = db.session.query(
-                        Entry.date, 
-                        db.func.count(Entry.id).label('count')
-                    ).filter(Entry.category_id == category.id).group_by(Entry.date).all()
-    
-                    datapoints = [
-                        [count, datetime.strptime(date, '%Y-%m-%d').timestamp() * 1000]
-                        for date, count in data_points
-                    ]
-    
-                    response.append({
-                        "target": target['target'],
-                        "datapoints": datapoints
-                    })
-    
-            return jsonify(response)
-        except Exception as e:
-            current_app.logger.error(f"Query failed: {e}")
-            return jsonify({"error": "Query failed"}), 500
+            raw_categories = request.args.get('categories', '')
+            categories = [name.strip() for name in raw_categories.split(',') if name.strip()]
+            start_date = _parse_iso_date(request.args.get('from'))
+            end_date = _parse_iso_date(request.args.get('to'))
 
-    @app.route('/grafana/annotations', methods=['POST'])
-    def grafana_annotations():
-        """
-        Endpoint for Grafana to fetch annotations based on multiple category names.
-        """
-        req = request.get_json()
-        try:
-            annotations = []
-            query_categories = req['annotation']['query'].split(',')  # Split the query by commas
-            query_categories = [name.strip() for name in query_categories]  # Clean whitespace
-    
-            categories = db.session.query(Category).filter(Category.name.in_(query_categories)).all()
-            category_ids = [cat.id for cat in categories]  # List of category IDs from the query
-    
-            if category_ids:
-                entries = db.session.query(Entry).filter(Entry.category_id.in_(category_ids)).all()
-                for entry in entries:
-                    annotations.append({
-                        "annotation": req['annotation'],
-                        "time": datetime.strptime(entry.date, '%Y-%m-%d').timestamp() * 1000,
-                        "title": entry.title,
-                        "tags": [entry.category.name],
-                        "text": entry.description or ""
-                    })
-            return jsonify(annotations)
-        except Exception as e:
-            current_app.logger.error(f"Annotations failed: {e}")
-            return jsonify({"error": "Annotations failed"}), 500
+            query = db.session.query(Entry).join(Category, Category.id == Entry.category_id)
+            if categories:
+                query = query.filter(Category.name.in_(categories))
+            if start_date:
+                query = query.filter(Entry.date >= start_date)
+            if end_date:
+                query = query.filter(Entry.date <= end_date)
 
-    @app.route('/grafana/tag-keys', methods=['POST'])
-    def grafana_tag_keys():
-        """
-        Endpoint for Grafana to fetch tag keys.
+            entries = query.order_by(Entry.date.asc()).all()
 
-        :return: JSON list of tag keys
-        """
-        return jsonify([
-            {"type": "string", "text": "category"},
-            {"type": "string", "text": "date"}
-        ])
-
-    @app.route('/grafana/tag-values', methods=['POST'])
-    def grafana_tag_values():
-        """
-        Endpoint for Grafana to fetch tag values based on key dynamically.
-        """
-        req = request.get_json()
-        key = req['key']
-        try:
-            if key == "category":
-                categories = db.session.query(Category.name).distinct().all()
-                values = [{"text": category.name} for category in categories]
-            elif key == "date":
-                dates = db.session.query(Entry.date).distinct().all()
-                values = [{"text": date[0]} for date in dates]
-            else:
-                values = []
-            return jsonify(values)
-        except Exception as e:
-            current_app.logger.error(f"Failed to fetch tag values: {e}")
-            return jsonify({"error": "Failed to fetch tag values"}), 500
+            return jsonify([
+                {
+                    "time": _to_timestamp_ms(entry.date),
+                    "date": entry.date,
+                    "title": entry.title,
+                    "text": entry.description or "",
+                    "category": entry.category.name,
+                }
+                for entry in entries
+            ])
+        except Exception as exc:
+            current_app.logger.error(f"Infinity annotations failed: {exc}")
+            return jsonify({"error": "Failed to fetch annotations"}), 500
 
     app.add_url_rule('/grafana/', view_func=grafana_test_connection)
-    app.add_url_rule('/grafana/search', view_func=grafana_search, methods=['POST'])
-    app.add_url_rule('/grafana/query', view_func=grafana_query, methods=['POST'])
-    app.add_url_rule('/grafana/annotations', view_func=grafana_annotations, methods=['POST'])
-    app.add_url_rule('/grafana/tag-keys', view_func=grafana_tag_keys, methods=['POST'])
-    app.add_url_rule('/grafana/tag-values', view_func=grafana_tag_values, methods=['POST'])
+    app.add_url_rule('/grafana/infinity/categories', view_func=grafana_infinity_categories, methods=['GET'])
+    app.add_url_rule('/grafana/infinity/timeseries', view_func=grafana_infinity_timeseries, methods=['GET'])
+    app.add_url_rule('/grafana/infinity/annotations', view_func=grafana_infinity_annotations, methods=['GET'])
