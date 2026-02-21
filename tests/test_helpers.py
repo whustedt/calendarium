@@ -210,3 +210,10 @@ def test_create_zip_with_missing_files(test_client):
             # Should not attempt to write non-existent files
             assert not zip_file_instance.write.called
 
+
+
+def test_get_entry_data_created_desc_sort_order(test_client: FlaskClient, init_database: None):
+    with test_client.application.app_context():
+        data = get_entry_data(db, sort_order='created_desc')
+        ids = [entry['id'] for entry in data['entries']]
+        assert ids == sorted(ids, reverse=True)
