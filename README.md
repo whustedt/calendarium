@@ -345,37 +345,37 @@ classDiagram
 
 ## Grafana Integration
 
-This application supports integration with Grafana through a Simple JSON Datasource, enabling Grafana to pull data for visualization purposes. Here are the endpoints provided for Grafana:
+This application integrates with Grafana using the **Infinity** data source plugin. Infinity can call JSON endpoints directly, so the Grafana API now exposes straightforward REST endpoints that return row-based JSON payloads.
 
-### Grafana Endpoint Descriptions
+### Grafana Infinity Endpoints
 
 - **Test Connection** (`GET /grafana/`)
-  - Confirms the data source connection is functional.
+  - Confirms the service is reachable.
 
-- **Search** (`POST /grafana/search`)
-  - Returns a list of categories that can be queried (e.g., 'cake', 'birthday').
+- **Categories** (`GET /grafana/infinity/categories`)
+  - Returns category rows for dashboard variables.
 
-- **Query** (`POST /grafana/query`)
-  - Retrieves timeseries data based on specified categories.
+- **Timeseries Rows** (`GET /grafana/infinity/timeseries`)
+  - Returns rows containing `category`, `date`, `timestamp`, and `count`.
+  - Optional query parameters: `category`, `from`, and `to` (ISO timestamps).
 
-- **Annotations** (`POST /grafana/annotations`)
-  - Delivers event annotations for graph overlays based on specific queries.
-
-- **Tag Keys** (`POST /grafana/tag-keys`)
-  - Provides tag keys for Grafana's ad hoc filtering capabilities.
-
-- **Tag Values** (`POST /grafana/tag-values`)
-  - Supplies values for the selected tag keys for further filtering.
+- **Annotations Rows** (`GET /grafana/infinity/annotations`)
+  - Returns rows containing `time`, `date`, `title`, `text`, and `category`.
+  - Optional query parameters: `categories` (comma-separated), `from`, and `to` (ISO timestamps).
 
 ### Example Usage
 
-Query Grafana for timeseries data in the 'cake' category using this `curl` command:
+Query Grafana Infinity for timeseries rows in the `Cake` category:
 
 ```bash
-curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/json" -d '{"targets":[{"target": "Cake", "type": "timeserie"}]}'
+curl "http://127.0.0.1:5000/grafana/infinity/timeseries?category=Cake"
 ```
 
-This command will return timeseries data points for the 'cake' category if such data exists. Ensure the Grafana Simple JSON Datasource plugin is installed and properly configured to interact with these endpoints.
+Query a date range using ISO timestamps:
+
+```bash
+curl "http://127.0.0.1:5000/grafana/infinity/timeseries?category=Cake&from=2024-01-01T00:00:00.000Z&to=2024-12-31T23:59:59.999Z"
+```
 
 ## Giphy Integration
 
