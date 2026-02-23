@@ -174,6 +174,16 @@ Below are the available API endpoints with their respective usage:
   - **POST** `/purge-old-entries`
   - Deletes all entries where the date is in the past and the category is not marked as protected.
 
+## HTTP Client Request Collections
+
+For convenient local API testing, ready-to-use `.http` request collections are provided in the `http/` folder:
+
+- `http/entries.http` for entry, category, maintenance, and utility endpoints
+- `http/quotes.http` for quote API and quote views
+- `http/grafana.http` for Grafana integration endpoints
+
+These files work with common REST client integrations (for example the VS Code REST Client extension or JetBrains HTTP Client).
+
 ## Quote Management
 
 The application includes full quote management functionality with both API endpoints and HTML views.

@@ -1,0 +1,73 @@
+@baseUrl = http://127.0.0.1:5000
+@entryId = 1
+@categoryId = 1
+
+### Health-ish check (HTML admin page)
+GET {{baseUrl}}/
+
+### Timeline (HTML)
+GET {{baseUrl}}/timeline?timeline-height=100%&font-family=Arial&font-scale=1.2&categories=Birthday&max-past-entries=5
+
+### API data (JSON)
+GET {{baseUrl}}/api/data
+
+### Create entry (form data)
+POST {{baseUrl}}/create
+Content-Type: application/x-www-form-urlencoded
+
+# NOTE: category must already exist
+# date format: YYYY-MM-DD
+# optional fields: description, image_url, image_path
+# optional bool fields: yearly_repeat, is_past_event, hide_age, is_test_data, cancelled
+date=2030-12-24&title=Christmas%20Eve&category=Holiday&description=Family%20dinner
+
+### Update entry (form data)
+POST {{baseUrl}}/update/{{entryId}}
+Content-Type: application/x-www-form-urlencoded
+
+date=2030-12-25&title=Christmas%20Day&category=Holiday&description=Gifts
+
+### Delete entry
+POST {{baseUrl}}/delete/{{entryId}}
+
+### Toggle entry cancelled flag
+POST {{baseUrl}}/toggle_cancelled/{{entryId}}
+
+### Categories list + create category (GET/POST)
+GET {{baseUrl}}/categories
+
+### Create category
+POST {{baseUrl}}/categories
+Content-Type: application/x-www-form-urlencoded
+
+name=Holiday&color=%23ff0000&repeat_annually=true
+
+### Update category
+POST {{baseUrl}}/categories/update/{{categoryId}}
+Content-Type: application/x-www-form-urlencoded
+
+name=Holiday&color=%2300aa00&repeat_annually=true
+
+### Delete category
+POST {{baseUrl}}/categories/delete/{{categoryId}}
+
+### Batch import test data
+POST {{baseUrl}}/batch-import
+Content-Type: application/json
+
+< ./testdata.json
+
+### Export data zip
+GET {{baseUrl}}/export-data
+
+### Purge old entries
+POST {{baseUrl}}/purge-old-entries
+
+### GIF search (requires GIPHY_API_TOKEN)
+GET {{baseUrl}}/search_gifs?q=birthday
+
+### Build Giphy URL (requires GIPHY_API_TOKEN)
+GET {{baseUrl}}/get-giphy-url?q=birthday
+
+### Check Giphy integration
+GET {{baseUrl}}/check-giphy-enabled
