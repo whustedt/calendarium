@@ -1,6 +1,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 20px;
+    padding-bottom: 120px;
     line-height: 1.6;
     background-image: radial-gradient(#9395b6 0.55px, #ffffff 0.55px);
     background-size: 11px 11px;
@@ -58,7 +59,7 @@ textarea {
     font-size: smaller;
     text-align: right; /* Aligns the text to the right */
     width: 100%; /* Full width to push it to the edge */
-  }
+}
 
 .category-group, .checkbox-group {
     display: grid;
@@ -72,7 +73,7 @@ textarea {
 }
 
 .checkbox-group label input[type="checkbox"] {
-    align-self: center; 
+    align-self: center;
     margin-right: 5px;
 }
 
@@ -189,18 +190,27 @@ button.delete {
 }
 
 .maintenance-panel {
-    margin-top: 20px;
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
     text-align: center;
-    background-color: #f9f9f9; /* Lighter gray background for panel */
-    padding: 10px;
-    width: 100%;
-    display: inline-block;
+    background-color: rgba(249, 249, 249, 0.95);
+    padding: 12px;
+    width: auto;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
 }
 
 .maintenance-panel form,
 .maintenance-panel button {
-    display: inline;
-    margin-right: 10px;
+    display: inline-block;
+    margin-right: 0;
 }
 
 .maintenance-panel .maintenance {
