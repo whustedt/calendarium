@@ -8,3 +8,4 @@ Flask-Migrate
 validators
 Flask-APScheduler
 markdown
+flask-restx

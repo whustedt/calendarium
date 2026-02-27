@@ -17,6 +17,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     scheduler.init_app(app)
 
+    # Initialize traditional routes
     from .routes import init_app as init_routes
     init_routes(app, scheduler)
         
@@ -31,6 +32,16 @@ def create_app(config_class=Config):
 
     from .routes_maintenance import init_maintenance_routes
     init_maintenance_routes(app)
+    
+    # Initialize API with Swagger documentation
+    from .api import init_api
+    api = init_api(app)
+    
+    # Import API route modules to register them with namespaces
+    from . import (
+        api_routes_entries, api_routes_categories, api_routes_quotes,
+        api_routes_grafana, api_routes_giphy, api_routes_maintenance
+    )
 
     with app.app_context():
 
