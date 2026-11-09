@@ -10,13 +10,13 @@ import re
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from flask import Blueprint, current_app, jsonify, request
-from sqlalchemy import or_, text
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from werkzeug.exceptions import BadRequest, UnprocessableEntity
 
 from . import db
-from .helpers import calculate_milestone_info
+from .helpers import calculate_milestone_info, parse_date
 from .models import Category, Entry
 
 
@@ -152,8 +152,6 @@ def _categories(names=None):
 def _occurrences(window):
     """Expand anniversaries in the requested years, not relative to today's date."""
     query = (db.select(Entry).join(Category).options(joinedload(Entry.category))
-             .where(or_(Category.repeat_annually.is_(True),
-                        Entry.date.between(window.first_date.isoformat(), window.last_date.isoformat())))
              .order_by(Entry.id))
     if window.categories is not None:
         query = query.where(Category.name.in_(window.categories))
@@ -161,9 +159,10 @@ def _occurrences(window):
         query = query.where(Entry.cancelled.is_(False))
     count = 0
     for entry in db.session.execute(query).scalars().yield_per(500):
-        try:
-            original = date.fromisoformat(entry.date)
-        except ValueError:
+        # Entry forms also accept unpadded dates, which cannot be compared as
+        # strings. Normalize with the application's parser before date filtering.
+        original = parse_date(entry.date)
+        if original is None:
             current_app.logger.warning('Skipping invalid date for Grafana entry %s', entry.id)
             continue
         if entry.category.repeat_annually:
@@ -171,6 +170,8 @@ def _occurrences(window):
                          min(original.day, calendar.monthrange(year, original.month)[1]))
                     for year in range(max(original.year, window.first_date.year), window.last_date.year + 1))
         else:
+            if not window.first_date <= original <= window.last_date:
+                continue
             days = (original,)
         for day in days:
             instant = window.midnight(day)
@@ -178,7 +179,7 @@ def _occurrences(window):
                 count += 1
                 if count > MAX_OCCURRENCES:
                     raise UnprocessableEntity('Too many event occurrences; narrow the time range or categories')
-                yield entry, day, _milliseconds(instant)
+                yield entry, original, day, _milliseconds(instant)
 
 
 def _limited_rows(rows):
@@ -210,7 +211,7 @@ def categories():
 
 
 def _event_rows(window):
-    for entry, day, timestamp in _occurrences(window):
+    for entry, original, day, timestamp in _occurrences(window):
         yield {
             'id': entry.id,
             'time': timestamp,
@@ -225,7 +226,7 @@ def _event_rows(window):
             'url': entry.url,
             'recurring': entry.category.repeat_annually,
             'cancelled': entry.cancelled,
-            **calculate_milestone_info(date.fromisoformat(entry.date), day, entry.category.repeat_annually),
+            **calculate_milestone_info(original, day, entry.category.repeat_annually),
         }
 
 
@@ -244,7 +245,7 @@ def annotations():
         'title': entry.title,
         'text': entry.title + ('\n\n' + entry.description if entry.description else ''),
         'tags': entry.category.name,
-    } for entry, day, timestamp in _occurrences(window))
+    } for entry, original, day, timestamp in _occurrences(window))
     rows.sort(key=lambda row: (row['time'], row['title']))
     return jsonify(rows)
 
@@ -281,7 +282,7 @@ def timeseries():
     if len(buckets) * len(selected_categories) > MAX_ROWS:
         raise UnprocessableEntity('More than 10000 rows; use a coarser interval or fewer categories')
     counts = Counter((_bucket(day, interval), entry.category_id)
-                     for entry, day, timestamp in _occurrences(window))
+                     for entry, original, day, timestamp in _occurrences(window))
     return jsonify([{
         'time': _milliseconds(max(window.start, window.midnight(day))),
         'category': category.name,

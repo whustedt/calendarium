@@ -117,6 +117,10 @@ just the next occurrence relative to today. Occurrences before the stored
 original year are excluded. February 29 falls on February 28 in non-leap years.
 Year `0001` retains the application's unknown-birth-year convention and produces
 no anniversary age. Counts, tables, and annotations use the same calendar rules.
+Stored dates are parsed with the application's shared date parser before range
+filtering and recurrence expansion, including accepted unpadded values such as
+`2000-1-2`. Occurrence dates are returned in ISO format; `original_date` retains
+the stored value.
 Malformed dates in legacy data are skipped with a server log warning.
 
 ### Event and annotation fields

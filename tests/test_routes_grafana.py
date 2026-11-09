@@ -303,6 +303,52 @@ def test_invalid_stored_dates_do_not_break_valid_entries(test_client, entries):
     assert len(response.json) == 6
 
 
+@pytest.mark.parametrize('endpoint', ['events', 'annotations', 'timeseries'])
+@pytest.mark.parametrize('write_route', ['create', 'update'])
+@pytest.mark.parametrize('category_name, stored_date, years_since', [
+    ('Birthday', '2000-1-2', 25),
+    ('Release', '2025-1-2', None),
+])
+def test_dates_accepted_by_entry_forms_are_included_in_grafana(
+        test_client, init_database, endpoint, write_route, category_name, stored_date, years_since):
+    category = db.session.query(Category).filter_by(name=category_name).one()
+    form = {'date': stored_date, 'category': category_name, 'title': 'Unpadded entry'}
+    if write_route == 'create':
+        response = test_client.post('/create', data=form)
+    else:
+        entry = Entry(date='2025-01-01', category=category, title='Before update')
+        db.session.add(entry)
+        db.session.commit()
+        response = test_client.post(f'/update/{entry.id}', data=form)
+    assert response.status_code == 302
+    entry = db.session.query(Entry).filter_by(title=form['title']).one()
+    assert entry.date == stored_date
+    # Dates on either side must be excluded after parsing, for both category types.
+    db.session.add_all([
+        Entry(date='2025-1-1', category=category, title='Before range'),
+        Entry(date='2025-1-3', category=category, title='After range'),
+    ])
+    db.session.commit()
+    response = test_client.get(BASE + '/' + endpoint, query_string={
+        'from': '2025-01-02T00:00:00Z', 'to': '2025-01-02T23:59:59.999Z',
+        'category': category_name,
+    })
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    row = response.json[0]
+    assert row['time'] == milliseconds('2025-01-02T00:00:00Z')
+    if endpoint == 'timeseries':
+        assert row['count'] == 1
+    else:
+        assert row['title'] == form['title']
+        if endpoint == 'events':
+            assert row['id'] == entry.id
+            assert row['date'] == '2025-01-02'
+            assert row['original_date'] == stored_date
+            assert row['years_since'] == years_since
+    assert db.session.get(Entry, entry.id).date == stored_date
+
+
 def test_saved_dashboard_queries_match_the_api(test_client, entries):
     dashboard = json.loads((Path(__file__).parents[1] / 'grafana/dashboards/calendarium.json').read_text())
     variable = dashboard['templating']['list'][0]['query']['infinityQuery']
