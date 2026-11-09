@@ -343,39 +343,19 @@ classDiagram
     Category "1" o-- "*" Entry
 ```
 
-## Grafana Integration
+## Grafana Integration (Grafana 13)
 
-This application supports integration with Grafana through a Simple JSON Datasource, enabling Grafana to pull data for visualization purposes. Here are the endpoints provided for Grafana:
+Calendarium exposes a read-only, versioned REST API for the Grafana Labs-maintained
+**Infinity** data source (`yesoreyeram-infinity-datasource`). It uses server-side
+JSONata/backend queries and Grafana data frames for charts, tables, annotations,
+and category variables.
 
-### Grafana Endpoint Descriptions
+See [Grafana setup and API reference](grafana/README.md) for installation,
+provisioning, bearer authentication, and migration instructions. A ready-to-use
+[dashboard](grafana/dashboards/calendarium.json) and provisioning files are included.
 
-- **Test Connection** (`GET /grafana/`)
-  - Confirms the data source connection is functional.
-
-- **Search** (`POST /grafana/search`)
-  - Returns a list of categories that can be queried (e.g., 'cake', 'birthday').
-
-- **Query** (`POST /grafana/query`)
-  - Retrieves timeseries data based on specified categories.
-
-- **Annotations** (`POST /grafana/annotations`)
-  - Delivers event annotations for graph overlays based on specific queries.
-
-- **Tag Keys** (`POST /grafana/tag-keys`)
-  - Provides tag keys for Grafana's ad hoc filtering capabilities.
-
-- **Tag Values** (`POST /grafana/tag-values`)
-  - Supplies values for the selected tag keys for further filtering.
-
-### Example Usage
-
-Query Grafana for timeseries data in the 'cake' category using this `curl` command:
-
-```bash
-curl -X POST http://127.0.0.1:5000/grafana/query -H "Content-Type: application/json" -d '{"targets":[{"target": "Cake", "type": "timeserie"}]}'
-```
-
-This command will return timeseries data points for the 'cake' category if such data exists. Ensure the Grafana Simple JSON Datasource plugin is installed and properly configured to interact with these endpoints.
+The former Simple JSON `/grafana/` and POST endpoints have been removed. Existing
+data sources and queries must be migrated to Infinity and `/api/grafana/v1`.
 
 ## Giphy Integration
 

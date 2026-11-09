@@ -1,4 +1,5 @@
 from dotenv import load_dotenv
+import os
 
 class Config:
     load_dotenv()  # This loads the env variables from .env file
@@ -8,6 +9,8 @@ class Config:
     UPLOAD_FOLDER = '/app/data/uploads'  # Directory to save uploaded images
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+    GRAFANA_API_TOKEN = os.getenv('GRAFANA_API_TOKEN')
+    GRAFANA_TIMEZONE = os.getenv('GRAFANA_TIMEZONE', 'Europe/Berlin')
 
 # for unittests
 class TestConfig(Config):

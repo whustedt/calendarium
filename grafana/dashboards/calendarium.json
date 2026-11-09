@@ -1,0 +1,391 @@
+{
+  "uid": "calendarium",
+  "title": "Calendarium",
+  "description": "Events, anniversaries and annotations from the Calendarium REST API using Infinity backend queries.",
+  "tags": [
+    "calendarium"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "Europe/Berlin",
+  "weekStart": "monday",
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d/d",
+    "to": "now+90d/d"
+  },
+  "annotations": {
+    "list": [
+      {
+        "name": "Calendarium events",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "calendarium"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "#FF9830",
+        "target": {
+          "refId": "Annotations",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "calendarium"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "/annotations",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "${__timeFrom}"
+              },
+              {
+                "key": "to",
+                "value": "${__timeTo}"
+              },
+              {
+                "key": "categories",
+                "value": "${categories:json}"
+              },
+              {
+                "key": "timezone",
+                "value": "Europe/Berlin"
+              }
+            ]
+          },
+          "root_selector": "$",
+          "format": "dataframe",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "title",
+              "text": "title",
+              "type": "string"
+            },
+            {
+              "selector": "text",
+              "text": "text",
+              "type": "string"
+            },
+            {
+              "selector": "tags",
+              "text": "tags",
+              "type": "string"
+            }
+          ]
+        },
+        "mappings": {
+          "time": {
+            "source": "field",
+            "value": "time"
+          },
+          "title": {
+            "source": "field",
+            "value": "title"
+          },
+          "text": {
+            "source": "field",
+            "value": "text"
+          },
+          "tags": {
+            "source": "field",
+            "value": "tags"
+          }
+        }
+      }
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "categories",
+        "label": "Categories",
+        "type": "query",
+        "datasource": {
+          "type": "yesoreyeram-infinity-datasource",
+          "uid": "calendarium"
+        },
+        "query": {
+          "queryType": "infinity",
+          "refId": "Variable",
+          "infinityQuery": {
+            "refId": "Variable",
+            "datasource": {
+              "type": "yesoreyeram-infinity-datasource",
+              "uid": "calendarium"
+            },
+            "type": "json",
+            "source": "url",
+            "parser": "backend",
+            "url": "/categories",
+            "url_options": {
+              "method": "GET",
+              "params": []
+            },
+            "root_selector": "$",
+            "format": "table",
+            "columns": [
+              {
+                "selector": "name",
+                "text": "__text",
+                "type": "string"
+              },
+              {
+                "selector": "name",
+                "text": "__value",
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "options": [],
+        "sort": 1
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Events per category",
+      "type": "timeseries",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "calendarium"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "calendarium"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "/timeseries",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "${__timeFrom}"
+              },
+              {
+                "key": "to",
+                "value": "${__timeTo}"
+              },
+              {
+                "key": "categories",
+                "value": "${categories:json}"
+              },
+              {
+                "key": "timezone",
+                "value": "Europe/Berlin"
+              },
+              {
+                "key": "interval",
+                "value": "$__customInterval(90d,day,730d,week,month)"
+              }
+            ]
+          },
+          "root_selector": "$",
+          "format": "timeseries",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "category",
+              "text": "category",
+              "type": "string"
+            },
+            {
+              "selector": "count",
+              "text": "count",
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 70,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "displayName": "${__field.labels.category}"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Events and anniversaries",
+      "type": "table",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "calendarium"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 24,
+        "h": 12
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "calendarium"
+          },
+          "type": "json",
+          "source": "url",
+          "parser": "backend",
+          "url": "/events",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "from",
+                "value": "${__timeFrom}"
+              },
+              {
+                "key": "to",
+                "value": "${__timeTo}"
+              },
+              {
+                "key": "categories",
+                "value": "${categories:json}"
+              },
+              {
+                "key": "timezone",
+                "value": "Europe/Berlin"
+              }
+            ]
+          },
+          "root_selector": "$",
+          "format": "table",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Date",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "title",
+              "text": "Title",
+              "type": "string"
+            },
+            {
+              "selector": "category",
+              "text": "Category",
+              "type": "string"
+            },
+            {
+              "selector": "description",
+              "text": "Description",
+              "type": "string"
+            },
+            {
+              "selector": "original_date",
+              "text": "Original date",
+              "type": "string"
+            },
+            {
+              "selector": "years_since",
+              "text": "Anniversary",
+              "type": "number"
+            },
+            {
+              "selector": "url",
+              "text": "URL",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "sortBy": [
+          {
+            "displayName": "Date",
+            "desc": false
+          }
+        ]
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Date": 0,
+              "Title": 1,
+              "Category": 2,
+              "Description": 3,
+              "Anniversary": 4,
+              "Original date": 5,
+              "URL": 6
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
