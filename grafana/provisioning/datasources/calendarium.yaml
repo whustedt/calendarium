@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: Calendarium
+    uid: calendarium
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: ${CALENDARIUM_URL}/api/grafana/v1
+    editable: false
+    jsonData:
+      auth_method: none
+      allowedHosts:
+        - ${CALENDARIUM_URL}
+      customHealthCheckEnabled: true
+      customHealthCheckUrl: ${CALENDARIUM_URL}/api/grafana/v1/health
+      timeoutInSeconds: 30

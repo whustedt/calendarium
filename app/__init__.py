@@ -20,8 +20,8 @@ def create_app(config_class=Config):
     from .routes import init_app as init_routes
     init_routes(app, scheduler)
         
-    from .routes_grafana import init_grafana_routes
-    init_grafana_routes(app)
+    from .routes_grafana import grafana_api
+    app.register_blueprint(grafana_api)
 
     from .routes_categories import init_categories_routes
     init_categories_routes(app)
